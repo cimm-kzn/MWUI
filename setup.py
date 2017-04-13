@@ -27,7 +27,7 @@ setup(
     name='MWUI',
     version=version(),
     packages=find_packages(),
-    url='https://github.com/stsouko/predictor',
+    url='https://github.com/stsouko/MWUI',
     license='AGPLv3',
     author='Dr. Ramil Nugmanov',
     author_email='stsouko@live.ru',
