@@ -136,13 +136,10 @@ class ThesisPostType(Enum):
         return names[self.name]
 
     @staticmethod
-    def thesis_types(part_type, dante=False):
+    def thesis_types(part_type):
         if part_type == MeetingPartType.ORAL:
-            out = [ThesisPostType.PLENARY, ThesisPostType.LECTURE, ThesisPostType.KEYNOTE, ThesisPostType.ORAL,
-                   ThesisPostType.SHORTCOMM]
-            if dante:
-                out.append(ThesisPostType.POSTER)
-            return out
+            return [ThesisPostType.PLENARY, ThesisPostType.LECTURE, ThesisPostType.KEYNOTE, ThesisPostType.ORAL,
+                    ThesisPostType.SHORTCOMM]
         elif part_type == MeetingPartType.EXTRAMURAL:
             return [ThesisPostType.EXTRAMURAL]
 

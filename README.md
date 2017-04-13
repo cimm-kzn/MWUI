@@ -1,7 +1,6 @@
-**MWUI** - DataBase Management system and WEB QSPR predictor with Blog and Meeting's Management
+**MWUI** - Meta package for ModelManager. incldes only magic numbers.
 
 INSTALL
 =======
 
-    pip install -U git+https://github.com/stsouko/predictor.git@master#egg=MWUI --process-dependency-links --allow-all-external
-
+    pip install -U git+https://github.com/stsouko/MWUI.git@magic#egg=MWUI
