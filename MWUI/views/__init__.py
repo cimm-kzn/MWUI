@@ -141,7 +141,7 @@ def remove(file, name):
         a = Attachment.get(file=file)
         if a and (current_user.role_is(UserRole.ADMIN)
                   or a.post.classtype == 'Thesis' and a.post.author.id == current_user.id
-                  and a.post.meeting.poster_deadline > datetime.utcnow()):
+                  and a.post.meeting.thesis_deadline > datetime.utcnow()):
             a.delete()
         return form.redirect()
 
