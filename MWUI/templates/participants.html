@@ -10,7 +10,14 @@
                             <th>Participant</th>
                             <th>Country</th>
                             <th>Status</th>
+                            <th>Degree</th>
                             <th>Presentation type</th>
+                            {% if admin %}
+                                <th>Town</th>
+                                <th>Affiliation</th>
+                                <th>Position</th>
+                                <th>Email</th>
+                            {% endif %}
                         </tr>
                     </thead>
                     <tbody>
@@ -20,7 +27,14 @@
                                 <td><a href="{{ url_for('.user', _user=x.useid) }}">{{ x.user }}</a></td>
                                 <td>{{ x.country }}</td>
                                 <td>{{ x.status }}</td>
+                                <td>{{ x.degree }}</td>
                                 <td>{{ x.type }}</td>
+                                {% if admin %}
+                                    <td>{{ x.town }}</td>
+                                    <td>{{ x.affiliation }}</td>
+                                    <td>{{ x.position }}</td>
+                                    <td>{{ x.email }}</td>
+                                {% endif %}
                             </tr>
                         {% endfor %}
                     </tbody>

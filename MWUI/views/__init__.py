@@ -28,7 +28,7 @@ from .blog import BlogView, AbstractsView, EmailsView, ThesesView, EventsView
 from .post import PostView
 from .profile import ProfileView
 from .visitcard import IndexView, AboutView, StudentsView, LessonsView
-from ..constants import UserRole, MeetingPostType, ProfileStatus
+from ..constants import UserRole, MeetingPostType, ProfileStatus, ProfileDegree
 from ..forms import DeleteButtonForm
 from ..models import User, Meeting, Post, Attachment, Subscription
 
@@ -118,10 +118,12 @@ def slug(_slug):
 
 @view_bp.route('/download/<file>/<name>', methods=['GET'])
 @db_session
-@login_required
 def download(file, name):
     a = Attachment.get(file=file)
-    if current_user.role_is(UserRole.ADMIN) or a.post.classtype != 'Thesis' or a.post.author.id == current_user.id:
+    if a and a.post.classtype != 'Thesis' or current_user.is_authenticated and \
+            (current_user.role_is(UserRole.ADMIN) or
+             current_user.role_is(UserRole.SECRETARY) or
+             a.post.author == current_user.get_user()):
         resp = make_response()
         resp.headers['X-Accel-Redirect'] = '/file/%s' % file
         resp.headers['Content-Description'] = 'File Transfer'
@@ -155,13 +157,20 @@ def participants(event):
     if not m:
         return redirect(url_for('.blog'))
 
-    subs = Subscription.select(lambda x: x.meeting == m).order_by(Subscription.id.desc())
-    users = {x.id: x for x in left_join(x for x in User for s in x.subscriptions if s.meeting == m)}
+    admin = False
+    if current_user.is_authenticated and (current_user.role_is(UserRole.ADMIN) or
+                                          current_user.role_is(UserRole.SECRETARY)):
+        admin = True
 
-    data = [dict(type=x.type.fancy, status=ProfileStatus(users[x.user.id].status).fancy,
-                 country=countries.get(alpha_3=users[x.user.id].country).name,
-                 user=users[x.user.id].full_name, useid=x.user.id) for x in subs]
-    return render_template('participants.html', data=data, title=m.title, subtitle='Participants',
+    #  cache users entities
+    list(left_join(x for x in User for s in x.subscriptions if s.meeting == m))
+
+    subs = Subscription.select(lambda x: x.meeting == m).order_by(Subscription.id.desc())
+    data = [dict(type=x.type.fancy, useid=x.user.id, user=x.user.full_name, status=ProfileStatus(x.user.status).fancy,
+                 country=countries.get(alpha_3=x.user.country).name, degree=ProfileDegree(x.user.degree).fancy,
+                 email=x.user.email, town=x.user.town, affiliation=x.user.affiliation, position=x.user.position)
+            for x in subs]
+    return render_template('participants.html', data=data, title=m.title, subtitle='Participants', admin=admin,
                            crumb=dict(url=url_for('.blog_post', post=event), title='Participants',
                                       parent='Event main page'))
 

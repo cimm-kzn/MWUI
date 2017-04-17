@@ -38,6 +38,7 @@ class PostView(View):
 
     def dispatch_request(self, post):
         admin = current_user.is_authenticated and current_user.role_is(UserRole.ADMIN)
+        secretary = current_user.is_authenticated and current_user.role_is(UserRole.SECRETARY)
         edit_post = None
         remove_post_form = None
         special_form = None
@@ -51,7 +52,7 @@ class PostView(View):
             return redirect(url_for('.blog'))
 
         opened_by_author = current_user.is_authenticated and p.author.id == current_user.id
-        downloadable = admin or p.classtype != 'Thesis' or opened_by_author
+        downloadable = admin or secretary or p.classtype != 'Thesis' or opened_by_author
         deletable = admin or p.classtype == 'Thesis' and opened_by_author and p.meeting.deadline > datetime.utcnow()
         """ admin page
         """
