@@ -19,11 +19,19 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-from smtplib import SMTP
 from MWUI.config import SMTP_HOST, SMTP_PORT, SMTP_LOGIN, SMTP_PASSWORD, SMTP_MAIL
+from smtplib import SMTP
+from time import sleep
 
 
 def run(mail, message):
-    with SMTP(SMTP_HOST, SMTP_PORT) as smtp:
-        smtp.login(SMTP_LOGIN, SMTP_PASSWORD)
-        smtp.sendmail(SMTP_MAIL, mail, message)
+    try:
+        with SMTP(SMTP_HOST, SMTP_PORT) as smtp:
+            smtp.login(SMTP_LOGIN, SMTP_PASSWORD)
+            smtp.sendmail(SMTP_MAIL, mail, message)
+    except:
+        print('MAIL SERVER FAILED')
+
+    print('SLEEP 15')
+    sleep(15)
+    print('DONE')

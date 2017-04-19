@@ -45,6 +45,7 @@ def send_mail(message, to_mail, to_name=None, from_name=None, subject=None, bann
     except ConnectionError:
         if not DEBUG:
             return False
+        sender = None
 
     out = ['Subject: %s' % Header(subject).encode() or 'No Title',
            'To: %s' % ('%s <%s>' % (Header(to_name).encode(), to_mail) if to_name else to_mail),
@@ -68,9 +69,11 @@ def send_mail(message, to_mail, to_name=None, from_name=None, subject=None, bann
     else:
         out.append(msg.as_string())
 
-    try:
-        return sender.enqueue_call('redis_mail.run', args=(to_mail, '\n'.join(out)), result_ttl=60).id
-    except:
-        if not DEBUG:
-            return False
+    if DEBUG:
         print('\n'.join(out))
+
+    if sender is not None:
+        try:
+            return sender.enqueue_call('redis_mail.run', args=(to_mail, '\n'.join(out)), result_ttl=60).id
+        except:
+            return False
