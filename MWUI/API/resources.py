@@ -245,9 +245,7 @@ class ResultsTask(AuthResource):
                           dict(code=401, message="user not authenticated"),
                           dict(code=403, message='user access deny. you do not have permission to this task'),
                           dict(code=404, message='invalid task id. perhaps this task has already been removed'),
-                          dict(code=406, message='task status is invalid. only validation tasks acceptable'),
-                          dict(code=500, message="modeling server error"),
-                          dict(code=512, message='task not ready')])
+                          dict(code=406, message='task status is invalid. only validation tasks acceptable')])
     def get(self, task):
         """
         Task with modeling results of structures with conditions
@@ -610,7 +608,7 @@ class CreateTask(AuthResource):
                           dict(code=403, message="invalid task type"),
                           dict(code=500, message="modeling server error")])
     @dynamic_docstring(AdditiveType.SOLVENT, TaskStatus.PREPARING,
-                       TaskType.MODELING, TaskType.SIMILARITY, TaskType.SUBSTRUCTURE)
+                       TaskType.MODELING, TaskType.SIMILARITY, TaskType.SUBSTRUCTURE, TaskType.STRUCTURE)
     def post(self, _type):
         """
         Create new task
@@ -629,7 +627,7 @@ class CreateTask(AuthResource):
         date: creation date time
         status: {1.value} [{1.name}]
         task: task id
-        type: {2.value} [{2.name}] or {3.value} [{3.name}] or {4.value} [{4.name}]
+        type: {2.value} [{2.name}] or {3.value} [{3.name}] or {4.value} [{4.name} or {5.value} [{5.name}]
         user: user id
         """
         try:
@@ -654,7 +652,7 @@ class CreateTask(AuthResource):
                         alist.append(a)
 
                 data.append(dict(structure=s, data=d['data'], status=StructureStatus.RAW, type=StructureType.UNDEFINED,
-                                 pressure=d['pressure'], temperature=d['temperature'],
+                                 pressure=d['pressure'], temperature=d['temperature'], fear=None,
                                  additives=alist, models=[preparer.copy()]))
 
         if not data:
@@ -689,7 +687,7 @@ class UploadTask(AuthResource):
                           dict(code=400, message="structure file required"),
                           dict(code=403, message="invalid task type"),
                           dict(code=500, message="modeling server error")])
-    def post(self, _type: int) -> Tuple[Dict, int]:
+    def post(self) -> Tuple[Dict, int]:
         """
         Structures file upload
 
@@ -725,10 +723,6 @@ class UploadTask(AuthResource):
 
         see task/create doc about acceptable conditions values and additives types and response structure.
         """
-        try:
-            _type = TaskType(_type)
-        except ValueError:
-            abort(403, message='invalid task type [%s]. valid values are %s' % (_type, task_types_desc))
 
         args = uf_post.parse_args()
 
@@ -748,14 +742,12 @@ class UploadTask(AuthResource):
         if file_url is None:
             abort(400, message='structure file required')
 
-        new_job = redis.new_job(dict(status=TaskStatus.NEW, type=_type, user=current_user.id,
-                                     structures=[dict(data=dict(url=file_url), status=StructureStatus.RAW,
-                                                      type=StructureType.UNDEFINED,
-                                                      models=[get_model(ModelType.PREPARER)])]))
+        new_job = redis.new_file_job(dict(status=TaskStatus.NEW, type=TaskType.MODELING, user=current_user.id,
+                                          structures=file_url, model=get_model(ModelType.PREPARER)))
         if new_job is None:
             abort(500, message='modeling server error')
 
-        return dict(task=new_job['id'], status=TaskStatus.PREPARING.value, type=_type.value,
+        return dict(task=new_job['id'], status=TaskStatus.PREPARING.value, type=TaskType.MODELING.value,
                     date=new_job['created_at'].strftime("%Y-%m-%d %H:%M:%S"), user=current_user.id), 201
 
 

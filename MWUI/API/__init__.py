@@ -36,7 +36,7 @@ else:
 
 
 api.add_resource(CreateTask, '/task/create/<int:_type>')
-api.add_resource(UploadTask, '/task/upload/<int:_type>')
+api.add_resource(UploadTask, '/task/upload')
 api.add_resource(PrepareTask, '/task/prepare/<string:task>')
 api.add_resource(ModelTask, '/task/model/<string:task>')
 api.add_resource(ResultsTask, '/task/results/<string:task>')

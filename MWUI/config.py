@@ -20,6 +20,8 @@
 #  MA 02110-1301, USA.
 #
 from os.path import join, exists, expanduser, dirname
+from sys import stderr
+from traceback import format_exc
 
 
 UPLOAD_PATH = 'upload'
@@ -61,11 +63,12 @@ REDIS_TTL = 86400
 REDIS_JOB_TIMEOUT = 3600
 REDIS_MAIL = 'mail'
 
+RESULTS_PER_PAGE = 50
 
 config_list = ('UPLOAD_PATH', 'PORTAL_NON_ROOT', 'SECRET_KEY', 'RESIZE_URL', 'MAX_UPLOAD_SIZE', 'IMAGES_ROOT',
                'DB_USER', 'DB_PASS', 'DB_HOST', 'DB_NAME', 'DB_MAIN', 'DB_PRED', 'YANDEX_METRIKA', 'SWAGGER',
                'REDIS_HOST', 'REDIS_PORT', 'REDIS_PASSWORD', 'REDIS_TTL', 'REDIS_JOB_TIMEOUT', 'REDIS_MAIL',
-               'LAB_NAME', 'LAB_SHORT', 'BLOG_POSTS_PER_PAGE', 'SCOPUS_API_KEY', 'SCOPUS_TTL',
+               'LAB_NAME', 'LAB_SHORT', 'BLOG_POSTS_PER_PAGE', 'SCOPUS_API_KEY', 'SCOPUS_TTL', 'RESULTS_PER_PAGE',
                'SMTP_HOST', 'SMTP_PORT', 'SMTP_LOGIN', 'SMTP_PASSWORD', 'SMTP_MAIL', 'MAIL_INKEY', 'MAIL_SIGNER')
 
 config_load_list = ['DEBUG']
@@ -78,12 +81,12 @@ if not any(exists(x) for x in config_dirs):
         f.write('\n'.join('%s = %s' % (x, y or '') for x, y in globals().items() if x in config_list))
 
 with open(next(x for x in config_dirs if exists(x))) as f:
-    for line in f:
+    for n, line in enumerate(f, start=1):
         try:
             k, v = line.split('=')
             k = k.strip()
             v = v.strip()
             if k in config_load_list:
                 globals()[k] = int(v) if v.isdigit() else v == 'True' if v in ('True', 'False', '') else v
-        except:
-            pass
+        except ValueError:
+            print('line %d\n\n%s\n consist errors: %s' % (n, line, format_exc()), file=stderr)

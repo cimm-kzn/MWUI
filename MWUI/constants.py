@@ -62,6 +62,7 @@ class TaskType(Enum):
     MODELING = 0
     SIMILARITY = 1
     SUBSTRUCTURE = 2
+    STRUCTURE = 3
 
 
 class AdditiveType(Enum):

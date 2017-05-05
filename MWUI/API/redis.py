@@ -47,6 +47,36 @@ class RedisCombiner(object):
         except ConnectionError:
             return None
 
+    def new_file_job(self, task):
+        if task['status'] != TaskStatus.NEW:
+            return None  # for api check.
+
+        try:
+            self.__tasks.ping()
+        except ConnectionError:
+            return None
+
+        s = task.pop('structures')
+        model = task.pop('model')
+        tmp = self.__new_worker(model['destinations'])
+        if tmp is None:
+            return None
+
+        dest, worker = tmp
+
+        try:
+            task['jobs'] = [(dest, worker.enqueue_call('redis_worker.convert', kwargs={'structures': s, 'model': model},
+                                                       result_ttl=self.__result_ttl).id)]
+            task['status'] = TaskStatus.PREPARED
+            task['structures'] = []
+
+            _id = str(uuid4())
+            self.__tasks.set(_id, dumps((task, datetime.utcnow())), ex=self.__result_ttl)
+            return dict(id=_id, created_at=datetime.utcnow())
+        except Exception as err:
+            print("upload task ERROR:", err)
+            return None
+
     def new_job(self, task):
         if task['status'] not in (TaskStatus.NEW, TaskStatus.PREPARING, TaskStatus.MODELING):
             return None  # for api check.
@@ -77,10 +107,8 @@ class RedisCombiner(object):
                 else:
                     failed.append(model)
 
-            if (failed or not models) and not isinstance(s['data'], dict):
-                """ save failed models in structures.
-                ad-hoc: file upload task return empty structures list.
-                store in redis failed or unused structures.
+            if failed or not models:
+                """ save failed models in structures. store in redis failed or unused structures.
                 """
                 s.setdefault('models', failed)
                 tmp.append(s)
@@ -137,7 +165,7 @@ class RedisCombiner(object):
                         tmp[s['structure']] = s
                 j.delete()
 
-            result['structures'] = list(tmp.values())
+            result['structures'] = [tmp[x] for x in sorted(tmp)]
             result['jobs'] = sub_jobs_unf
             ended_at = max(x.ended_at for x in sub_jobs_fin)
 
