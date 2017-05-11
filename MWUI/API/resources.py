@@ -36,7 +36,7 @@ from .redis import RedisCombiner
 from .structures import (ModelRegisterFields, TaskPostResponseFields, TaskGetResponseFields, TaskStructureFields,
                          LogInFields, AdditivesListFields, ModelListFields)
 from ..config import (UPLOAD_PATH, REDIS_HOST, REDIS_JOB_TIMEOUT, REDIS_PASSWORD, REDIS_PORT, REDIS_TTL, SWAGGER,
-                      BLOG_POSTS_PER_PAGE)
+                      RESULTS_PER_PAGE)
 from ..constants import (StructureStatus, TaskStatus, ModelType, TaskType, StructureType, UserRole, AdditiveType,
                          ResultType)
 from ..logins import UserLogin
@@ -275,7 +275,7 @@ class ResultsTask(AuthResource):
 
             s = select(s for s in Structure if s.task == result).order_by(Structure.id)
             if page:
-                s = s.page(page, pagesize=BLOG_POSTS_PER_PAGE)
+                s = s.page(page, pagesize=RESULTS_PER_PAGE)
 
             structures = {x.id: dict(structure=x.id, data=x.structure, temperature=x.temperature, pressure=x.pressure,
                                      type=x.structure_type, status=x.structure_status, additives=[], models=[])
@@ -399,8 +399,7 @@ class ModelTask(AuthResource):
         result = fetch_task(task, TaskStatus.PREPARED)[0]
 
         prepared = {s['structure']: s for s in result['structures']}
-        structures = data if isinstance(data, list) else [data]
-        tmp = {x['structure']: x for x in structures if x['structure'] in prepared}
+        tmp = {x['structure']: x for x in (data if isinstance(data, list) else [data]) if x['structure'] in prepared}
 
         if 0 in tmp:
             abort(400, message='invalid structure data')
@@ -423,12 +422,9 @@ class ModelTask(AuthResource):
                             alist.append(a)
                     ps['additives'] = alist
 
-                if result['type'] != TaskType.MODELING:  # for search tasks assign compatible models
-                    ps['models'] = [get_model(ModelType.select(ps['type'], result['type']))]
-
                 elif d['models'] is not None and ps['status'] == StructureStatus.CLEAR:
                     ps['models'] = [models[m['model']].copy() for m in d['models'] if m['model'] in models and
-                                    models[m['model']]['type'].compatible(ps['type'], TaskType.MODELING)]
+                                    models[m['model']]['type'].compatible(ps['type'], result['type'])]
 
                 if d['temperature']:
                     ps['temperature'] = d['temperature']
@@ -436,7 +432,7 @@ class ModelTask(AuthResource):
                 if d['pressure']:
                     ps['pressure'] = d['pressure']
 
-        result['structures'] = list(prepared.values())
+        result['structures'] = [x for x in prepared.values() if x['status'] != StructureStatus.HAS_ERROR]
         result['status'] = TaskStatus.MODELING
 
         new_job = redis.new_job(result)
@@ -486,8 +482,7 @@ class PrepareTask(AuthResource):
         type: data type = {4.value} [{4.name}] - plain text information
         value: string - body
         """
-        page = results_fetch.parse_args().get('page')
-        return format_results(task, fetch_task(task, TaskStatus.PREPARED), page=page), 200
+        return format_results(task, fetch_task(task, TaskStatus.PREPARED)), 200
 
     @swagger.operation(
         notes='Create revalidation task',
@@ -506,7 +501,7 @@ class PrepareTask(AuthResource):
                           dict(code=500, message="modeling server error"),
                           dict(code=512, message='task not ready')])
     @dynamic_docstring(StructureStatus.CLEAR, StructureType.REACTION, ModelType.REACTION_MODELING,
-                       StructureType.MOLECULE, ModelType.MOLECULE_MODELING)
+                       StructureType.MOLECULE, ModelType.MOLECULE_MODELING, StructureStatus.HAS_ERROR)
     def post(self, task):
         """
         Revalidate task structures and conditions
@@ -515,7 +510,8 @@ class PrepareTask(AuthResource):
         send only changed data and structure id's. e.g. if user changed only temperature in structure 4 json should be
         {{"temperature": new_value, "structure": 4}} or in  list [{{"temperature": new_value, "structure": 4}}]
 
-        unchanged data server kept as is.
+        unchanged data server kept as is. except structures with status {5.value} [{5.name}]. 
+        this structures if not modified will be removed from task. 
 
         structures status and type fields not usable
 
@@ -539,8 +535,7 @@ class PrepareTask(AuthResource):
         preparer = get_model(ModelType.PREPARER)
 
         prepared = {s['structure']: s for s in result['structures']}
-        structures = data if isinstance(data, list) else [data]
-        tmp = {x['structure']: x for x in structures if x['structure'] in prepared}
+        tmp = {x['structure']: x for x in (data if isinstance(data, list) else [data]) if x['structure'] in prepared}
 
         if 0 in tmp:
             abort(400, message='invalid structure data')
@@ -572,7 +567,7 @@ class PrepareTask(AuthResource):
                 elif ps['status'] == StructureStatus.CLEAR:
                     if d['models'] is not None:
                         ps['models'] = [models[m['model']].copy() for m in d['models'] if m['model'] in models and
-                                        models[m['model']]['type'].compatible(ps['type'], TaskType.MODELING)]
+                                        models[m['model']]['type'].compatible(ps['type'], result['type'])]
                     else:  # recheck models for existing
                         ps['models'] = [m.copy() for m in ps['models'] if m['model'] in models]
 
@@ -582,7 +577,7 @@ class PrepareTask(AuthResource):
                 if d['pressure']:
                     ps['pressure'] = d['pressure']
 
-        result['structures'] = list(prepared.values())
+        result['structures'] = [x for x in prepared.values() if x['status'] != StructureStatus.HAS_ERROR]
         result['status'] = TaskStatus.PREPARING
 
         new_job = redis.new_job(result)
@@ -607,13 +602,12 @@ class CreateTask(AuthResource):
                           dict(code=401, message="user not authenticated"),
                           dict(code=403, message="invalid task type"),
                           dict(code=500, message="modeling server error")])
-    @dynamic_docstring(AdditiveType.SOLVENT, TaskStatus.PREPARING,
-                       TaskType.MODELING, TaskType.SIMILARITY, TaskType.SUBSTRUCTURE, TaskType.STRUCTURE)
+    @dynamic_docstring(AdditiveType.SOLVENT, TaskStatus.PREPARING, TaskType.MODELING, TaskType.SEARCHING)
     def post(self, _type):
         """
         Create new task
 
-        possible to send list of TaskStructureFields.
+        possible to send list of TaskStructureFields if task type is {2.value} [{2.name}].
         e.g. [TaskStructureFields1, TaskStructureFields2,...]
 
         todelete, status, type and models fields not usable
@@ -627,7 +621,7 @@ class CreateTask(AuthResource):
         date: creation date time
         status: {1.value} [{1.name}]
         task: task id
-        type: {2.value} [{2.name}] or {3.value} [{3.name}] or {4.value} [{4.name} or {5.value} [{5.name}]
+        type: {2.value} [{2.name}] or {3.value} [{3.name}]
         user: user id
         """
         try:
@@ -638,7 +632,7 @@ class CreateTask(AuthResource):
         data = marshal(request.get_json(force=True), TaskStructureFields.resource_fields)
         additives = get_additives()
         preparer = get_model(ModelType.PREPARER)
-        structures = data if isinstance(data, list) else [data]
+        structures = [data] if not isinstance(data, list) else data if _type == TaskType.MODELING else data[:1]
 
         data = []
         for s, d in enumerate(structures, start=1):
@@ -691,7 +685,7 @@ class UploadTask(AuthResource):
         """
         Structures file upload
 
-        Need for batch mode.
+        Need for batch modeling mode.
         Any chemical structure formats convertable with Chemaxon JChem can be passed.
 
         conditions in files should be present in next key-value format:

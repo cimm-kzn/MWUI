@@ -45,14 +45,8 @@ class ModelType(Enum):
     PREPARER = 0
     MOLECULE_MODELING = 1
     REACTION_MODELING = 2
-    MOLECULE_SIMILARITY = 3
-    REACTION_SIMILARITY = 4
-    MOLECULE_SUBSTRUCTURE = 5
-    REACTION_SUBSTRUCTURE = 6
-
-    @staticmethod
-    def select(structure_type, task_type):
-        return ModelType['%s_%s' % (structure_type.name, task_type.name)]
+    MOLECULE_SEARCHING = 3
+    REACTION_SEARCHING = 4
 
     def compatible(self, structure_type, task_type):
         return self.name == '%s_%s' % (structure_type.name, task_type.name)
@@ -60,9 +54,7 @@ class ModelType(Enum):
 
 class TaskType(Enum):
     MODELING = 0
-    SIMILARITY = 1
-    SUBSTRUCTURE = 2
-    STRUCTURE = 3
+    SEARCHING = 1
 
 
 class AdditiveType(Enum):

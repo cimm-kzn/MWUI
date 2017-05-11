@@ -96,7 +96,7 @@ class RedisCombiner(object):
                 models = [(x['model'], x) for x in s.pop('models') if x['type'] != ModelType.PREPARER]
             elif s['status'] == StructureStatus.RAW:
                 models = [next((x['model'], x) for x in s.pop('models') if x['type'] == ModelType.PREPARER)]
-            else:  # clean or error structures in prepare task.
+            else:  # clean structures in prepare task.
                 models = []
 
             failed = []

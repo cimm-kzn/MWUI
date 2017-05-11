@@ -19,7 +19,7 @@
 #  MA 02110-1301, USA.
 #
 from pony.orm import db_session, select
-from ..config import BLOG_POSTS_PER_PAGE
+from ..config import RESULTS_PER_PAGE
 from ..constants import ModelType
 from ..models import Additive, Model
 
@@ -58,7 +58,7 @@ def format_results(task, fetched_task, page=None):
     out = dict(task=task, date=ended_at.strftime("%Y-%m-%d %H:%M:%S"), status=result['status'].value,
                type=result['type'].value, user=result['user'], structures=[])
 
-    for s in result['structures'][(page - 1) * BLOG_POSTS_PER_PAGE: page * BLOG_POSTS_PER_PAGE] \
+    for s in result['structures'][(page - 1) * RESULTS_PER_PAGE: page * RESULTS_PER_PAGE] \
             if page else result['structures']:
         out['structures'].append(dict(status=s['status'].value, type=s['type'].value, structure=s['structure'],
                                       data=s['data'], pressure=s['pressure'], temperature=s['temperature'],
