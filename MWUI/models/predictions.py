@@ -21,10 +21,60 @@
 from datetime import datetime
 from pony.orm import PrimaryKey, Required, Optional, Set
 from ..config import DEBUG
-from ..constants import TaskType, ResultType, StructureType, StructureStatus
+from ..constants import TaskType, ResultType, StructureType, StructureStatus, ModelType, AdditiveType
+
+
+def filter_kwargs(kwargs):
+    return {x: y for x, y in kwargs.items() if y}
 
 
 def load_tables(db, schema):
+    class Model(db.Entity):
+        _table_ = '%s_model' % schema if DEBUG else (schema, 'model')
+        id = PrimaryKey(int, auto=True)
+        description = Optional(str)
+        destinations = Set('Destination')
+        example = Optional(str)
+        model_type = Required(int)
+        name = Required(str, unique=True)
+        results = Set('Result')
+
+        def __init__(self, **kwargs):
+            _type = kwargs.pop('type', ModelType.MOLECULE_MODELING).value
+            super(Model, self).__init__(model_type=_type, **filter_kwargs(kwargs))
+
+        @property
+        def type(self):
+            return ModelType(self.model_type)
+
+    class Destination(db.Entity):
+        _table_ = '%s_destination' % schema if DEBUG else (schema, 'destination')
+        id = PrimaryKey(int, auto=True)
+        host = Required(str)
+        model = Required('Model')
+        name = Required(str)
+        password = Optional(str)
+        port = Required(int, default=6379)
+
+        def __init__(self, **kwargs):
+            super(Destination, self).__init__(**filter_kwargs(kwargs))
+
+    class Additive(db.Entity):
+        _table_ = '%s_additive' % schema if DEBUG else (schema, 'additive')
+        id = PrimaryKey(int, auto=True)
+        additive_type = Required(int)
+        additiveset = Set('Additiveset')
+        name = Required(str, unique=True)
+        structure = Optional(str)
+
+        def __init__(self, **kwargs):
+            _type = kwargs.pop('type', AdditiveType.SOLVENT).value
+            super(Additive, self).__init__(additive_type=_type, **kwargs)
+
+        @property
+        def type(self):
+            return AdditiveType(self.additive_type)
+
     class Task(db.Entity):
         _table_ = '%s_task' % schema if DEBUG else (schema, 'task')
         id = PrimaryKey(int, auto=True)
@@ -91,4 +141,4 @@ def load_tables(db, schema):
         amount = Required(float, default=1)
         structure = Required('Structure')
 
-    return Task, Structure, Result, Additiveset
+    return Task, Structure, Result, Additiveset, Model, Destination, Additive

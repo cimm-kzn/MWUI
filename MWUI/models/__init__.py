@@ -18,7 +18,6 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-from CGRdb import Loader
 from pony.orm import Database
 from .predictions import load_tables as save
 from .web import load_tables as main
@@ -26,9 +25,5 @@ from ..config import DB_MAIN, DB_PRED
 
 db = Database()
 
-(User, Subscription, Model, Destination, Additive,
- Post, BlogPost, TeamPost, Meeting, Thesis, Email, Attachment) = main(db, DB_MAIN)
-Task, Structure, Result, Additiveset = save(db, DB_PRED)
-
-# currently unused
-cgr_databases = Loader.list_databases()
+User, Subscription, Post, BlogPost, TeamPost, Meeting, Thesis, Email, Attachment = main(db, DB_MAIN)
+Task, Structure, Result, Additiveset, Model, Destination, Additive = save(db, DB_PRED)

@@ -41,8 +41,7 @@ def get_additives():
 def get_models_list(skip_prep=True, skip_destinations=False, skip_example=True):
     with db_session:
         res = {}
-        for m in (select(m for m in Model if m.model_type in (ModelType.MOLECULE_MODELING.value,
-                                                              ModelType.REACTION_MODELING.value))
+        for m in (select(m for m in Model if m.model_type != ModelType.PREPARER.value)
                   if skip_prep else select(m for m in Model)):
             res[m.id] = dict(model=m.id, name=m.name, description=m.description, type=m.type)
             if not skip_destinations:

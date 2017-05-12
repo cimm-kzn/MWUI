@@ -62,6 +62,7 @@ redis = RedisCombiner(host=REDIS_HOST, port=REDIS_PORT, password=REDIS_PASSWORD,
 task_types_desc = ', '.join('{0.value} - {0.name}'.format(x) for x in TaskType)
 results_types_desc = ', '.join('{0.value} - {0.name}'.format(x) for x in ResultType)
 additives_types_desc = ', '.join('{0.value} - {0.name}'.format(x) for x in AdditiveType)
+models_types_desc = ', '.join('{0.value} - {0.name}'.format(x) for x in ModelType)
 
 
 class Abort512(HTTPException):
@@ -187,7 +188,7 @@ class AvailableModels(AuthResource):
         nickname='modellist',
         responseClass=ModelListFields.__name__,
         responseMessages=[dict(code=200, message="models list"), dict(code=401, message="user not authenticated")])
-    @dynamic_docstring(ModelType.MOLECULE_MODELING, ModelType.REACTION_MODELING)
+    @dynamic_docstring(models_types_desc)
     def get(self):
         """
         Get available models list
@@ -196,7 +197,7 @@ class AvailableModels(AuthResource):
         example - chemical structure in in smiles or marvin or cml format
         description - description of model. in markdown format.
         name - model name
-        type - model type: {0.value} [{0.name}] or {1.value} [{1.name}]
+        type - model type: {0}
         model - id
         """
         out = []
@@ -316,6 +317,7 @@ class ResultsTask(AuthResource):
                           dict(code=403, message='user access deny. you do not have permission to this task'),
                           dict(code=404, message='invalid task id. perhaps this task has already been removed'),
                           dict(code=406, message='task status is invalid. only modeled tasks acceptable'),
+                          dict(code=406, message='task type is invalid. only modeling tasks acceptable'),
                           dict(code=500, message="modeling server error"),
                           dict(code=512, message='task not ready')])
     def post(self, task):
@@ -326,6 +328,8 @@ class ResultsTask(AuthResource):
         failed models in structures skipped.
         """
         result, ended_at = fetch_task(task, TaskStatus.DONE)
+        if result['type'] == TaskType.SEARCHING:
+            abort(406, message='task type is invalid. only modeling tasks acceptable')
 
         with db_session:
             _task = Task(type=result['type'], date=ended_at, user=User[current_user.id])
@@ -672,9 +676,7 @@ class UploadTask(AuthResource):
         notes='Create validation task from uploaded structures file',
         nickname='upload',
         responseClass=TaskPostResponseFields.__name__,
-        parameters=[dict(name='_type', description='Task type ID: %s' % task_types_desc, required=True,
-                         allowMultiple=False, dataType='int', paramType='path'),
-                    dict(name='structures', description='RDF SDF MRV SMILES file', required=True,
+        parameters=[dict(name='structures', description='RDF SDF MRV SMILES file', required=True,
                          allowMultiple=False, dataType='file', paramType='body')],
         responseMessages=[dict(code=201, message="validation task created"),
                           dict(code=401, message="user not authenticated"),
@@ -789,8 +791,7 @@ class MagicNumbers(AuthResource):
         data = {x.__name__: self.__to_dict(x) for x in [TaskType, TaskStatus, StructureType, StructureStatus,
                                                         AdditiveType, ResultType]}
 
-        data['ModelType'] = {ModelType.MOLECULE_MODELING.name: ModelType.MOLECULE_MODELING.value,
-                             ModelType.REACTION_MODELING.name: ModelType.REACTION_MODELING.value}
+        data['ModelType'] = {x.name: x.value for x in ModelType if x != ModelType.PREPARER}
 
         return data, 200
 

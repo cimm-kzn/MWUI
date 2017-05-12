@@ -22,7 +22,6 @@
 
 
 def init():
-    from CGRdb import Loader
     from datetime import datetime
     from flask import Flask
     from flask_bootstrap import Bootstrap
@@ -49,8 +48,6 @@ def init():
         from .config import DB_PASS, DB_HOST, DB_USER, DB_NAME
         db.bind('postgres', user=DB_USER, password=DB_PASS, host=DB_HOST, database=DB_NAME)
         db.generate_mapping()
-
-    Loader.load_schemas(user_entity=User)
 
     app = Flask(__name__)
 
