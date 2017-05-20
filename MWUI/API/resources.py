@@ -31,7 +31,7 @@ from uuid import uuid4
 from validators import url
 from werkzeug import datastructures
 from werkzeug.exceptions import HTTPException, Aborter
-from .data import get_additives, get_model, get_models_list, format_results
+from .data import get_additives, get_preparer_model, get_models_list, format_results
 from .redis import RedisCombiner
 from .structures import (ModelRegisterFields, TaskPostResponseFields, TaskGetResponseFields, TaskStructureFields,
                          LogInFields, AdditivesListFields, ModelListFields)
@@ -83,8 +83,8 @@ def abort(http_status_code, **kwargs):
         raise
 
 
-def fetch_task(task, status):
-    job = redis.fetch_job(task)
+def fetch_task(task, status, page=None):
+    job = redis.fetch_job(task, page=page)
     if job is None:
         abort(404, message='invalid task id. perhaps this task has already been removed')
 
@@ -241,7 +241,9 @@ class ResultsTask(AuthResource):
         nickname='saved',
         responseClass=TaskGetResponseFields.__name__,
         parameters=[dict(name='task', description='Task ID', required=True,
-                         allowMultiple=False, dataType='str', paramType='path')],
+                         allowMultiple=False, dataType='str', paramType='path'),
+                    dict(name='page', description='Results pagination', required=False,
+                         allowMultiple=False, dataType='int', paramType='query')],
         responseMessages=[dict(code=200, message="modeled task"),
                           dict(code=401, message="user not authenticated"),
                           dict(code=403, message='user access deny. you do not have permission to this task'),
@@ -304,7 +306,8 @@ class ResultsTask(AuthResource):
                     structures[s]['models'].append(tmp)
 
         return dict(task=task, status=TaskStatus.DONE.value, date=result.date.strftime("%Y-%m-%d %H:%M:%S"),
-                    type=result.task_type, user=result.user.id, structures=list(structures.values())), 200
+                    type=result.task_type, user=result.user.id,
+                    structures=[structures[x] for x in sorted(structures)]), 200
 
     @swagger.operation(
         notes='Save modeled task',
@@ -353,7 +356,9 @@ class ModelTask(AuthResource):
         nickname='modeled',
         responseClass=TaskGetResponseFields.__name__,
         parameters=[dict(name='task', description='Task ID', required=True,
-                         allowMultiple=False, dataType='str', paramType='path')],
+                         allowMultiple=False, dataType='str', paramType='path'),
+                    dict(name='page', description='Results pagination', required=False,
+                         allowMultiple=False, dataType='int', paramType='query')],
         responseMessages=[dict(code=200, message="modeled task"),
                           dict(code=401, message="user not authenticated"),
                           dict(code=403, message='user access deny. you do not have permission to this task'),
@@ -374,7 +379,7 @@ class ModelTask(AuthResource):
         available model results response types: {0}
         """
         page = results_fetch.parse_args().get('page')
-        return format_results(task, fetch_task(task, TaskStatus.DONE), page=page), 200
+        return format_results(task, fetch_task(task, TaskStatus.DONE, page=page)), 200
 
     @swagger.operation(
         notes='Create modeling task',
@@ -426,9 +431,12 @@ class ModelTask(AuthResource):
                             alist.append(a)
                     ps['additives'] = alist
 
-                elif d['models'] is not None and ps['status'] == StructureStatus.CLEAR:
-                    ps['models'] = [models[m['model']].copy() for m in d['models'] if m['model'] in models and
-                                    models[m['model']]['type'].compatible(ps['type'], result['type'])]
+                elif ps['status'] == StructureStatus.CLEAR:
+                    if d['models'] is not None:
+                        ps['models'] = [models[m['model']].copy() for m in d['models'] if m['model'] in models and
+                                        models[m['model']]['type'].compatible(ps['type'], result['type'])]
+                    else:  # recheck models for existing
+                        ps['models'] = [models[m['model']].copy() for m in ps['models'] if m['model'] in models]
 
                 if d['temperature']:
                     ps['temperature'] = d['temperature']
@@ -453,7 +461,9 @@ class PrepareTask(AuthResource):
         nickname='prepared',
         responseClass=TaskGetResponseFields.__name__,
         parameters=[dict(name='task', description='Task ID', required=True,
-                         allowMultiple=False, dataType='str', paramType='path')],
+                         allowMultiple=False, dataType='str', paramType='path'),
+                    dict(name='page', description='Results pagination', required=False,
+                         allowMultiple=False, dataType='int', paramType='query')],
         responseMessages=[dict(code=200, message="validated task"),
                           dict(code=401, message="user not authenticated"),
                           dict(code=403, message='user access deny. you do not have permission to this task'),
@@ -486,7 +496,8 @@ class PrepareTask(AuthResource):
         type: data type = {4.value} [{4.name}] - plain text information
         value: string - body
         """
-        return format_results(task, fetch_task(task, TaskStatus.PREPARED)), 200
+        page = results_fetch.parse_args().get('page')
+        return format_results(task, fetch_task(task, TaskStatus.PREPARED, page=page)), 200
 
     @swagger.operation(
         notes='Create revalidation task',
@@ -536,7 +547,7 @@ class PrepareTask(AuthResource):
         """
         data = marshal(request.get_json(force=True), TaskStructureFields.resource_fields)
         result = fetch_task(task, TaskStatus.PREPARED)[0]
-        preparer = get_model(ModelType.PREPARER)
+        preparer = get_preparer_model()
 
         prepared = {s['structure']: s for s in result['structures']}
         tmp = {x['structure']: x for x in (data if isinstance(data, list) else [data]) if x['structure'] in prepared}
@@ -573,7 +584,7 @@ class PrepareTask(AuthResource):
                         ps['models'] = [models[m['model']].copy() for m in d['models'] if m['model'] in models and
                                         models[m['model']]['type'].compatible(ps['type'], result['type'])]
                     else:  # recheck models for existing
-                        ps['models'] = [m.copy() for m in ps['models'] if m['model'] in models]
+                        ps['models'] = [models[m['model']].copy() for m in ps['models'] if m['model'] in models]
 
                 if d['temperature']:
                     ps['temperature'] = d['temperature']
@@ -635,7 +646,7 @@ class CreateTask(AuthResource):
 
         data = marshal(request.get_json(force=True), TaskStructureFields.resource_fields)
         additives = get_additives()
-        preparer = get_model(ModelType.PREPARER)
+        preparer = get_preparer_model()
         structures = [data] if not isinstance(data, list) else data if _type == TaskType.MODELING else data[:1]
 
         data = []
@@ -650,7 +661,7 @@ class CreateTask(AuthResource):
                         alist.append(a)
 
                 data.append(dict(structure=s, data=d['data'], status=StructureStatus.RAW, type=StructureType.UNDEFINED,
-                                 pressure=d['pressure'], temperature=d['temperature'], fear=None,
+                                 pressure=d['pressure'], temperature=d['temperature'],
                                  additives=alist, models=[preparer.copy()]))
 
         if not data:
@@ -739,7 +750,7 @@ class UploadTask(AuthResource):
             abort(400, message='structure file required')
 
         new_job = redis.new_file_job(dict(status=TaskStatus.NEW, type=TaskType.MODELING, user=current_user.id,
-                                          structures=file_url, model=get_model(ModelType.PREPARER)))
+                                          structures=file_url, model=get_preparer_model()))
         if new_job is None:
             abort(500, message='modeling server error')
 

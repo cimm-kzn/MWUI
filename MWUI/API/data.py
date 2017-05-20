@@ -19,17 +19,16 @@
 #  MA 02110-1301, USA.
 #
 from pony.orm import db_session, select
-from ..config import RESULTS_PER_PAGE
 from ..constants import ModelType
 from ..models import Additive, Model
 
 
-def get_model(_type):
+def get_preparer_model():
     with db_session:
         return next(dict(model=m.id, name=m.name, description=m.description, type=m.type,
                          destinations=[dict(host=x.host, port=x.port, password=x.password, name=x.name)
                                        for x in m.destinations])
-                    for m in select(m for m in Model if m.model_type == _type.value))
+                    for m in select(m for m in Model if m.model_type == ModelType.PREPARER.value))
 
 
 def get_additives():
@@ -52,13 +51,12 @@ def get_models_list(skip_prep=True, skip_destinations=False, skip_example=True):
         return res
 
 
-def format_results(task, fetched_task, page=None):
+def format_results(task, fetched_task):
     result, ended_at = fetched_task
     out = dict(task=task, date=ended_at.strftime("%Y-%m-%d %H:%M:%S"), status=result['status'].value,
                type=result['type'].value, user=result['user'], structures=[])
 
-    for s in result['structures'][(page - 1) * RESULTS_PER_PAGE: page * RESULTS_PER_PAGE] \
-            if page else result['structures']:
+    for s in result['structures']:
         out['structures'].append(dict(status=s['status'].value, type=s['type'].value, structure=s['structure'],
                                       data=s['data'], pressure=s['pressure'], temperature=s['temperature'],
                                       additives=[dict(additive=a['additive'], name=a['name'], structure=a['structure'],
