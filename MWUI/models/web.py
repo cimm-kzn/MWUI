@@ -24,7 +24,7 @@ from hashlib import md5
 from pony.orm import PrimaryKey, Required, Optional, Set, Json
 from pycountry import countries
 from ..config import DEBUG
-from ..constants import (ModelType, AdditiveType, UserRole, ProfileDegree, ProfileStatus, Glyph, BlogPostType,
+from ..constants import (UserRole, ProfileDegree, ProfileStatus, Glyph, BlogPostType,
                          MeetingPostType, ThesisPostType, EmailPostType, TeamPostType, MeetingPartType)
 
 

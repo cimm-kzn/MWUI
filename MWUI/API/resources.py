@@ -431,7 +431,7 @@ class ModelTask(AuthResource):
                             alist.append(a)
                     ps['additives'] = alist
 
-                elif ps['status'] == StructureStatus.CLEAR:
+                if ps['status'] == StructureStatus.CLEAR:
                     if d['models'] is not None:
                         ps['models'] = [models[m['model']].copy() for m in d['models'] if m['model'] in models and
                                         models[m['model']]['type'].compatible(ps['type'], result['type'])]

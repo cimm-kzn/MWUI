@@ -47,7 +47,7 @@ def init():
     else:
         from .config import DB_PASS, DB_HOST, DB_USER, DB_NAME
         db.bind('postgres', user=DB_USER, password=DB_PASS, host=DB_HOST, database=DB_NAME)
-        db.generate_mapping()
+        db.generate_mapping(create_tables=False)
 
     app = Flask(__name__)
 

@@ -37,7 +37,9 @@ class RedisCombiner(object):
 
     def __new_worker(self, destinations):
         for x in destinations:
-            return x, self.__get_queue(x)  # todo: check for free machines. len(q) - number of tasks
+            q = self.__get_queue(x)
+            if q is not None:
+                return x, q  # todo: check for free machines. len(q) - number of tasks
         return None
 
     def __get_queue(self, destination):
@@ -96,7 +98,7 @@ class RedisCombiner(object):
             if task['status'] == TaskStatus.MODELING and s['status'] == StructureStatus.CLEAR:
                 # modeling task. accept only clear structures.
                 models = [(x['model'], x) for x in s.pop('models') if x['type'] != ModelType.PREPARER]
-            elif task['status'] == TaskStatus.PREPARING and s['status'] == StructureStatus.RAW:
+            elif task['status'] in (TaskStatus.PREPARING, TaskStatus.NEW) and s['status'] == StructureStatus.RAW:
                 # preparing task. accept only raw structures.
                 models = [next((x['model'], x) for x in s.pop('models') if x['type'] == ModelType.PREPARER)]
             elif s['status'] == StructureStatus.HAS_ERROR:
@@ -207,7 +209,7 @@ class RedisCombiner(object):
                 self.__tasks.set(_id, dumps(chunk), ex=self.__result_ttl)
 
             result['jobs'] = sub_jobs_unf
-            ended_at = max(x.ended_at for x in sub_jobs_fin)
+            ended_at = max(x.ended_at for x, _ in sub_jobs_fin)
 
             self.__tasks.set(task, dumps((result, ended_at)), ex=self.__result_ttl)
 
