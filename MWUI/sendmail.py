@@ -25,12 +25,11 @@ from email.mime.text import MIMEText
 from flask import render_template
 from flask_misaka import markdown
 from misaka import HTML_ESCAPE
-from os.path import basename
 from redis import Redis, ConnectionError
 from rq import Queue
 from subprocess import Popen, PIPE
 from .bootstrap import CustomMisakaRenderer
-from .config import (LAB_NAME, SMTP_MAIL, REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_MAIL,
+from .config import (LAB_NAME, SMTP_MAIL, REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_MAIL, UPLOAD_ROOT,
                      MAIL_INKEY, MAIL_SIGNER)
 
 
@@ -71,11 +70,11 @@ def send_mail(message, to_mail, to_name=None, from_name=None, subject=None, bann
         if attach_names and len(attach_files) == len(attach_names):
             names = attach_names
         else:
-            names = [basename(x) for x in attach_files]
+            names = [x.name for x in attach_files]
 
         for file, name in zip(attach_files, names):
             try:
-                with open(file, "rb") as f:
+                with file.open("rb") as f:
                     attach = MIMEApplication(f.read(), name=name)
             except (FileNotFoundError, PermissionError):
                 print('INVALID ATTACH')
@@ -93,3 +92,8 @@ def send_mail(message, to_mail, to_name=None, from_name=None, subject=None, bann
         return sender.enqueue_call('redis_mail.run', args=(to_mail, '\n'.join(out)), result_ttl=60).id
     except Exception:
         return False
+
+
+def attach_mixin(m):
+    attach = [(a.name, UPLOAD_ROOT / a.file) for a in (m and m.attachments or [])]
+    return [x for _, x in attach], [x for x, _ in attach]

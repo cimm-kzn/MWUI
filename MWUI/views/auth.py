@@ -27,7 +27,7 @@ from ..forms import LoginForm, RegistrationForm, ForgotPasswordForm, LogoutForm
 from ..logins import UserLogin
 from ..models import User, Email, Meeting
 from ..redirect import get_redirect_target
-from ..sendmail import send_mail
+from ..sendmail import send_mail, attach_mixin
 
 
 class LoginView(View):
@@ -78,10 +78,12 @@ class LoginView(View):
                              town=active_form.town.data, country=active_form.country.data,
                              status=active_form.status.data, degree=active_form.degree.data)
 
+                    attach_files, attach_names = attach_mixin(m)
                     send_mail((m and m.body or 'Welcome! %s.') % u.full_name, u.email,
                               to_name=u.full_name, subject=m and m.title or 'Welcome',
                               banner=m and m.banner, title=m and m.title,
-                              from_name=m and m.from_name, reply_mail=m and m.reply_mail, reply_name=m and m.reply_name)
+                              from_name=m and m.from_name, reply_mail=m and m.reply_mail, reply_name=m and m.reply_name,
+                              attach_files=attach_files, attach_names=attach_names)
 
                 login_user(UserLogin(u), remember=False)
                 return active_form.redirect()
@@ -96,12 +98,13 @@ class LoginView(View):
                     if u:
                         m = select(x for x in Email if x.post_type == EmailPostType.FORGOT.value).first()
                         restore = u.gen_restore()
+                        attach_files, attach_names = attach_mixin(m)
                         send_mail((m and m.body or '%s\n\nNew password: %s') % (u.full_name, restore),
                                   u.email, to_name=u.full_name,
                                   subject=m and m.title or 'Forgot password?',
                                   banner=m and m.banner, title=m and m.title,
                                   from_name=m and m.from_name, reply_mail=m and m.reply_mail,
-                                  reply_name=m and m.reply_name)
+                                  reply_name=m and m.reply_name, attach_files=attach_files, attach_names=attach_names)
                 flash('Check your email box', 'warning')
                 return redirect(url_for('.login', next=get_redirect_target()))
 

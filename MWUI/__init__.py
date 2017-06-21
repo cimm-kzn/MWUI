@@ -30,11 +30,11 @@ def init():
     from flask_nav import Nav, register_renderer
     from flask_resize import Resize
     from misaka import HTML_ESCAPE
-    from os.path import join
+    from pathlib import PurePosixPath
     from pony.orm import sql_debug
     from .API import api_bp
     from .bootstrap import top_nav, CustomBootstrapRenderer, CustomMisakaRenderer
-    from .config import (PORTAL_NON_ROOT, SECRET_KEY, DEBUG, LAB_NAME, RESIZE_URL, UPLOAD_PATH, IMAGES_ROOT,
+    from .config import (PORTAL_NON_ROOT, SECRET_KEY, DEBUG, LAB_NAME, RESIZE_URL, IMAGES_PATH,
                          MAX_UPLOAD_SIZE, YANDEX_METRIKA)
     from .logins import load_user
     from .models import db, User
@@ -56,7 +56,7 @@ def init():
     app.config['BOOTSTRAP_SERVE_LOCAL'] = DEBUG
     app.config['ERROR_404_HELP'] = False
     app.config['RESIZE_URL'] = RESIZE_URL
-    app.config['RESIZE_ROOT'] = IMAGES_ROOT
+    app.config['RESIZE_ROOT'] = IMAGES_PATH
     app.config['MAX_CONTENT_LENGTH'] = MAX_UPLOAD_SIZE
 
     app.jinja_env.globals.update(year=datetime.utcnow, laboratory=LAB_NAME, yandex=YANDEX_METRIKA)
@@ -76,7 +76,8 @@ def init():
     login_manager.login_view = '.login'
     login_manager.user_loader(load_user)
 
-    app.register_blueprint(api_bp, url_prefix=join('/', PORTAL_NON_ROOT, 'api'))
-    app.register_blueprint(view_bp, url_prefix=join('/', PORTAL_NON_ROOT) if PORTAL_NON_ROOT else None)
+    app_url = PurePosixPath('/') / (PORTAL_NON_ROOT or '')
+    app.register_blueprint(api_bp, url_prefix=(app_url / 'api').as_posix())
+    app.register_blueprint(view_bp, url_prefix=app_url.as_posix() if PORTAL_NON_ROOT else None)
 
     return app

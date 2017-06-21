@@ -28,7 +28,7 @@ from ..constants import (UserRole, BlogPostType, MeetingPostType, EmailPostType,
 from ..forms import PostForm, DeleteButtonForm, MeetingForm, EmailForm, ThesisForm, TeamForm, MeetForm
 from ..models import Email, Post, Thesis, Subscription
 from ..scopus import get_articles
-from ..sendmail import send_mail
+from ..sendmail import send_mail, attach_mixin
 from ..upload import save_upload, combo_save
 
 
@@ -181,11 +181,13 @@ class PostView(View):
                             flash('Welcome to meeting!')
 
                             m = Email.get(post_parent=p.meeting, post_type=EmailPostType.MEETING_THESIS.value)
+                            attach_files, attach_names = attach_mixin(m)
                             send_mail((m and m.body or '%s\n\nYou registered to meeting') % current_user.full_name,
                                       current_user.email, to_name=current_user.full_name, title=m and m.title,
                                       subject=m and m.title or 'Welcome to meeting', banner=m and m.banner,
                                       from_name=m and m.from_name, reply_mail=m and m.reply_mail,
-                                      reply_name=m and m.reply_name)
+                                      reply_name=m and m.reply_name,
+                                      attach_files=attach_files, attach_names=attach_names)
 
                 elif current_user.is_authenticated and p.type == MeetingPostType.SUBMISSION \
                         and p.thesis_deadline > datetime.utcnow():

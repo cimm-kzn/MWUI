@@ -24,7 +24,7 @@ from flask_login import current_user, login_user
 from flask_restful import reqparse, marshal, inputs, Resource
 from functools import wraps
 from importlib.util import find_spec
-from os import path
+from pathlib import Path
 from pony.orm import db_session, select, left_join
 from typing import Dict, Tuple
 from uuid import uuid4
@@ -35,7 +35,7 @@ from .data import get_additives, get_preparer_model, get_models_list, format_res
 from .redis import RedisCombiner
 from .structures import (ModelRegisterFields, TaskPostResponseFields, TaskGetResponseFields, TaskStructureFields,
                          LogInFields, AdditivesListFields, ModelListFields)
-from ..config import (UPLOAD_PATH, REDIS_HOST, REDIS_JOB_TIMEOUT, REDIS_PASSWORD, REDIS_PORT, REDIS_TTL, SWAGGER,
+from ..config import (UPLOAD_ROOT, REDIS_HOST, REDIS_JOB_TIMEOUT, REDIS_PASSWORD, REDIS_PORT, REDIS_TTL, SWAGGER,
                       RESULTS_PER_PAGE)
 from ..constants import (StructureStatus, TaskStatus, ModelType, TaskType, StructureType, UserRole, AdditiveType,
                          ResultType)
@@ -738,12 +738,12 @@ class UploadTask(AuthResource):
             if url(args['file.url']):
                 file_url = args['file.url']
         elif args['file.path']:  # NGINX upload
-            file_name = path.basename(args['file.path'])
-            if path.exists(path.join(UPLOAD_PATH, file_name)):
+            file_name = Path(args['file.path']).name
+            if (UPLOAD_ROOT / file_name).exists():
                 file_url = url_for('.batch_file', file=file_name, _external=True)
         elif args['structures']:  # flask
             file_name = str(uuid4())
-            args['structures'].save(path.join(UPLOAD_PATH, file_name))
+            args['structures'].save((UPLOAD_ROOT / file_name).as_posix())
             file_url = url_for('.batch_file', file=file_name, _external=True)
 
         if file_url is None:

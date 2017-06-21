@@ -18,16 +18,16 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-from os.path import splitext, join
+from os.path import splitext
 from uuid import uuid4
 from werkzeug.utils import secure_filename
-from .config import UPLOAD_PATH, IMAGES_ROOT
+from .config import UPLOAD_ROOT, IMAGES_ROOT
 
 
 def save_upload(field, images=False):
     ext = splitext(field.filename)[-1].lower()
     file_name = '%s%s' % (uuid4(), ext)
-    field.save(join(IMAGES_ROOT if images else UPLOAD_PATH, file_name))
+    field.save(((IMAGES_ROOT if images else UPLOAD_ROOT) / file_name).as_posix())
     if images:
         return file_name
     else:
