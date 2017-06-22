@@ -19,7 +19,6 @@
 #  MA 02110-1301, USA.
 #
 from flask import request
-from os import path
 from urllib.parse import urlparse, urljoin
 
 
@@ -33,7 +32,3 @@ def get_redirect_target():
     target = request.args.get('next')
     if target and is_safe_url(target):
         return target
-
-
-def split_url_path(target):
-    return path.split(urlparse(target).path)
