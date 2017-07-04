@@ -83,7 +83,7 @@ def page_not_found(*args, **kwargs):
 @view_bp.route('/search', methods=['GET'])
 @login_required
 def search():
-    return render_template("search.html")
+    return render_template("search.html", title='Search')
 
 
 @view_bp.route('/queries', methods=['GET'])

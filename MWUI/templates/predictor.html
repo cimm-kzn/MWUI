@@ -24,58 +24,63 @@
     <script src="{{ url_for('static', filename='js/predictor/app.js') }}"></script>
 {% endblock scripts %}
 
-{% block page %}
-    <div class="row">
-        <div class="col-lg-12">
-            <nav class="navbar navbar-custom">
-                <div class="container-fluid">
-                    <div class="navbar-header">
-                        <label id="upload" class="btn btn-default btn-file navbar-btn" data-loading-text="<i class='glyphicon glyphicon-refresh spinning'></i> Uploading...">
-                            <i class="glyphicon glyphicon-upload"></i> Browse
-                            <form id="upload-file" method="post" accept-charset="utf-8" enctype="multipart/form-data">
-                                <input  type="file" name="structures" style="display: none;" />
-                            </form>
-                        </label>
+{% block content %}
+    <div id="loader" class="cssload-container" style="display: none">
+        <div class="cssload-speeding-wheel"></div>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <nav class="navbar navbar-custom">
+                    <div class="container-fluid">
+                        <div class="navbar-header">
+                            <label id="upload" class="btn btn-default btn-file navbar-btn" data-loading-text="<i class='glyphicon glyphicon-refresh spinning'></i> Uploading...">
+                                <i class="glyphicon glyphicon-upload"></i> Browse
+                                <form id="upload-file" method="post" accept-charset="utf-8" enctype="multipart/form-data">
+                                    <input  type="file" name="structures" style="display: none;" />
+                                </form>
+                            </label>
+                        </div>
+                        <div class="navbar-right-btn">
+                            <button type="button" class="btn btn-primary start navbar-btn" id="validate" disabled="true"
+                                    data-loading-text="<i class='glyphicon glyphicon-refresh spinning'></i> Validating...">
+                                <i class="glyphicon glyphicon-share-alt"></i>
+                                <span>Validate</span>
+                            </button>
+                            <button type="button" class="btn btn-danger start navbar-btn" id="newstructure" style="display: none"
+                                    data-loading-text="<i class='glyphicon glyphicon-refresh spinning'></i> Revalidating...">
+                                <i class="glyphicon glyphicon-repeat"></i>
+                                <span>Revalidate</span>
+                            </button>
+                            <button type="button" class="btn btn-primary start navbar-btn" id="modelling" style="display: none"
+                                    data-loading-text="<i class='glyphicon glyphicon-refresh spinning'></i> Modelling...">
+                                <i class="glyphicon glyphicon-play-circle"></i>
+                                <span>Modelling</span>
+                            </button>
+                            <button  type="button"
+                                     class="btn btn-danger navbar-btn"
+                                     id = "saving"
+                                     data-loading-text="<i class='glyphicon glyphicon-refresh spinning'></i> Saving..."
+                                     style="display: none">
+                                <i class="glyphicon glyphicon-floppy-save"></i>
+                                <span>Save</span>
+                            </button>
+                        </div>
                     </div>
-                    <div class="navbar-right-btn">
-                        <button type="button" class="btn btn-primary start navbar-btn" id="validate" disabled="true"
-                                data-loading-text="<i class='glyphicon glyphicon-refresh spinning'></i> Validating...">
-                            <i class="glyphicon glyphicon-share-alt"></i>
-                            <span>Validate</span>
-                        </button>
-                        <button type="button" class="btn btn-danger start navbar-btn" id="newstructure" style="display: none"
-                                data-loading-text="<i class='glyphicon glyphicon-refresh spinning'></i> Revalidating...">
-                            <i class="glyphicon glyphicon-repeat"></i>
-                            <span>Revalidate</span>
-                        </button>
-                        <button type="button" class="btn btn-primary start navbar-btn" id="modelling" style="display: none"
-                                data-loading-text="<i class='glyphicon glyphicon-refresh spinning'></i> Modelling...">
-                            <i class="glyphicon glyphicon-play-circle"></i>
-                            <span>Modelling</span>
-                        </button>
-                        <button  type="button"
-                                 class="btn btn-danger navbar-btn"
-                                 id = "saving"
-                                 data-loading-text="<i class='glyphicon glyphicon-refresh spinning'></i> Saving..."
-                                 style="display: none">
-                            <i class="glyphicon glyphicon-floppy-save"></i>
-                            <span>Save</span>
-                        </button>
-                    </div>
-                </div>
-            </nav>
-        </div>
-
-        <div class="col-lg-12">
-            <div id="error-messange" class="alert alert-danger alert-custom" role="alert">
-                <span class="text"></span>
-                <button type="button" class="close"><span aria-hidden="true">&times;</span></button>
+                </nav>
             </div>
-        </div>
 
-        <div id="index" class="col-lg-12" style="display: none"></div>
-        <div id="model" class="col-lg-12" style="display: none"></div>
-        <div id="result" class="col-lg-12" style="display: none"></div>
+            <div class="col-lg-12">
+                <div id="error-messange" class="alert alert-danger alert-custom" role="alert">
+                    <span class="text"></span>
+                    <button type="button" class="close"><span aria-hidden="true">&times;</span></button>
+                </div>
+            </div>
+
+            <div id="index" class="col-lg-12" style="display: none"></div>
+            <div id="model" class="col-lg-12" style="display: none"></div>
+            <div id="result" class="col-lg-12" style="display: none"></div>
+        </div>
     </div>
 
     <div id="myModal" class="predictor-modal">
@@ -92,10 +97,3 @@
         </div>
     </div>
 {% endblock %}
-
-{% block body %}
-    <div id="loader" class="cssload-container" style="display: none">
-        <div class="cssload-speeding-wheel"></div>
-    </div>
-    {{super()}}
-{% endblock body %}
