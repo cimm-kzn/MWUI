@@ -1,0 +1,11 @@
+.ImagePointer{
+    cursor: pointer;
+    width: 100%;
+}
+.ImagePointer:hover{
+    border: 1px solid #8fdfff;
+}
+.list-group-item{
+    margin-bottom: 0;
+    border: 0;
+}

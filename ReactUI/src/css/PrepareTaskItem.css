@@ -1,0 +1,11 @@
+.error{
+    border-color: red;
+}
+
+.rc-slider-mark{
+    z-index: 100;
+}
+
+.error-check{
+    border: 1px solid red;
+}
