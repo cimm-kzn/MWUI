@@ -68,5 +68,4 @@ class EditorStructure extends Component {
 }
 
 const mapStateToProps = (state) => ({modal: state.triggerModal});
-
 export default connect(mapStateToProps)(EditorStructure);

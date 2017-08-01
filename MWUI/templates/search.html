@@ -1,17 +1,17 @@
 {% extends "layout.html" %}
-{% block styles %}
-    {{super()}}
-    <link href="//unpkg.com/react-select/dist/react-select.css" rel="stylesheet" >
-{% endblock styles %}
 {% block scripts %}
     {{super()}}
-
     <script src="{{ url_for('static', filename='marvinjs/gui/lib/promise-1.0.0.min.js') }}"></script>
     <script src="{{ url_for('static', filename='marvinjs/js/webservices.js') }}"></script>
     <script src="{{ url_for('static', filename='marvinjs/js/marvinjslauncher.js') }}"></script>
-
-    <script src="{{ url_for('static', filename='js/main.de510e65.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/search.js') }}"></script>
 {% endblock scripts %}
+
+{% block styles %}
+    {{super()}}
+    <link href="//unpkg.com/react-select/dist/react-select.css" rel="stylesheet" >
+    <link href="{{ url_for('static', filename='css/search.css') }}" rel="stylesheet">
+{% endblock styles %}
 
 {% block content %}
     <div id="root"></div>

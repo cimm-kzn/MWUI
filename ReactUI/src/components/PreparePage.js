@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {PageHeader, ButtonToolbar, Button, Row, Glyphicon, Col} from 'react-bootstrap';
+import {PageHeader, ButtonToolbar, Button, Row, Glyphicon, Col, Alert} from 'react-bootstrap';
 import axios from 'axios';
 import {API} from '../config';
 import {URL} from '../constants';
@@ -23,7 +23,7 @@ class PreparePage extends Component {
             taskId: "",
             revalidate: false,
             modellingPage: false,
-            alertVisible: true
+            alertVisible: false
         };
     }
 
@@ -80,6 +80,10 @@ class PreparePage extends Component {
             })
         })
         .catch(error => {console.log(error)});
+    }
+
+    handleAlertDismiss(){
+        this.setState({alertVisible: false});
     }
 
     rewriteState(arr) {
@@ -144,7 +148,31 @@ class PreparePage extends Component {
             }
         });
 
-        if (err) return false;
+        if (err) {
+            this.setState({alertVisible:true});
+            return false;
+        }
+
+        axios({
+            method: 'post',
+            url: API.RESULT + this.state.taskId,
+            withCredentials: true,
+            data: this.props.tasks.map((obj) => {
+                return {
+                    data: obj.cml,
+                    temperature: obj.temperature,
+                    pressure: obj.pressure,
+                    additives: obj.additives,
+                    total: obj.total,
+                    structure: 1
+                }
+
+            })
+        })
+            .then(response => {
+                this.setState({modellingPage: response.data.task})
+            })
+            .catch(error => {console.log(error)});
     }
 
     render() {
@@ -167,7 +195,8 @@ class PreparePage extends Component {
                         <Glyphicon glyph="chevron-left"/>
                         Back to index
                     </Button>
-                    {buttonType ?
+                    {this.props.tasks.length ?
+                        buttonType ?
                         <Button bsStyle="danger" className="pull-right" onClick={this.revalidate.bind(this)}>
                             <Glyphicon glyph="play-circle"/>
                             Revalidate
@@ -175,16 +204,18 @@ class PreparePage extends Component {
                         <Button bsStyle="primary" className="pull-right" onClick={this.modeling.bind(this)}>
                             <Glyphicon glyph="play-circle"/>
                             Modeling
-                        </Button>
+                        </Button>:
+                        ""
                     }
                 </ButtonToolbar>
                 <hr/>
 
-
-                {/*<Alert bsStyle="danger" closeLabel='Close alert'>*/}
-                    {/*<h4>Oh snap! You got an error!</h4>*/}
-                    {/*<p>Change this and that and try again. Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem nec elit. Cras mattis consectetur purus sit amet fermentum.</p>*/}
-                {/*</Alert>*/}
+                { this.state.alertVisible ?
+                    <Alert bsStyle="danger"  onDismiss={this.handleAlertDismiss.bind(this)}>
+                        <h4>Error</h4>
+                        <p>Please correct errors</p>
+                    </Alert>: ""
+                }
 
 
                 {this.props.tasks.map(obj =>
