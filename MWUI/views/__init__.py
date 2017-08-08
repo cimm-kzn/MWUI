@@ -24,7 +24,7 @@ from flask_login import login_required, current_user
 from pony.orm import db_session, left_join
 from pycountry import countries
 from .auth import LoginView, LogoutView
-from .blog import BlogView, AbstractsView, EmailsView, ThesesView, EventsView
+from .blog import BlogView, AbstractsView, EmailsView, ThesesView, EventsView, ModelsView
 from .post import PostView
 from .profile import ProfileView
 from .visitcard import IndexView, AboutView, StudentsView, LessonsView
@@ -74,6 +74,10 @@ emails_view = EmailsView.as_view('emails')
 view_bp.add_url_rule('/emails', view_func=emails_view)
 view_bp.add_url_rule('/emails/<int:page>', view_func=emails_view)
 
+models_view = ModelsView.as_view('models')
+view_bp.add_url_rule('/models', view_func=models_view)
+view_bp.add_url_rule('/models/<int:page>', view_func=models_view)
+
 
 @view_bp.errorhandler(404)
 def page_not_found(*args, **kwargs):
@@ -84,12 +88,6 @@ def page_not_found(*args, **kwargs):
 @login_required
 def search():
     return render_template("search.html", title='Search')
-
-
-@view_bp.route('/queries', methods=['GET'])
-@login_required
-def queries():
-    return render_template("layout.html")
 
 
 @view_bp.route('/results', methods=['GET'])

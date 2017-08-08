@@ -86,6 +86,7 @@ class BlogPostType(Enum):
     PROJECTS = 4
     ABOUT = 5
     LESSON = 21
+    MODEL = 27
 
 
 class TeamPostType(Enum):
@@ -194,6 +195,7 @@ class Glyph(Enum):
     EXTRAMURAL = 'blackboard'
 
     LESSON = 'education'
+    MODEL = 'education'
 
 
 class FormRoute(Enum):

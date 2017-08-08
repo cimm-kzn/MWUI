@@ -159,9 +159,9 @@ def top_nav():
         if current_user.role_is(UserRole.ADMIN):
             user_menu.insert(2, View('Email Templates', '.emails'))
 
-        rsg = RightSubgroup(Subgroup('Searching', View('Search', '.search'), Separator(), View('History', '.queries')),
+        rsg = RightSubgroup(View('Search', '.search'),
                             Subgroup('Modeling', View('Modeling', '.predictor'), Separator(),
-                                     View('History', '.results')),
+                                     View('Available Models', '.models'), View('History', '.results')),
                             Subgroup(current_user.full_name, *user_menu))
     else:
         rsg = RightSubgroup(View('Searching', '.search'), View('Modeling', '.predictor'),

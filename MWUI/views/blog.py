@@ -24,7 +24,7 @@ from flask_login import login_required, current_user
 from pony.orm import db_session, select
 from ..bootstrap import Pagination
 from ..config import BLOG_POSTS_PER_PAGE
-from ..constants import UserRole, MeetingPostType
+from ..constants import UserRole, MeetingPostType, BlogPostType
 from ..models import Email, Meeting, Post, Thesis, Subscription
 
 
@@ -100,3 +100,12 @@ class EventsView(View):
     def dispatch_request(self, page=1):
         q = select(x.meeting for x in Subscription if x.user == current_user.get_user()).order_by(Meeting.id.desc())
         return blog_viewer(page, q, '.events', 'Events', 'Participation')
+
+
+class ModelsView(View):
+    methods = ['GET']
+    decorators = [db_session]
+
+    def dispatch_request(self, page=1):
+        q = Post.select(lambda x: x.post_type == BlogPostType.MODEL.value).order_by(Post.id.desc())
+        return blog_viewer(page, q, '.models', 'QSPR', 'Models')
