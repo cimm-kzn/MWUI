@@ -6,8 +6,8 @@ import {Col, Button, Glyphicon, ButtonGroup, Thumbnail, ListGroup, ListGroupItem
 import Select from 'react-select';
 import 'react-select/dist/react-select.css';
 import Slider from 'rc-slider';
-import { triggerModal } from '../actions/modal';
-import { deleteTask, addModel, addTemp, addPress, addSolv, addAmount, addTotal } from '../actions/tasks';
+import {triggerModal} from '../actions/modal';
+import {deleteTask, addModel, addTemp, addPress, addSolv, addAmount, addTotal} from '../actions/tasks';
 import {connect} from 'react-redux';
 
 //const Range = Slider.Range;

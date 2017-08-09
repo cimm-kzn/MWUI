@@ -1,6 +1,6 @@
 export const MARVIN_PATH_IFRAME = '/static/marvinjs/editorws.html';
 
-const BASE_URL = window.location.protocol + "//" + window.location.host + "/"; //'http://localhost/'
+const BASE_URL = window.location.protocol + "//" + window.location.host + "/";
 
 export const API = {
     CREATE_TASK: BASE_URL + 'api/task/create/0',

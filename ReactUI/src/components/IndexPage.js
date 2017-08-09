@@ -6,8 +6,8 @@ import {triggerModal} from '../actions/modal';
 import {deleteTasks} from '../actions/tasks';
 import {connect} from 'react-redux';
 import {Redirect} from 'react-router';
-import  IndexTaskItem  from '../containers/IndexTaskItem';
-import  IndexDefault  from '../containers/IndexDefault'
+import IndexTaskItem from '../containers/IndexTaskItem';
+import IndexDefault from '../containers/IndexDefault'
 import axios from 'axios';
 import {API} from '../config';
 import queryString from 'query-string'
