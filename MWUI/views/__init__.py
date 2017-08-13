@@ -18,19 +18,27 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
+from collections import namedtuple
 from datetime import datetime
 from flask import redirect, url_for, render_template, Blueprint, abort, make_response
 from flask_login import login_required, current_user
 from pony.orm import db_session, left_join
-from pycountry import countries
+from .admin import PostEditView, AdminPostView, AdminUserView
 from .auth import LoginView, LogoutView
-from .blog import BlogView, AbstractsView, EmailsView, ThesesView, EventsView, ModelsView
+from .blog import BlogView, AbstractsView, ThesesView, EventsView, ModelsView
 from .post import PostView
 from .profile import ProfileView
 from .visitcard import IndexView, AboutView, StudentsView, LessonsView
-from ..constants import UserRole, MeetingPostType, ProfileStatus, ProfileDegree
+from ..constants import UserRole, MeetingPostType
 from ..forms import DeleteButtonForm
 from ..models import User, Meeting, Post, Attachment, Subscription
+
+
+table = namedtuple('Table', ('header', 'rows'))
+row = namedtuple('TableRow', ('number', 'participant', 'country', 'status', 'degree', 'presentation', 'town',
+                              'affiliation', 'email'))
+cell = namedtuple('TableCell', ('url', 'text'))
+
 
 view_bp = Blueprint('view', __name__)
 
@@ -45,6 +53,14 @@ view_bp.add_url_rule('/profile', view_func=profile_view)
 view_bp.add_url_rule('/profile/<int:action>', view_func=profile_view)
 
 view_bp.add_url_rule('/page/<int:post>', view_func=PostView.as_view('blog_post'))
+
+admin_post_view = AdminPostView.as_view('admin_post')
+admin_user_view = AdminUserView.as_view('admin_user')
+view_bp.add_url_rule('/admin/page/<int:post>', view_func=PostEditView.as_view('post_edit'))
+view_bp.add_url_rule('/admin/posts', view_func=admin_post_view)
+view_bp.add_url_rule('/admin/posts/<int:page>', view_func=admin_post_view)
+view_bp.add_url_rule('/admin/users', view_func=admin_user_view)
+view_bp.add_url_rule('/admin/users/<int:page>', view_func=admin_user_view)
 
 index_view = IndexView.as_view('index')
 view_bp.add_url_rule('/', view_func=index_view)
@@ -69,10 +85,6 @@ view_bp.add_url_rule('/events/<int:page>', view_func=events_view)
 abstracts_view = AbstractsView.as_view('abstracts')
 view_bp.add_url_rule('/abstracts/<int:event>', view_func=abstracts_view)
 view_bp.add_url_rule('/abstracts/<int:event>/<int:page>', view_func=abstracts_view)
-
-emails_view = EmailsView.as_view('emails')
-view_bp.add_url_rule('/emails', view_func=emails_view)
-view_bp.add_url_rule('/emails/<int:page>', view_func=emails_view)
 
 models_view = ModelsView.as_view('models')
 view_bp.add_url_rule('/models', view_func=models_view)
@@ -155,22 +167,23 @@ def participants(event):
     if not m:
         return redirect(url_for('.blog'))
 
-    admin = False
-    if current_user.is_authenticated and (current_user.role_is(UserRole.ADMIN) or
-                                          current_user.role_is(UserRole.SECRETARY)):
-        admin = True
+    admin = True if current_user.is_authenticated and (current_user.role_is(UserRole.ADMIN) or
+                                                       current_user.role_is(UserRole.SECRETARY)) else False
+
+    header = ('#', 'Participant', 'Country', 'Status', 'Degree', 'Presentation type', 'Town', 'Affiliation', 'Email') \
+        if admin else ('#', 'Participant', 'Country', 'Status', 'Degree', 'Presentation type')
 
     #  cache users entities
     list(left_join(x for x in User for s in x.subscriptions if s.meeting == m))
-
     subs = Subscription.select(lambda x: x.meeting == m).order_by(Subscription.id.desc())
-    data = [dict(type=x.type.fancy, useid=x.user.id, user=x.user.full_name, status=ProfileStatus(x.user.status).fancy,
-                 country=countries.get(alpha_3=x.user.country).name, degree=ProfileDegree(x.user.degree).fancy,
-                 email=x.user.email, town=x.user.town, affiliation=x.user.affiliation, position=x.user.position)
-            for x in subs]
-    return render_template('participants.html', data=data, title=m.title, subtitle='Participants', admin=admin,
-                           crumb=dict(url=url_for('.blog_post', post=event), title='Participants',
-                                      parent='Event main page'))
+
+    data = [row(n, cell(url_for('.user', _user=x.user.id), x.user.full_name), x.user.country_name,
+                x.user.sci_status.fancy, x.user.sci_degree.fancy, x.type.fancy,
+                x.user.town, x.user.affiliation, x.user.email)
+            for n, x in enumerate(subs, start=1)]
+
+    return render_template('table.html', table=table(header=header, rows=data), title=m.title, subtitle='Participants',
+                           crumb=dict(url=url_for('.blog_post', post=event), title='Participants', parent='Event page'))
 
 
 @view_bp.route('/user/<int:_user>', methods=['GET'])

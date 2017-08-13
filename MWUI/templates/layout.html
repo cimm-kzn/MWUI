@@ -1,6 +1,5 @@
 {% extends "bootstrap/base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
-{% import "bootstrap/fixes.html" as fixes %}
 {% from "bootstrap/utils.html" import flashed_messages %}
 {% from "macroses.html" import metrika %}
 
@@ -12,24 +11,34 @@
     {% block carousel %}{% endblock %}
 
     <div class="container">
-        <div class="row">
-            <div class="col-lg-12">
-                <h1 class="page-header">{{ title }}
-                    <small>{{ subtitle }}</small>
-                </h1>
-                {% if crumb is defined and crumb %}
-                    <ol class="breadcrumb">
-                        <li><a href="{{ crumb.url }}">{{ crumb.parent }}</a></li>
-                        <li class="active">{{ crumb.title }}</li>
-                    </ol>
-                {% endif %}
+        {% if title is defined and title %}
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1 class="page-header">{{ title }}
+                        {% if subtitle is defined and subtitle %}
+                            <small>{{ subtitle }}</small>
+                        {% endif %}
+                    </h1>
+                    {% if crumb is defined and crumb %}
+                        <ol class="breadcrumb">
+                            <li><a href="{{ crumb.url }}">{{ crumb.parent }}</a></li>
+                            <li class="active">{{ crumb.title }}</li>
+                        </ol>
+                    {% endif %}
+                </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-md-12">
-                {{ flashed_messages(container=False) }}
-            </div>
-        </div>
+        {% endif %}
+
+        {% with messages = get_flashed_messages(with_categories=True) %}
+            {% if messages %}
+                <div class="row">
+                    <div class="col-md-12">
+                        {{ flashed_messages(messages=messages, container=False) }}
+                    </div>
+                </div>
+            {% endif %}
+        {% endwith %}
+
         {% block page %}{% endblock %}
 
         <hr>
@@ -57,5 +66,4 @@
 {% block head %}
     {{super()}}
     <link rel="icon" type="image/ico" href="{{ url_for('static', filename='favicon.ico') }}">
-    {{fixes.ie8()}}
 {% endblock %}

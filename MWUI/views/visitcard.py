@@ -18,12 +18,18 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-from flask import render_template
+from collections import namedtuple
+from flask import render_template, url_for
 from flask.views import View
+from jinja2.filters import do_truncate as truncate
 from pony.orm import db_session, select
 from ..config import BLOG_POSTS_PER_PAGE, LAB_NAME
 from ..constants import BlogPostType, MeetingPostType, TeamPostType
 from ..models import BlogPost, Post, TeamPost
+
+
+grid = namedtuple('Grid', ('rows', 'width'))
+row = namedtuple('Row', ('title', 'banner', 'url', 'text', 'more'))
 
 
 class IndexView(View):
@@ -48,9 +54,15 @@ class AboutView(View):
         chief = select(x for x in TeamPost if x.post_type == TeamPostType.CHIEF.value).order_by(lambda x:
                                                                                                 x.special['order'])
         team = select(x for x in TeamPost if x.post_type == TeamPostType.TEAM.value).order_by(TeamPost.id.desc())
-        return render_template("about.html", title='About', subtitle='Laboratory', about=about_us,
-                               chief=(chief[x: x + 3] for x in range(0, len(chief), 3)),
-                               team=(team[x: x + 3] for x in range(0, len(team), 3)))
+        return render_template("grid.html", title='About', subtitle='Laboratory',
+                               about=row(about_us.title, about_us.banner, url_for('.blog_post', post=about_us.id),
+                                         truncate(about_us.body, 1000, True), None) if about_us else None,
+                               grid_big=grid(rows=((row(y.title, y.banner, url_for('.blog_post', post=y.id),
+                                                        y.role, truncate(y.body, 200, True)) for y in chief[x: x + 3])
+                                                   for x in range(0, len(chief), 3)), width=4),
+                               grid_small=grid(rows=((row(y.title, y.banner, url_for('.blog_post', post=y.id),
+                                                          y.role, None) for y in team[x: x + 3])
+                                                     for x in range(0, len(team), 3)), width=4))
 
 
 class StudentsView(View):
@@ -59,8 +71,10 @@ class StudentsView(View):
 
     def dispatch_request(self):
         studs = select(x for x in TeamPost if x.post_type == TeamPostType.STUDENT.value).order_by(TeamPost.id.desc())
-        return render_template("students.html", title='Laboratory', subtitle='students',
-                               students=(studs[x: x + 4] for x in range(0, len(studs), 4)))
+        return render_template("grid.html", title='Laboratory', subtitle='students',
+                               grid_small=grid(rows=((row(y.title, y.banner, url_for('.blog_post', post=y.id),
+                                                          y.role, None) for y in studs[x: x + 4])
+                                                     for x in range(0, len(studs), 4)), width=3))
 
 
 class LessonsView(View):
@@ -69,6 +83,7 @@ class LessonsView(View):
 
     def dispatch_request(self):
         less = select(x for x in BlogPost if x.post_type == BlogPostType.LESSON.value).order_by(BlogPost.id.desc())
-        return render_template("lessons.html", title='Master', subtitle='courses',
-                               lessons=(less[x: x + 3] for x in range(0, len(less), 3)))
-
+        return render_template("grid.html", title='Master', subtitle='courses',
+                               grid_small=grid(rows=((row(y.title, y.banner, url_for('.blog_post', post=y.id),
+                                                          None, None) for y in less[x: x + 3])
+                                                     for x in range(0, len(less), 3)), width=4))

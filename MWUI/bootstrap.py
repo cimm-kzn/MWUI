@@ -157,7 +157,8 @@ def top_nav():
                      View('Profile', '.user', _user=current_user.id), View('Edit Profile', '.profile'), Separator(),
                      View('Logout', '.logout')]
         if current_user.role_is(UserRole.ADMIN):
-            user_menu.insert(2, View('Email Templates', '.emails'))
+            user_menu.insert(3, View('Admin Users', '.admin_user'))
+            user_menu.insert(3, View('Admin Posts', '.admin_post'))
 
         rsg = RightSubgroup(View('Search', '.search'),
                             Subgroup('Modeling', View('Modeling', '.predictor'), Separator(),

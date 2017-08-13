@@ -24,8 +24,8 @@ from flask_login import login_required, current_user
 from pony.orm import db_session, select
 from ..bootstrap import Pagination
 from ..config import BLOG_POSTS_PER_PAGE
-from ..constants import UserRole, MeetingPostType, BlogPostType
-from ..models import Email, Meeting, Post, Thesis, Subscription
+from ..constants import MeetingPostType, BlogPostType
+from ..models import Meeting, Post, Thesis, Subscription
 
 
 def blog_viewer(page, query, redirect_url, title, subtitle, crumb=None):
@@ -70,18 +70,6 @@ class AbstractsView(View):
         return blog_viewer(page, q, '.participants', m.title, 'Abstracts',
                            crumb=dict(url=url_for('.blog_post', post=event), title='Abstracts',
                                       parent='Event main page'))
-
-
-class EmailsView(View):
-    methods = ['GET']
-    decorators = [db_session, login_required]
-
-    def dispatch_request(self, page=1):
-        if not current_user.role_is(UserRole.ADMIN):
-            return redirect(url_for('.index'))
-
-        q = select(x for x in Email).order_by(Email.id.desc())
-        return blog_viewer(page, q, '.emails', 'E-mail templates', 'list')
 
 
 class ThesesView(View):

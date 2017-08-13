@@ -800,9 +800,7 @@ class MagicNumbers(AuthResource):
         Dict of all magic numbers with values.
         """
         data = {x.__name__: self.__to_dict(x) for x in [TaskType, TaskStatus, StructureType, StructureStatus,
-                                                        AdditiveType, ResultType]}
-
-        data['ModelType'] = {x.name: x.value for x in ModelType if x != ModelType.PREPARER}
+                                                        AdditiveType, ResultType, ModelType]}
 
         return data, 200
 

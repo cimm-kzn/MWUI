@@ -25,6 +25,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from json import loads
 from imghdr import what
+from itertools import chain
 from pony.orm import db_session
 from pycountry import countries
 from werkzeug.datastructures import FileStorage
@@ -88,7 +89,7 @@ class CustomForm(FlaskForm):
 
     @staticmethod
     def reorder(order, prefix=None):
-        return ['%s-%s' % (prefix, x) for x in order] if prefix else order
+        return ['%s-%s' % (prefix, x) for x in order] if prefix else list(order)
 
     def __iter__(self):
         collect = OrderedDict((x.name, x) for x in super(CustomForm, self).__iter__())
@@ -212,6 +213,11 @@ class CommonPost(CustomForm):
                              validators=[FileAllowed('jpg jpe jpeg png'.split(), 'JPEG or PNG images only'),
                                          VerifyImage('jpeg png'.split())])
     attachment = FileField('Abstract File', validators=[FileAllowed('doc docx odt pdf'.split(), 'Documents only')])
+    to_delete = BooleanField('Delete')
+
+    def __init__(self, order, *args, **kwargs):
+        self._order = self.reorder(chain(order, ('to_delete',)) if kwargs.get('admin') else order, kwargs.get('prefix'))
+        super(CommonPost, self).__init__(*args, **kwargs)
 
 
 class ThesisForm(CommonPost):
@@ -222,8 +228,7 @@ class ThesisForm(CommonPost):
     __order = ('csrf_token', 'next', 'title', 'body', 'banner_field', 'attachment', 'post_type', 'submit_btn')
 
     def __init__(self, *args, body_name=None, types=None, **kwargs):
-        self._order = self.reorder(self.__order, kwargs.get('prefix'))
-        super(ThesisForm, self).__init__(*args, **kwargs)
+        super(ThesisForm, self).__init__(self.__order, *args, **kwargs)
         if types is not None:
             self.post_type.choices = [(x.value, x.fancy) for x in types]
         self.body.label.text = body_name and '%s *' % body_name or 'Short Abstract'
@@ -245,8 +250,7 @@ class PostForm(Post):
     __order = ('csrf_token', 'next', 'title', 'body', 'slug', 'banner_field', 'attachment', 'post_type', 'submit_btn')
 
     def __init__(self, *args, **kwargs):
-        self._order = self.reorder(self.__order, kwargs.get('prefix'))
-        super(PostForm, self).__init__(*args, **kwargs)
+        super(PostForm, self).__init__(self.__order, *args, **kwargs)
 
     @property
     def type(self):
@@ -272,8 +276,7 @@ class MeetingForm(Post):
                'thesis_types_id', 'submit_btn')
 
     def __init__(self, *args, **kwargs):
-        self._order = self.reorder(self.__order, kwargs.get('prefix'))
-        super(MeetingForm, self).__init__(*args, **kwargs)
+        super(MeetingForm, self).__init__(self.__order, *args, **kwargs)
 
     @property
     def type(self):
@@ -300,8 +303,7 @@ class EmailForm(Post):
                'reply_mail', 'reply_name', 'meeting_id', 'submit_btn')
 
     def __init__(self, *args, **kwargs):
-        self._order = self.reorder(self.__order, kwargs.get('prefix'))
-        super(EmailForm, self).__init__(*args, **kwargs)
+        super(EmailForm, self).__init__(self.__order, *args, **kwargs)
 
     @property
     def type(self):
@@ -319,8 +321,7 @@ class TeamForm(Post):
                'order', 'scopus', 'submit_btn')
 
     def __init__(self, *args, **kwargs):
-        self._order = self.reorder(self.__order, kwargs.get('prefix'))
-        super(TeamForm, self).__init__(*args, **kwargs)
+        super(TeamForm, self).__init__(self.__order, *args, **kwargs)
 
     @property
     def type(self):

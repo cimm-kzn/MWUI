@@ -6,7 +6,7 @@
                 {% for tab in tabs %}
                     <li class="{{ tab.active and 'active' or '' }}">
                         <a href="{{ tab.url }}">
-                            <span class="glyphicon glyphicon-{{ tab.glyph }}" aria-hidden="true"></span> {{ tab.title }}
+                            <span class="glyphicon glyphicon-{{ tab.glyph }}"></span> {{ tab.title }}
                         </a>
                     </li>
                 {% endfor %}
