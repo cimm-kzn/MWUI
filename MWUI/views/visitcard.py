@@ -21,7 +21,6 @@
 from collections import namedtuple
 from flask import render_template, url_for
 from flask.views import View
-from jinja2.filters import do_truncate as truncate
 from pony.orm import db_session, select
 from ..config import BLOG_POSTS_PER_PAGE, LAB_NAME
 from ..constants import BlogPostType, MeetingPostType, TeamPostType
@@ -56,9 +55,12 @@ class AboutView(View):
         team = select(x for x in TeamPost if x.post_type == TeamPostType.TEAM.value).order_by(TeamPost.id.desc())
         return render_template("grid.html", title='About', subtitle='Laboratory',
                                about=row(about_us.title, about_us.banner, url_for('.blog_post', post=about_us.id),
-                                         truncate(about_us.body, 1000, True), None) if about_us else None,
+                                         about_us.body[:997] + '...' if len(about_us.body) > 1000 else about_us.body,
+                                         None) if about_us else None,
                                grid_big=grid(rows=((row(y.title, y.banner, url_for('.blog_post', post=y.id),
-                                                        y.role, truncate(y.body, 200, True)) for y in chief[x: x + 3])
+                                                        y.role,
+                                                        y.body[:197] + '...' if len(y.body) > 200 else y.body)
+                                                    for y in chief[x: x + 3])
                                                    for x in range(0, len(chief), 3)), width=4),
                                grid_small=grid(rows=((row(y.title, y.banner, url_for('.blog_post', post=y.id),
                                                           y.role, None) for y in team[x: x + 3])
