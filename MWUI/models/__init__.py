@@ -21,9 +21,11 @@
 from pony.orm import Database
 from .predictions import load_tables as save
 from .web import load_tables as main
-from ..config import DB_MAIN, DB_PRED
+from .scopus import load_tables as scopus
+from ..config import DB_MAIN, DB_PRED, DB_SCOPUS
 
 db = Database()
 
 User, Subscription, Post, BlogPost, TeamPost, Meeting, Thesis, Email, Attachment = main(db, DB_MAIN)
 Task, Structure, Result, Additiveset, Model, Destination, Additive = save(db, DB_PRED)
+Author, Journal = scopus(db, DB_SCOPUS)
