@@ -45,14 +45,8 @@ class ModelType(Enum):
     PREPARER = 0
     MOLECULE_MODELING = 1
     REACTION_MODELING = 2
-    MOLECULE_SIMILARITY = 3
-    REACTION_SIMILARITY = 4
-    MOLECULE_SUBSTRUCTURE = 5
-    REACTION_SUBSTRUCTURE = 6
-
-    @staticmethod
-    def select(structure_type, task_type):
-        return ModelType['%s_%s' % (structure_type.name, task_type.name)]
+    MOLECULE_SEARCHING = 3
+    REACTION_SEARCHING = 4
 
     def compatible(self, structure_type, task_type):
         return self.name == '%s_%s' % (structure_type.name, task_type.name)
@@ -60,8 +54,7 @@ class ModelType(Enum):
 
 class TaskType(Enum):
     MODELING = 0
-    SIMILARITY = 1
-    SUBSTRUCTURE = 2
+    SEARCHING = 1
 
 
 class AdditiveType(Enum):
@@ -83,6 +76,7 @@ class UserRole(Enum):
     COMMON = 1
     ADMIN = 2
     DATA_MANAGER = 3
+    SECRETARY = 4
 
 
 class BlogPostType(Enum):
@@ -92,6 +86,7 @@ class BlogPostType(Enum):
     PROJECTS = 4
     ABOUT = 5
     LESSON = 21
+    MODEL = 27
 
 
 class TeamPostType(Enum):
@@ -136,10 +131,13 @@ class ThesisPostType(Enum):
         return names[self.name]
 
     @staticmethod
-    def thesis_types(part_type):
+    def thesis_types(part_type, dante=False):
         if part_type == MeetingPartType.ORAL:
-            return [ThesisPostType.PLENARY, ThesisPostType.LECTURE, ThesisPostType.KEYNOTE, ThesisPostType.ORAL,
-                    ThesisPostType.SHORTCOMM]
+            out = [ThesisPostType.PLENARY, ThesisPostType.LECTURE, ThesisPostType.KEYNOTE, ThesisPostType.ORAL,
+                   ThesisPostType.SHORTCOMM]
+            if dante:
+                out.append(ThesisPostType.POSTER)
+            return out
         elif part_type == MeetingPartType.EXTRAMURAL:
             return [ThesisPostType.EXTRAMURAL]
 
@@ -197,6 +195,7 @@ class Glyph(Enum):
     EXTRAMURAL = 'blackboard'
 
     LESSON = 'education'
+    MODEL = 'education'
 
 
 class FormRoute(Enum):
