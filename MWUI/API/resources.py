@@ -408,7 +408,7 @@ class ModelTask(AuthResource):
         result = fetch_task(task, TaskStatus.PREPARED)[0]
 
         prepared = {s['structure']: s for s in result['structures']}
-        tmp = {x['structure']: x for x in (data if isinstance(data, list) else [data]) if x['structure'] in prepared}
+        tmp = {x['structure']: x for x in (data if isinstance(data, list) else [data])}
 
         if 0 in tmp:
             abort(400, message='invalid structure data')
@@ -416,11 +416,19 @@ class ModelTask(AuthResource):
         additives = get_additives()
         models = get_models_list()
 
-        for s, d in tmp.items():
-            if d['todelete']:
-                prepared.pop(s)
+        structures = []
+        for s, ps in prepared.items():
+            if ps['status'] != StructureStatus.CLEAR:
+                continue
+            elif s not in tmp:
+                if not ps['models']:
+                    continue
+                ps['models'] = [models[m['model']].copy() for m in ps['models'] if m['model'] in models]
+            elif tmp[s]['todelete']:
+                continue
             else:
-                ps = prepared[s]
+                d = tmp[s]
+
                 if d['additives'] is not None:
                     alist = []
                     for a in d['additives']:
@@ -431,12 +439,11 @@ class ModelTask(AuthResource):
                             alist.append(a)
                     ps['additives'] = alist
 
-                if ps['status'] == StructureStatus.CLEAR:
-                    if d['models'] is not None:
-                        ps['models'] = [models[m['model']].copy() for m in d['models'] if m['model'] in models and
-                                        models[m['model']]['type'].compatible(ps['type'], result['type'])]
-                    else:  # recheck models for existing
-                        ps['models'] = [models[m['model']].copy() for m in ps['models'] if m['model'] in models]
+                if d['models'] is not None:
+                    ps['models'] = [models[m['model']].copy() for m in d['models'] if m['model'] in models and
+                                    models[m['model']]['type'].compatible(ps['type'], result['type'])]
+                else:  # recheck models for existing
+                    ps['models'] = [models[m['model']].copy() for m in ps['models'] if m['model'] in models]
 
                 if d['temperature']:
                     ps['temperature'] = d['temperature']
@@ -444,14 +451,16 @@ class ModelTask(AuthResource):
                 if d['pressure']:
                     ps['pressure'] = d['pressure']
 
-        result['structures'] = [x for x in prepared.values() if x['status'] != StructureStatus.HAS_ERROR]
-        result['status'] = TaskStatus.MODELING
+            structures.append(ps)
 
-        new_job = redis.new_job(result)
+        if not structures:
+            abort(400, message='invalid structure data')
+
+        new_job = redis.new_job(structures, result['user'], result['type'], TaskStatus.MODELING)
         if new_job is None:
             abort(500, message='modeling server error')
 
-        return dict(task=new_job['id'], status=result['status'].value, type=result['type'].value,
+        return dict(task=new_job['id'], status=TaskStatus.MODELING.value, type=result['type'].value,
                     date=new_job['created_at'].strftime("%Y-%m-%d %H:%M:%S"), user=result['user']), 201
 
 
@@ -550,7 +559,7 @@ class PrepareTask(AuthResource):
         preparer = get_preparer_model()
 
         prepared = {s['structure']: s for s in result['structures']}
-        tmp = {x['structure']: x for x in (data if isinstance(data, list) else [data]) if x['structure'] in prepared}
+        tmp = {x['structure']: x for x in (data if isinstance(data, list) else [data])}
 
         if 0 in tmp:
             abort(400, message='invalid structure data')
@@ -558,11 +567,31 @@ class PrepareTask(AuthResource):
         additives = get_additives()
         models = get_models_list()
 
-        for s, d in tmp.items():
-            if d['todelete']:
-                prepared.pop(s)
+        structures = []
+        for s, ps in prepared.items():
+            if s not in tmp:
+                if ps['status'] == StructureStatus.RAW:  # renew preparer model.
+                    ps['models'] = [preparer.copy()]
+                elif ps['status'] == StructureStatus.HAS_ERROR:
+                    continue
+            elif tmp[s]['todelete']:
+                continue
             else:
-                ps = prepared[s]
+                d = tmp[s]
+
+                if d['data']:
+                    ps['data'], ps['status'], ps['models'] = d['data'], StructureStatus.RAW, [preparer.copy()]
+                elif s['status'] == StructureStatus.RAW:  # renew preparer model.
+                    ps['models'] = [preparer.copy()]
+                elif ps['status'] == StructureStatus.CLEAR:
+                    if d['models'] is not None:
+                        ps['models'] = [models[m['model']].copy() for m in d['models'] if m['model'] in models and
+                                        models[m['model']]['type'].compatible(ps['type'], result['type'])]
+                    else:  # recheck models for existing
+                        ps['models'] = [models[m['model']].copy() for m in ps['models'] if m['model'] in models]
+                else:
+                    continue
+
                 if d['additives'] is not None:
                     alist = []
                     for a in d['additives']:
@@ -573,33 +602,22 @@ class PrepareTask(AuthResource):
                             alist.append(a)
                     ps['additives'] = alist
 
-                if d['data']:
-                    ps['data'] = d['data']
-                    ps['status'] = StructureStatus.RAW
-                    ps['models'] = [preparer.copy()]
-                elif s['status'] == StructureStatus.RAW:  # renew preparer model.
-                    ps['models'] = [preparer.copy()]
-                elif ps['status'] == StructureStatus.CLEAR:
-                    if d['models'] is not None:
-                        ps['models'] = [models[m['model']].copy() for m in d['models'] if m['model'] in models and
-                                        models[m['model']]['type'].compatible(ps['type'], result['type'])]
-                    else:  # recheck models for existing
-                        ps['models'] = [models[m['model']].copy() for m in ps['models'] if m['model'] in models]
-
                 if d['temperature']:
                     ps['temperature'] = d['temperature']
 
                 if d['pressure']:
                     ps['pressure'] = d['pressure']
 
-        result['structures'] = [x for x in prepared.values() if x['status'] != StructureStatus.HAS_ERROR]
-        result['status'] = TaskStatus.PREPARING
+            structures.append(ps)
 
-        new_job = redis.new_job(result)
+        if not structures:
+            abort(400, message='invalid structure data')
+
+        new_job = redis.new_job(structures, result['user'], result['type'], TaskStatus.PREPARING)
         if new_job is None:
             abort(500, message='modeling server error')
 
-        return dict(task=new_job['id'], status=result['status'].value, type=result['type'].value,
+        return dict(task=new_job['id'], status=TaskStatus.PREPARING.value, type=result['type'].value,
                     date=new_job['created_at'].strftime("%Y-%m-%d %H:%M:%S"), user=result['user']), 201
 
 
@@ -647,10 +665,10 @@ class CreateTask(AuthResource):
         data = marshal(request.get_json(force=True), TaskStructureFields.resource_fields)
         additives = get_additives()
         preparer = get_preparer_model()
-        structures = [data] if not isinstance(data, list) else data if _type == TaskType.MODELING else data[:1]
+        data = [data] if not isinstance(data, list) else data if _type == TaskType.MODELING else data[:1]
 
-        data = []
-        for s, d in enumerate(structures, start=1):
+        structures = []
+        for s, d in enumerate(data, start=1):
             if d['data']:
                 alist = []
                 for a in d['additives'] or []:
@@ -660,14 +678,14 @@ class CreateTask(AuthResource):
                         a.update(additives[a['additive']])
                         alist.append(a)
 
-                data.append(dict(structure=s, data=d['data'], status=StructureStatus.RAW, type=StructureType.UNDEFINED,
-                                 pressure=d['pressure'], temperature=d['temperature'],
-                                 additives=alist, models=[preparer.copy()]))
+                structures.append(dict(structure=s, data=d['data'], pressure=d['pressure'],
+                                       temperature=d['temperature'], additives=alist,
+                                       models=[preparer.copy()], status=StructureStatus.RAW))
 
-        if not data:
+        if not structures:
             abort(400, message='invalid structure data')
 
-        new_job = redis.new_job(dict(status=TaskStatus.NEW, type=_type, user=current_user.id, structures=data))
+        new_job = redis.new_job(structures, current_user.id, _type, TaskStatus.PREPARING)
 
         if new_job is None:
             abort(500, message='modeling server error')
@@ -749,8 +767,7 @@ class UploadTask(AuthResource):
         if file_url is None:
             abort(400, message='structure file required')
 
-        new_job = redis.new_file_job(dict(status=TaskStatus.NEW, type=TaskType.MODELING, user=current_user.id,
-                                          structures=file_url, model=get_preparer_model()))
+        new_job = redis.new_file_job(file_url, get_preparer_model(), current_user.id, TaskType.MODELING)
         if new_job is None:
             abort(500, message='modeling server error')
 

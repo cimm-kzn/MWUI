@@ -34,7 +34,6 @@ class StructureType(Enum):
 
 
 class TaskStatus(Enum):
-    NEW = 0
     PREPARING = 1
     PREPARED = 2
     MODELING = 3

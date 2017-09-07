@@ -24,7 +24,7 @@ from pickle import dumps, loads
 from redis import Redis, ConnectionError
 from rq import Queue
 from uuid import uuid4
-from ..constants import TaskStatus, StructureStatus, ModelType
+from ..constants import TaskStatus, StructureStatus, ModelType, TaskType, ResultType
 from ..config import RESULTS_PER_PAGE
 
 
@@ -50,40 +50,33 @@ class RedisCombiner(object):
         except ConnectionError:
             return None
 
-    def new_file_job(self, task):
-        if task['status'] != TaskStatus.NEW:
-            return None  # for api check.
-
+    def new_file_job(self, file_url, model, user, _type=TaskType.MODELING):
         try:
             self.__tasks.ping()
         except ConnectionError:
             return None
 
-        s = task.pop('structures')
-        model = task.pop('model')
         tmp = self.__new_worker(model['destinations'])
         if tmp is None:
             return None
-
         dest, worker = tmp
 
         try:
-            task['jobs'] = [(dest, worker.enqueue_call('redis_worker.convert', kwargs={'structures': s, 'model': model},
-                                                       result_ttl=self.__result_ttl).id)]
-            task['status'] = TaskStatus.PREPARED
-            task['structures'] = {}
-
+            job = dict(jobs=[(dest, worker.enqueue_call('redis_worker.convert',
+                                                        kwargs={'structures': file_url, 'model': model['name']},
+                                                        result_ttl=self.__result_ttl).id,
+                              dict(type=model['type'], model=model['model'], name=model['name']))],
+                       user=user, type=_type, status=TaskStatus.PREPARED, structures={})
             _id = str(uuid4())
-            self.__tasks.set(_id, dumps((task, datetime.utcnow())), ex=self.__result_ttl)
-            return dict(id=_id, created_at=datetime.utcnow())
+            now = datetime.utcnow()
+            self.__tasks.set(_id, dumps((job, now)), ex=self.__result_ttl)
+
+            return dict(id=_id, created_at=now)
         except Exception as err:
             print("upload task ERROR:", err)
             return None
 
-    def new_job(self, task):
-        if task['status'] not in (TaskStatus.NEW, TaskStatus.PREPARING, TaskStatus.MODELING):
-            return None  # for api check.
-
+    def new_job(self, structures, user, _type=TaskType.MODELING, status=TaskStatus.PREPARING):
         try:
             self.__tasks.ping()
         except ConnectionError:
@@ -93,41 +86,44 @@ class RedisCombiner(object):
         model_struct = defaultdict(list)
         unused_structures = []
 
-        for s in task['structures']:
+        for s in structures:
             # check for models in structures
-            if task['status'] == TaskStatus.MODELING and s['status'] == StructureStatus.CLEAR:
-                # modeling task. accept only clear structures.
-                models = [(x['model'], x) for x in s.pop('models') if x['type'] != ModelType.PREPARER]
-            elif task['status'] in (TaskStatus.PREPARING, TaskStatus.NEW) and s['status'] == StructureStatus.RAW:
-                # preparing task. accept only raw structures.
-                models = [next((x['model'], x) for x in s.pop('models') if x['type'] == ModelType.PREPARER)]
-            elif s['status'] == StructureStatus.HAS_ERROR:
-                # remove models for structures with errors in any tasks.
-                models = s['models'] = []
-            else:  # clean structures in prepare task.
-                for x in s['models']:
-                    x.pop('destinations')
-                models = []
+            if status == TaskStatus.MODELING:
+                if s['status'] != StructureStatus.CLEAR:  # modeling task. accept only clear structures.
+                    continue
+                models = [x for x in s['models'] if x['type'] != ModelType.PREPARER]
+            else:
+                if s['status'] == StructureStatus.RAW:  # preparing task. accept only raw structures.
+                    models = [next(x for x in s['models'] if x['type'] == ModelType.PREPARER)]
+                else:
+                    if s['status'] == StructureStatus.CLEAR:  # clean structures in prepare task.
+                        s = s.copy()
+                        s['models'] = [dict(type=m['type'], model=m['model'], name=m['name']) for m in s['models']]
+                        unused_structures.append(s)   # store in redis unused structures.
+                    continue  # remove structures with errors in any tasks.
 
+            s = s.copy()
+            s.pop('models')
             failed = []
-            for m, model in models:
-                dest = model.pop('destinations')
+            for model in models:
+                dest = model['destinations']
+                m = model['model']
                 if (model_worker.get(m) or model_worker.setdefault(m, (self.__new_worker(dest), model)))[0] is not None:
                     model_struct[m].append(s)
                 else:
-                    failed.append(model)
+                    failed.append(dict(type=model['type'], model=model['model'], name=model['name'],
+                                       results=[dict(type=ResultType.TEXT, key='Modeling Failed',
+                                                value='Modeling server not response')]))
 
             if failed:  # save failed models in structures.
                 s['models'] = failed
-            if 'models' in s:  # store in redis failed or unused structures.
                 unused_structures.append(s)
 
-        new_job = ((w, {'structures': s, 'model': m}, m)
-                   for (w, m), s in ((model_worker[m], s) for m, s in model_struct.items()))
-
         try:
-            jobs = [(dest, w.enqueue_call('redis_worker.run', kwargs=d, result_ttl=self.__result_ttl).id, m)
-                    for (dest, w), d, m in new_job]
+            jobs = [(dest, w.enqueue_call('redis_worker.run', kwargs={'structures': s, 'model': m['name']},
+                                          result_ttl=self.__result_ttl).id,
+                     dict(type=m['type'], model=m['model'], name=m['name']))
+                    for ((dest, w), m), s in ((model_worker[m], s) for m, s in model_struct.items())]
 
             tmp = {}
             for x in range(0, len(unused_structures), RESULTS_PER_PAGE):  # store structures in chunks.
@@ -137,15 +133,15 @@ class RedisCombiner(object):
                 for s in chunk:
                     tmp[s] = _id
 
-            task['structures'] = tmp
-            task['jobs'] = jobs
-            task['status'] = TaskStatus.DONE if task['status'] == TaskStatus.MODELING else TaskStatus.PREPARED
+            job = dict(structures=tmp, jobs=jobs, user=user, type=_type,
+                       status=TaskStatus.DONE if status == TaskStatus.MODELING else TaskStatus.PREPARED)
 
             _id = str(uuid4())
-            self.__tasks.set(_id, dumps((task, datetime.utcnow())), ex=self.__result_ttl)
-            return dict(id=_id, created_at=datetime.utcnow())
+            now = datetime.utcnow()
+            self.__tasks.set(_id, dumps((job, now)), ex=self.__result_ttl)
+            return dict(id=_id, created_at=now)
         except Exception as err:
-            print("new_job->ERROR:", err)
+            print("new_job ERROR:", err)
             return None
 
     def fetch_job(self, task, page=None):
@@ -182,12 +178,12 @@ class RedisCombiner(object):
 
             for j, model in sub_jobs_fin:
                 for s in j.result:
-                    results = dict(results=s.pop('results', []), **model)
+                    results = [dict(results=s.pop('results', []), **model)]
                     s_id = s['structure']
                     if s_id in result['structures']:
                         ch_id = result['structures'][s_id]
                         ch = loaded_chunks.get(ch_id) or loaded_chunks.setdefault(ch_id, loads(self.__tasks.get(ch_id)))
-                        ch[s_id]['models'].extend([results])
+                        ch[s_id]['models'].extend(results)
                     else:
                         if partial_chunk:
                             ch = loaded_chunks.get(partial_chunk) or \
@@ -196,7 +192,7 @@ class RedisCombiner(object):
                             partial_chunk = str(uuid4())
                             ch = loaded_chunks.setdefault(partial_chunk, {})
 
-                        s['models'] = [results]
+                        s['models'] = results
                         ch[s_id] = s
                         result['structures'][s_id] = partial_chunk
 

@@ -54,6 +54,7 @@ MAIL_SIGNER = None
 DB_USER = None
 DB_PASS = None
 DB_HOST = None
+DB_PORT = 5432
 DB_NAME = None
 DB_MAIN = None
 DB_PRED = None
@@ -74,7 +75,7 @@ config_list = ('UPLOAD_PATH', 'PORTAL_NON_ROOT', 'SECRET_KEY', 'RESIZE_URL', 'MA
                'REDIS_HOST', 'REDIS_PORT', 'REDIS_PASSWORD', 'REDIS_TTL', 'REDIS_JOB_TIMEOUT', 'REDIS_MAIL',
                'LAB_NAME', 'LAB_SHORT', 'BLOG_POSTS_PER_PAGE', 'SCOPUS_API_KEY', 'SCOPUS_TTL', 'RESULTS_PER_PAGE',
                'SMTP_HOST', 'SMTP_PORT', 'SMTP_LOGIN', 'SMTP_PASSWORD', 'SMTP_MAIL', 'MAIL_INKEY', 'MAIL_SIGNER',
-               'SCOPUS_SUBJECT_LIST', 'DB_SCOPUS', 'REDIS_SCOPUS')
+               'SCOPUS_SUBJECT_LIST', 'DB_SCOPUS', 'REDIS_SCOPUS', 'DB_PORT')
 
 config_load_list = ['DEBUG']
 config_load_list.extend(config_list)
