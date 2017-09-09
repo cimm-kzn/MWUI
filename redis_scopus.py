@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 #  Copyright 2017 Ramil Nugmanov <stsouko@live.ru>
@@ -18,7 +19,27 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
+from MWUI.models import Author, Journal, db
+from pony.orm import db_session
 
 
-def version():
-    return '2.3.1'
+def run(task, author_id):
+    from MWUI.config import DB_PASS, DB_HOST, DB_USER, DB_NAME, DB_PORT
+    db.bind('postgres', user=DB_USER, password=DB_PASS, host=DB_HOST, database=DB_NAME, port=DB_PORT)
+    db.generate_mapping(create_tables=False)
+
+    if task == 'new':
+        with db_session:
+            a = Author.add_author(author_id)
+            if a:
+                a.update_statistics()
+                Journal.update_statistics()
+    elif task == 'update':
+        with db_session:
+            a = Author[author_id]
+            if not a.is_fresh:
+                a.update_articles()
+                a.update_statistics()
+                Journal.update_statistics()
+    else:
+        print('INVALID TASK')

@@ -30,7 +30,7 @@ from rq import Queue
 from subprocess import Popen, PIPE
 from .bootstrap import CustomMisakaRenderer
 from .config import (LAB_NAME, SMTP_MAIL, REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_MAIL, UPLOAD_ROOT,
-                     MAIL_INKEY, MAIL_SIGNER)
+                     MAIL_INKEY, MAIL_SIGNER, REDIS_JOB_TIMEOUT)
 
 
 def send_mail(message, to_mail, to_name=None, from_name=None, subject=None, banner=None, title=None,
@@ -42,7 +42,7 @@ def send_mail(message, to_mail, to_name=None, from_name=None, subject=None, bann
 
     try:
         r.ping()
-        sender = Queue(connection=r, name=REDIS_MAIL, default_timeout=3600)
+        sender = Queue(connection=r, name=REDIS_MAIL, default_timeout=REDIS_JOB_TIMEOUT)
     except ConnectionError:
         print('REDIS NOT WORKING')
         return False

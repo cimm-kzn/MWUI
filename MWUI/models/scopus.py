@@ -18,11 +18,11 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-from collections import namedtuple, MutableSet
+from collections import namedtuple, MutableSet, defaultdict, OrderedDict
 from datetime import datetime, timedelta
-from pony.orm import PrimaryKey, Required, Optional, Set, left_join, select, flush
+from pony.orm import PrimaryKey, Required, Optional, Set, left_join, select, flush, desc
 from requests import get
-from ..config import DEBUG, SCOPUS_API_KEY, SCOPUS_TTL
+from ..config import DEBUG, SCOPUS_API_KEY, SCOPUS_TTL, SCOPUS_SUBJECT
 
 metric = namedtuple('Metrics', ['h_index', 'citations'])
 article = namedtuple('Article', ['authors', 'title', 'journal', 'volume', 'issue', 'pages', 'date', 'doi', 'cited',
@@ -104,7 +104,7 @@ def load_tables(db, schema):
                 return True
 
             now = datetime.utcnow()
-            fresh = now - self.issn.update < timedelta(days=SCOPUS_TTL)
+            fresh = now - self.issn.update < timedelta(seconds=SCOPUS_TTL)
             if not fresh and Score.exists(lambda x: x.issn == self.issn and x.year == now.year - 1):
                 fresh = True
                 self.issn.update = now
@@ -125,21 +125,20 @@ def load_tables(db, schema):
 
             if results:
                 journals_dict = {x.issn: x for x in journals}
-                journals_scores = {}
-                journals_ranks = {}
+                journals_scores, journals_ranks = defaultdict(list), defaultdict(list)
                 for s in (y for x in journals for y in x.scores):
-                    journals_scores.setdefault(s.issn.issn, []).append(s.year)
+                    journals_scores[s.issn.issn].append(s.year)
 
                 for r in (y for x in journals for y in x.quartiles):
-                    journals_ranks.setdefault(r.issn.issn, []).append((r.year, r.subject_code))
+                    journals_ranks[r.issn.issn].append((r.year, r.subject_code))
 
                 for issn, (score, rank) in results.items():
                     j = journals_dict[issn]
                     for s in score:
-                        if issn not in journals_scores or s.year not in journals_scores[issn]:
+                        if s.year not in journals_scores[issn]:
                             Score(year=s.year, score=s.score, issn=j)
                     for r in rank:
-                        if issn not in journals_ranks or (r.year, r.subject_code) not in journals_ranks[issn]:
+                        if (r.year, r.subject_code) not in journals_ranks[issn]:
                             Quartile(year=r.year, subject_code=r.subject_code, percentile=r.percentile, issn=j)
                     flush()
 
@@ -171,7 +170,7 @@ def load_tables(db, schema):
                             year = int(x['@year'])
                             score.append(year_score(year, float(info['citeScore'])))
                             for y in info['citeScoreSubjectRank']:
-                                rank.append(year_rank(year, int(y['percentile']), int(y['subjectCode'])))
+                                rank.append(year_rank(year, float(y['percentile']), int(y['subjectCode'])))
 
             return results
 
@@ -188,11 +187,69 @@ def load_tables(db, schema):
 
         @property
         def is_fresh(self):
-            return datetime.utcnow() - self.update < timedelta(days=SCOPUS_TTL)
+            return datetime.utcnow() - self.update < timedelta(seconds=SCOPUS_TTL)
+
+        def get_articles(self):
+            list(left_join(x.author for x in ArticleAuthor if x.article in
+                           select(y.article for y in ArticleAuthor if y.author == self)))  # cache coauthors
+
+            arts = list(left_join(x.article for x in ArticleAuthor if x.author == self)
+                        .order_by(desc(Article.date)).prefetch(Journal, JournalISSN))
+
+            authors = defaultdict(list)
+            for x in select(x for x in db.ArticleAuthor if x.article in
+                            select(a.article for a in db.ArticleAuthor if a.author == self)).order_by(ArticleAuthor.id):
+                authors[x.article.id].append(x.author)
+
+            issns = {x.journal.issn for x in arts if x.journal.issn}
+            scores, quarts = defaultdict(list), defaultdict(OrderedDict)
+            for x in select(x for x in Score if x.issn in issns).order_by(desc(Score.year)):
+                scores[x.issn.id].append(x)
+            for x in select(x for x in Quartile if x.issn in issns).order_by(desc(Quartile.year)):
+                quarts[x.issn.id].setdefault(x.year, []).append(x)
+
+            data = ['***h***-index: **{0.h_index}**, citations count: **{0.citations}**, counted articles: '
+                    '**{1}**) *[Provided by SCOPUS API]*\n\n'.format(self, len(arts)),
+                    '**List of published articles:**\n\n',
+                    '|Published|Meta|Cited Count|CiteScore|Quartiles|\n|---|---|---|---|---|\n']
+
+            f_scores, f_quarts = {}, {}
+            for k, v in scores.items():
+                f_scores[k] = ', '.join('{0.score:.2f}({0.year})'.format(x) for x in v)
+            for k, v in quarts.items():
+                tmp = []
+                for y, x in v.items():
+                    percentile = max((i.percentile for i in x if i.subject_code in SCOPUS_SUBJECT), default=None)
+                    if percentile is not None:
+                        tmp.append('{0:.2f}({1})'.format(percentile, y))
+
+                f_quarts[k] = ', '.join(tmp)
+
+            for i in arts:
+                a = ', '.join('{0.initials} {0.surname}'.format(x) for x in authors[i.id])
+                d = datetime.strftime(i.date, '%Y-%m-%d')
+                data.append('|**{1}**|*{0.title}* / {2} // ***{0.journal.title}***.— {0.date.year}'.format(i, d, a))
+                if i.volume:
+                    data.append('.— V.{.volume}'.format(i))
+                if i.issue:
+                    data.append('.— Is.{.issue}'.format(i))
+                if i.pages:
+                    data.append('.— P.{.pages}'.format(i))
+                if i.doi:
+                    data.append(' [[doi](//dx.doi.org/{.doi})]'.format(i))
+                if i.journal.issn:
+                    score = f_scores.get(i.journal.issn.id, '')
+                    quart = f_quarts.get(i.journal.issn.id, '')
+                else:
+                    score = quart = ''
+
+                data.append('|{0.cited}|{1}|{2}|\n'.format(i, score, quart))
+
+            return ''.join(data)
 
         @classmethod
         def add_author(cls, scopus_id):
-            if cls.exists(lambda x: x.scopus_id == scopus_id):
+            if cls.exists(scopus_id=scopus_id):
                 return False
 
             data = cls.__get_articles(scopus_id)
@@ -202,11 +259,11 @@ def load_tables(db, schema):
             scopus_id_list = [i.scopus_id for i in data]
             articles = Article.select(lambda x: x.scopus_id in scopus_id_list)
             cls.__update_or_create_article(data, articles)
-            return True
+            return cls.get(scopus_id=scopus_id)
 
         def update_statistics(self):
             tmp = sorted(left_join(aa.article.cited for aa in ArticleAuthor
-                                   if aa.author == self and aa.article.cited > 0), reverse=True)
+                                   if aa.author == self and aa.article.cited > 0).without_distinct(), reverse=True)
 
             h = 0
             for i in tmp:
@@ -242,7 +299,7 @@ def load_tables(db, schema):
 
         @staticmethod
         def __add_article(art):
-            update = datetime.utcnow() - timedelta(days=SCOPUS_TTL)
+            update = datetime.utcnow() - timedelta(seconds=SCOPUS_TTL)
             art_attrs = {a: v for a, v in ((a, getattr(art, a)) for a in ('volume', 'issue', 'pages', 'doi')) if v}
 
             if art.issn:

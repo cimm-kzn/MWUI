@@ -39,7 +39,7 @@ LAB_NAME = 'Kazan Chemoinformatics and Molecular Modeling Laboratory'
 LAB_SHORT = 'CIMM'
 BLOG_POSTS_PER_PAGE = 10
 SCOPUS_API_KEY = None
-SCOPUS_TTL = 7
+SCOPUS_TTL = 86400 * 7
 SCOPUS_SUBJECT_LIST = '1600'
 
 SMTP_HOST = None
@@ -65,6 +65,7 @@ REDIS_PASSWORD = None
 REDIS_TTL = 86400
 REDIS_JOB_TIMEOUT = 3600
 REDIS_MAIL = 'mail'
+REDIS_SCOPUS = 'scopus'
 
 RESULTS_PER_PAGE = 50
 
@@ -73,7 +74,7 @@ config_list = ('UPLOAD_PATH', 'PORTAL_NON_ROOT', 'SECRET_KEY', 'RESIZE_URL', 'MA
                'REDIS_HOST', 'REDIS_PORT', 'REDIS_PASSWORD', 'REDIS_TTL', 'REDIS_JOB_TIMEOUT', 'REDIS_MAIL',
                'LAB_NAME', 'LAB_SHORT', 'BLOG_POSTS_PER_PAGE', 'SCOPUS_API_KEY', 'SCOPUS_TTL', 'RESULTS_PER_PAGE',
                'SMTP_HOST', 'SMTP_PORT', 'SMTP_LOGIN', 'SMTP_PASSWORD', 'SMTP_MAIL', 'MAIL_INKEY', 'MAIL_SIGNER',
-               'SCOPUS_SUBJECT_LIST', 'DB_SCOPUS')
+               'SCOPUS_SUBJECT_LIST', 'DB_SCOPUS', 'REDIS_SCOPUS')
 
 config_load_list = ['DEBUG']
 config_load_list.extend(config_list)
@@ -99,4 +100,4 @@ with next(x for x in config_dirs if x.exists()).open() as f:
 
 IMAGES_ROOT = Path(IMAGES_PATH)
 UPLOAD_ROOT = Path(UPLOAD_PATH)
-SCOPUS_SUBJECT = SCOPUS_SUBJECT_LIST.split(',')
+SCOPUS_SUBJECT = [int(x) for x in SCOPUS_SUBJECT_LIST.split(',')]

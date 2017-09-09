@@ -23,18 +23,13 @@ from flask import redirect, url_for, render_template, flash
 from flask.views import View
 from flask_login import current_user
 from pony.orm import db_session, select, commit
-from ..config import SCOPUS_API_KEY, SCOPUS_TTL, REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, SCOPUS_SUBJECT
 from ..constants import (UserRole, BlogPostType, MeetingPostType, EmailPostType, TeamPostType, MeetingPartType,
                          ThesisPostType)
 from ..forms import ThesisForm, MeetForm
 from ..models import Email, Post, Thesis, Subscription
-from ..scopus import Scopus
+from ..scopus import get_articles
 from ..sendmail import send_mail, attach_mixin
 from ..upload import save_upload, combo_save
-
-
-scopus = Scopus(SCOPUS_API_KEY, subject=SCOPUS_SUBJECT, redis_ttl=SCOPUS_TTL, redis_host=REDIS_HOST,
-                redis_port=REDIS_PORT, redis_password=REDIS_PASSWORD)
 
 
 class PostView(View):
@@ -66,7 +61,7 @@ class PostView(View):
             crumb = dict(url=url_for('.students'), title='Student', parent='Laboratory') \
                     if p.type == TeamPostType.STUDENT else \
                     dict(url=url_for('.about'), title='Member', parent='Laboratory')
-            special_field = scopus.get_articles(p.scopus) if p.scopus else None
+            special_field = get_articles(p.scopus) if p.scopus else None
         elif p.type == BlogPostType.ABOUT:
             crumb = dict(url=url_for('.about'), title='Description', parent='Laboratory')
         else:

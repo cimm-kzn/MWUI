@@ -174,9 +174,9 @@ class RedisCombiner(object):
                         sub_jobs_unf.append((dest, sub_task, model))
 
         if sub_jobs_fin:
-            chunks = {}
+            chunks = defaultdict(list)
             for s_id, _id in result['structures'].items():
-                chunks.setdefault(_id, []).append(s_id)
+                chunks[_id].append(s_id)
 
             partial_chunk = next((k for k, v in chunks.items() if len(v) < RESULTS_PER_PAGE), None)
 
