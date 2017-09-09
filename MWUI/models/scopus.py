@@ -219,9 +219,9 @@ def load_tables(db, schema):
             for k, v in quarts.items():
                 tmp = []
                 for y, x in v.items():
-                    percentile = max((i.percentile for i in x if i.subject_code in SCOPUS_SUBJECT), default=None)
-                    if percentile is not None:
-                        tmp.append('{0:.2f}({1})'.format(percentile, y))
+                    p = max((i.percentile for i in x if i.subject_code in SCOPUS_SUBJECT), default=None)
+                    if p is not None:
+                        tmp.append('{0}({1})'.format(p > 74 and 'Q1' or p > 49 and 'Q2' or p > 24 and 'Q3' or 'Q4', y))
 
                 f_quarts[k] = ', '.join(tmp)
 
@@ -375,7 +375,7 @@ def load_tables(db, schema):
         volume = Optional(str)
         issue = Optional(str)
         pages = Optional(str)
-        doi = Optional(str, unique=True)
+        doi = Optional(str)
         cited = Required(int)
         authors = Set('ArticleAuthor')
         journal = Required('Journal')

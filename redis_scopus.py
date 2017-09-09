@@ -20,7 +20,7 @@
 #  MA 02110-1301, USA.
 #
 from MWUI.models import Author, Journal, db
-from pony.orm import db_session
+from pony.orm import db_session, flush
 
 
 def run(task, author_id):
@@ -32,6 +32,7 @@ def run(task, author_id):
         with db_session:
             a = Author.add_author(author_id)
             if a:
+                flush()
                 a.update_statistics()
                 Journal.update_statistics()
     elif task == 'update':
@@ -39,6 +40,7 @@ def run(task, author_id):
             a = Author[author_id]
             if not a.is_fresh:
                 a.update_articles()
+                flush()
                 a.update_statistics()
                 Journal.update_statistics()
     else:
