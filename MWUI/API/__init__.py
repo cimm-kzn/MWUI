@@ -18,12 +18,17 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-from flask import Blueprint, send_from_directory
+from flask import Blueprint, send_from_directory, redirect, url_for
+from flask_login import current_user
 from flask_restful import Api
 from importlib.util import find_spec
-from ..config import UPLOAD_PATH, SWAGGER
+from pony.orm import db_session
 from .resources import (CreateTask, UploadTask, PrepareTask, ModelTask, ResultsTask, AvailableAdditives, LogIn,
                         AvailableModels, RegisterModels, MagicNumbers)
+from .resources.common import redis, abort
+from ..config import UPLOAD_PATH, SWAGGER
+from ..constants import TaskType, ModelType
+from ..models import Model
 
 api_bp = Blueprint('api', __name__)
 
@@ -50,3 +55,23 @@ api.add_resource(LogIn, '/auth')
 @api_bp.route('/task/batch_file/<string:file>', methods=['GET'])
 def batch_file(file):
     return send_from_directory(directory=UPLOAD_PATH, filename=file)
+
+
+@api_bp.route('/example/<int:_id>', methods=['GET'])
+@db_session
+def example(_id):
+    """
+    Get example task
+    """
+    m = Model.get(id=_id)
+
+    if not m or m.type == ModelType.PREPARER:
+        return redirect(url_for('.index'))
+
+    _type = TaskType.SEARCHING if TaskType.SEARCHING.name in m.type.name else TaskType.MODELING
+    new_job = redis.new_job([m.example], current_user.id, _type)
+
+    if new_job is None:
+        abort(500)
+
+    return redirect(url_for('view.predictor') + '#/prepare/?task=%s' % new_job['id'])

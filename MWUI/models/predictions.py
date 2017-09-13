@@ -19,13 +19,10 @@
 #  MA 02110-1301, USA.
 #
 from datetime import datetime
-from pony.orm import PrimaryKey, Required, Optional, Set
+from pony.orm import PrimaryKey, Required, Optional, Set, Json
 from ..config import DEBUG
 from ..constants import TaskType, ResultType, StructureType, StructureStatus, ModelType, AdditiveType
-
-
-def filter_kwargs(kwargs):
-    return {x: y for x, y in kwargs.items() if y}
+from ..utils import filter_kwargs, jsonify_structures
 
 
 def load_tables(db, schema):
@@ -33,19 +30,67 @@ def load_tables(db, schema):
         _table_ = '%s_model' % schema if DEBUG else (schema, 'model')
         id = PrimaryKey(int, auto=True)
         description = Optional(str)
-        destinations = Set('Destination')
-        example = Optional(str)
-        model_type = Required(int)
+        _destinations = Set('Destination')
+        _example = Optional(Json, column='example')
+        _type = Required(int, column='type')
         name = Required(str, unique=True)
-        results = Set('Result')
 
-        def __init__(self, **kwargs):
+        def __init__(self, example, **kwargs):
             _type = kwargs.pop('type', ModelType.MOLECULE_MODELING).value
-            super(Model, self).__init__(model_type=_type, **filter_kwargs(kwargs))
+            tmp = dict(data=example['data'], pressure=example['pressure'], temperature=example['temperature'],
+                       type=example['type'].value,
+                       additives=[dict(name=x['name'], amount=x['amount']) for x in example['additives']])
+            super().__init__(_type=_type, _example=tmp, **filter_kwargs(kwargs))
 
         @property
         def type(self):
-            return ModelType(self.model_type)
+            return ModelType(self._type)
+
+        @property
+        def example(self):
+            return self._get_example()
+
+        def _get_example(self, skip_models=False, raw=False):
+            additives = {a.name: dict(additive=a.id, name=a.name, structure=a.structure,
+                                      type=a._type if raw else a.type) for a in Additive.select()}
+            tmp = self._example.copy()
+            alist = []
+            for a in tmp['additives']:
+                ai = a['name']
+                if ai in additives:
+                    alist.append(dict(amount=a['amount'], **additives[ai]))
+
+            if raw:
+                tmp.update(type=tmp['type'], status=StructureStatus.CLEAR.value)
+            else:
+                tmp.update(type=StructureType(tmp['type']), status=StructureStatus.CLEAR)
+
+            tmp.update(structure=1, additives=alist,
+                       models=[dict(type=self._type if raw else self.type, model=self.id, name=self.name,
+                                    destinations=self.destinations)] if not skip_models else [])
+            return tmp
+
+        @classmethod
+        def get_models_dict(cls, skip_prep=True, skip_destinations=False, skip_example=True, raw=False):
+            res = {}
+            for m in cls.select(lambda x: x._type != ModelType.PREPARER.value) if skip_prep else cls.select():
+                res[m.id] = tmp = dict(model=m.id, name=m.name, description=m.description,
+                                       type=m._type if raw else m.type)
+                if not skip_destinations:
+                    tmp['destinations'] = m.destinations
+                if not skip_example:
+                    tmp['example'] = m._get_example(skip_models=True, raw=raw)
+            return res
+
+        @classmethod
+        def get_preparer_model(cls, raw=False):
+            return next(dict(model=m.id, name=m.name, description=m.description, type=m._type if raw else m.type,
+                             destinations=m.destinations)
+                        for m in cls.select(lambda x: x._type == ModelType.PREPARER.value))
+
+        @property
+        def destinations(self):
+            return [dict(host=x.host, port=x.port, password=x.password, name=x.name) for x in self._destinations]
 
     class Destination(db.Entity):
         _table_ = '%s_destination' % schema if DEBUG else (schema, 'destination')
@@ -57,88 +102,60 @@ def load_tables(db, schema):
         port = Required(int, default=6379)
 
         def __init__(self, **kwargs):
-            super(Destination, self).__init__(**filter_kwargs(kwargs))
+            super().__init__(**filter_kwargs(kwargs))
 
     class Additive(db.Entity):
         _table_ = '%s_additive' % schema if DEBUG else (schema, 'additive')
         id = PrimaryKey(int, auto=True)
-        additive_type = Required(int)
-        additiveset = Set('Additiveset')
+        _type = Required(int, column='type')
         name = Required(str, unique=True)
         structure = Optional(str)
 
         def __init__(self, **kwargs):
             _type = kwargs.pop('type', AdditiveType.SOLVENT).value
-            super(Additive, self).__init__(additive_type=_type, **kwargs)
+            super().__init__(_type=_type, **kwargs)
 
         @property
         def type(self):
-            return AdditiveType(self.additive_type)
+            return AdditiveType(self._type)
+
+        @classmethod
+        def get_additives_dict(cls, key='id', raw=False):
+            return {getattr(a, key): dict(additive=a.id, name=a.name, structure=a.structure,
+                                          type=a._type if raw else a.type)
+                    for a in cls.select()}
 
     class Task(db.Entity):
         _table_ = '%s_task' % schema if DEBUG else (schema, 'task')
         id = PrimaryKey(int, auto=True)
-        date = Required(datetime, default=datetime.utcnow())
-        structures = Set('Structure')
-        task_type = Required(int)
+        date = Required(datetime, default=datetime.utcnow)
+        _type = Required(int, column='type')
         user = Required('User')
-    
-        def __init__(self, **kwargs):
+        _data = Required(Json, column='data')
+
+        def __init__(self, structures, **kwargs):
             _type = kwargs.pop('type', TaskType.MODELING).value
-            super(Task, self).__init__(task_type=_type, **kwargs)
-    
+            super().__init__(_type=_type, _data=jsonify_structures(structures), **kwargs)
+
         @property
         def type(self):
-            return TaskType(self.task_type)
+            return TaskType(self._type)
 
-    class Structure(db.Entity):
-        _table_ = '%s_structure' % schema if DEBUG else (schema, 'structure')
-        id = PrimaryKey(int, auto=True)
-        additives = Set('Additiveset')
-        pressure = Optional(float)
-        results = Set('Result')
-        structure = Required(str)
-        structure_type = Required(int)
-        structure_status = Required(int)
-        task = Required('Task')
-        temperature = Optional(float)
-    
-        def __init__(self, **kwargs):
-            _type = kwargs.pop('type', StructureType.MOLECULE).value
-            status = kwargs.pop('status', StructureStatus.CLEAR).value
-            super(Structure, self).__init__(structure_type=_type, structure_status=status, **kwargs)
-    
-        @property
-        def type(self):
-            return StructureType(self.structure_type)
-    
-        @property
-        def status(self):
-            return StructureStatus(self.structure_status)
+        def get_data(self, raw=False):
+            if not raw:
+                out = []
+                for s in self._data:
+                    out.append(dict(status=StructureStatus(s['status']), type=StructureType(s['type']),
+                                    structure=s['structure'],
+                                    data=s['data'], pressure=s['pressure'], temperature=s['temperature'],
+                                    additives=[dict(additive=a['additive'], name=a['name'], structure=a['structure'],
+                                                    type=AdditiveType(a['type']), amount=a['amount'])
+                                               for a in s['additives']],
+                                    models=[dict(type=ModelType(m['type']), model=m['model'], name=m['name'],
+                                                 results=[dict(type=ResultType(r['type']), key=r['key'],
+                                                               value=r['value'])
+                                                          for r in m['results']]) for m in s['models']]))
+                return out
+            return self._data
 
-    class Result(db.Entity):
-        _table_ = '%s_result' % schema if DEBUG else (schema, 'result')
-        id = PrimaryKey(int, auto=True)
-        key = Required(str)
-        model = Required('Model')
-        result_type = Required(int)
-        structure = Required('Structure')
-        value = Required(str)
-    
-        def __init__(self, **kwargs):
-            _type = kwargs.pop('type', ResultType.TEXT).value
-            _model = db.Model[kwargs.pop('model')]
-            super(Result, self).__init__(result_type=_type, model=_model, **kwargs)
-    
-        @property
-        def type(self):
-            return ResultType(self.result_type)
-    
-    class Additiveset(db.Entity):
-        _table_ = '%s_additives' % schema if DEBUG else (schema, 'additives')
-        id = PrimaryKey(int, auto=True)
-        additive = Required('Additive')
-        amount = Required(float, default=1)
-        structure = Required('Structure')
-
-    return Task, Structure, Result, Additiveset, Model, Destination, Additive
+    return Task, Model, Destination, Additive

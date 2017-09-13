@@ -53,26 +53,8 @@ class LogInFields:
 
 
 @swagger.model
-class TaskPostResponseFields:
-    resource_fields = dict(task=fields.String, status=fields.Integer, type=fields.Integer,
-                           date=fields.String, user=fields.Integer)
-
-
-@swagger.model
-class DestinationsFields:
-    resource_fields = dict(host=fields.String, port=fields.Integer(6379), password=fields.String, name=fields.String)
-
-
-@swagger.model
-@swagger.nested(destinations=DestinationsFields.__name__)
-class ModelRegisterFields:
-    resource_fields = dict(example=fields.String, description=fields.String, type=ModelTypeField, name=fields.String,
-                           destinations=fields.List(fields.Nested(DestinationsFields.resource_fields)))
-
-
-@swagger.model
 class AdditivesFields:
-    resource_fields = dict(additive=fields.Integer, amount=fields.Float)
+    resource_fields = dict(additive=fields.Integer, amount=fields.Float, name=fields.String)
 
 
 @swagger.model
@@ -88,6 +70,25 @@ class TaskStructureFields:
                            status=fields.Integer, type=fields.Integer,
                            additives=fields.List(fields.Nested(AdditivesFields.resource_fields)),
                            models=fields.List(fields.Nested(ModelsFields.resource_fields)))
+
+
+@swagger.model
+class DestinationsFields:
+    resource_fields = dict(host=fields.String, port=fields.Integer(6379), password=fields.String, name=fields.String)
+
+
+@swagger.model
+@swagger.nested(destinations=DestinationsFields.__name__, example=TaskStructureFields.__name__)
+class ModelRegisterFields:
+    resource_fields = dict(example=fields.Nested(TaskStructureFields.resource_fields), description=fields.String,
+                           type=ModelTypeField, name=fields.String,
+                           destinations=fields.List(fields.Nested(DestinationsFields.resource_fields)))
+
+
+@swagger.model
+class TaskPostResponseFields:
+    resource_fields = dict(task=fields.String, status=fields.Integer, type=fields.Integer,
+                           date=fields.String, user=fields.Integer)
 
 
 @swagger.model

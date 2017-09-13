@@ -98,7 +98,8 @@ class RedisCombiner(object):
                 else:
                     if s['status'] == StructureStatus.CLEAR:  # clean structures in prepare task.
                         s = s.copy()
-                        s['models'] = [dict(type=m['type'], model=m['model'], name=m['name']) for m in s['models']]
+                        s['models'] = [dict(type=m['type'], model=m['model'], name=m['name']) for m in s['models']
+                                       if m['type'] != ModelType.PREPARER]
                         unused_structures.append(s)   # store in redis unused structures.
                     continue  # remove structures with errors in any tasks.
 

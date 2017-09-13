@@ -27,5 +27,5 @@ from ..config import DB_MAIN, DB_PRED, DB_SCOPUS
 db = Database()
 
 User, Subscription, Post, BlogPost, TeamPost, Meeting, Thesis, Email, Attachment = main(db, DB_MAIN)
-Task, Structure, Result, Additiveset, Model, Destination, Additive = save(db, DB_PRED)
+Task, Model, Destination, Additive = save(db, DB_PRED)
 Author, Journal = scopus(db, DB_SCOPUS)
