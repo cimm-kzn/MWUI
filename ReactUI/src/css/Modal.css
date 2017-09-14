@@ -11,6 +11,11 @@
     outline: 0;
 }
 
+#modal-hidden{
+    opacity: 0;
+    z-index: -1;
+}
+
 .modal-body{
     padding: 5px;
 }
