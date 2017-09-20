@@ -26,10 +26,7 @@ from pycountry import countries
 from ..config import DEBUG
 from ..constants import (UserRole, ProfileDegree, ProfileStatus, Glyph, BlogPostType,
                          MeetingPostType, ThesisPostType, EmailPostType, TeamPostType, MeetingPartType)
-
-
-def filter_kwargs(kwargs):
-    return {x: y for x, y in kwargs.items() if y}
+from ..utils import filter_kwargs
 
 
 def load_tables(db, schema):
@@ -51,7 +48,7 @@ def load_tables(db, schema):
         active = Required(bool, default=True)
         email = Required(str, unique=True)
         password = Required(str)
-        user_role = Required(int)
+        _role = Required(int, column='role')
         tasks = Set('Task')
         token = Required(str)
         restore = Optional(str)
@@ -73,8 +70,7 @@ def load_tables(db, schema):
         def __init__(self, email, password, role=UserRole.COMMON, **kwargs):
             password = self.__hash_password(password)
             token = self.__gen_token(email, str(datetime.utcnow()))
-            super(User, self).__init__(email=email, password=password, token=token, user_role=role.value,
-                                       **filter_kwargs(kwargs))
+            super().__init__(email=email, password=password, token=token, _role=role.value, **filter_kwargs(kwargs))
 
         @property
         def full_name(self):
@@ -119,24 +115,28 @@ def load_tables(db, schema):
 
         @property
         def role(self):
-            return UserRole(self.user_role)
+            return UserRole(self._role)
 
     class Subscription(db.Entity):
         _table_ = '%s_subscription' % schema if DEBUG else (schema, 'subscription')
         id = PrimaryKey(int, auto=True)
         user = Required('User')
         meeting = Required('Meeting')
-        part_type = Required(int)
+        _type = Required(int, column='type')
 
-        def __init__(self, user, meeting, part_type):
-            super(Subscription, self).__init__(user=user, meeting=meeting, part_type=part_type.value)
+        def __init__(self, user, meeting, _type):
+            super().__init__(user=user, meeting=meeting, _type=_type.value)
 
         @property
         def type(self):
-            return MeetingPartType(self.part_type)
+            return MeetingPartType(self._type)
 
         def update_type(self, _type):
-            self.part_type = _type.value
+            self._type = _type.value
+
+        @property
+        def part_type(self):
+            return self._type
 
     class Attachment(db.Entity):
         _table_ = '%s_attachment' % schema if DEBUG else (schema, 'attachment')
@@ -148,23 +148,22 @@ def load_tables(db, schema):
     class Post(db.Entity):
         _table_ = '%s_post' % schema if DEBUG else (schema, 'post')
         id = PrimaryKey(int, auto=True)
-        post_type = Required(int)
+        _type = Required(int, column='type')
         author = Required('User')
         title = Required(str)
         body = Required(str)
-        date = Required(datetime)
+        date = Required(datetime, default=datetime.utcnow)
         banner = Optional(str)
         attachments = Set('Attachment')
         slug = Optional(str, unique=True)
 
         children = Set('Post', cascade_delete=True)
-        post_parent = Optional('Post')
+        _parent = Optional('Post', column='parent')
         special = Optional(Json)
 
         def __init__(self, **kwargs):
             attachments = kwargs.pop('attachments', None) or []
-            date = kwargs.pop('date', datetime.utcnow())
-            super(Post, self).__init__(date=date, **filter_kwargs(kwargs))
+            super().__init__(**filter_kwargs(kwargs))
 
             for file, name in attachments:
                 self.add_attachment(file, name)
@@ -183,23 +182,27 @@ def load_tables(db, schema):
         def author_name(self):
             return self.author.full_name
 
+        @property
+        def post_type(self):
+            return self._type
+
     class BlogPost(Post):
         def __init__(self, **kwargs):
             _type = kwargs.pop('type', BlogPostType.COMMON).value
-            super(BlogPost, self).__init__(post_type=_type, **kwargs)
+            super().__init__(_type=_type, **kwargs)
 
         @property
         def type(self):
-            return BlogPostType(self.post_type)
+            return BlogPostType(self._type)
 
         def update_type(self, _type):
-            self.post_type = _type.value
+            self._type = _type.value
 
     class TeamPost(Post):
         def __init__(self, role='Researcher', scopus=None, order=0, **kwargs):
             _type = kwargs.pop('type', TeamPostType.TEAM).value
             special = dict(scopus=scopus, order=order, role=role)
-            super(TeamPost, self).__init__(post_type=_type, special=special, **kwargs)
+            super().__init__(_type=_type, special=special, **kwargs)
 
         @property
         def scopus(self):
@@ -224,10 +227,10 @@ def load_tables(db, schema):
 
         @property
         def type(self):
-            return TeamPostType(self.post_type)
+            return TeamPostType(self._type)
 
         def update_type(self, _type):
-            self.post_type = _type.value
+            self._type = _type.value
 
     class Meeting(Post, MeetingMixin):
         subscribers = Set('Subscription')
@@ -259,7 +262,7 @@ def load_tables(db, schema):
                 if thesis_types is not None:
                     special['thesis_types'] = [x.value for x in thesis_types]
 
-            super(Meeting, self).__init__(post_type=_type.value, post_parent=parent, special=special, **kwargs)
+            super().__init__(_type=_type.value, _parent=parent, special=special, **kwargs)
 
         @property
         def participation_types(self):
@@ -292,7 +295,7 @@ def load_tables(db, schema):
 
         @property
         def type(self):
-            return MeetingPostType(self.post_type)
+            return MeetingPostType(self._type)
 
         def update_type(self, _type):
             if self.type == MeetingPostType.MEETING:
@@ -302,7 +305,7 @@ def load_tables(db, schema):
             elif _type == MeetingPostType.MEETING:
                 raise Exception('Page can not be changed to Meeting page')
 
-            self.post_type = _type.value
+            self._type = _type.value
 
         @property
         def thesis_count(self):
@@ -334,7 +337,7 @@ def load_tables(db, schema):
 
         @property
         def meeting(self):
-            return self.post_parent or self
+            return self._parent or self
 
         def can_update_meeting(self):
             return self.type != MeetingPostType.MEETING
@@ -342,7 +345,7 @@ def load_tables(db, schema):
         def update_meeting(self, meeting):
             if not self.can_update_meeting():
                 raise Exception('Parent can not be set to MEETING type post')
-            self.post_parent = self._get_parent(meeting)
+            self._parent = self._get_parent(meeting)
 
     class Thesis(Post, MeetingMixin):
         def __init__(self, meeting, **kwargs):
@@ -354,7 +357,7 @@ def load_tables(db, schema):
             if parent.deadline < datetime.utcnow():
                 raise Exception('Deadline left')
 
-            super(Thesis, self).__init__(post_type=_type, post_parent=parent, **filter_kwargs(kwargs))
+            super().__init__(_type=_type, _parent=parent, **filter_kwargs(kwargs))
 
         @property
         def body_name(self):
@@ -362,14 +365,14 @@ def load_tables(db, schema):
 
         @property
         def type(self):
-            return ThesisPostType(self.post_type)
+            return ThesisPostType(self._type)
 
         def update_type(self, _type):
-            self.post_type = _type.value
+            self._type = _type.value
 
         @property
         def meeting(self):
-            return self.post_parent
+            return self._parent
 
     class Email(Post, MeetingMixin):
         def __init__(self, from_name=None, reply_name=None, reply_mail=None, meeting=None, **kwargs):
@@ -384,12 +387,11 @@ def load_tables(db, schema):
             else:
                 parent = None
 
-            super(Email, self).__init__(post_type=_type.value, post_parent=parent, special=special,
-                                        **filter_kwargs(kwargs))
+            super().__init__(_type=_type.value, _parent=parent, special=special, **filter_kwargs(kwargs))
 
         @property
         def meeting(self):
-            return self.post_parent
+            return self._parent
 
         def can_update_meeting(self):
             return self.type.is_meeting
@@ -398,7 +400,7 @@ def load_tables(db, schema):
             if not self.can_update_meeting():
                 raise Exception('Parent can not be set to non MEETING type Email')
 
-            self.post_parent = self._get_parent(meeting)
+            self._parent = self._get_parent(meeting)
 
         @property
         def from_name(self):
@@ -423,7 +425,7 @@ def load_tables(db, schema):
 
         @property
         def type(self):
-            return EmailPostType(self.post_type)
+            return EmailPostType(self._type)
 
         def update_type(self, _type):
             if self.type.is_meeting:
@@ -432,6 +434,6 @@ def load_tables(db, schema):
             elif _type.is_meeting:
                 raise Exception('Non meeting Emails can be changed only to non meeting Email')
 
-            self.post_type = _type.value
+            self._type = _type.value
 
     return User, Subscription, Post, BlogPost, TeamPost, Meeting, Thesis, Email, Attachment

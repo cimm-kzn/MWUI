@@ -47,8 +47,8 @@ class BlogView(View):
     def dispatch_request(self, page=1):
         q = select(x for x in Post
                    if x.classtype not in ('Thesis', 'Email')
-                   and x.post_type not in (MeetingPostType.COMMON.value, MeetingPostType.SUBMISSION.value,
-                                           MeetingPostType.REGISTRATION.value)).order_by(Post.date.desc())
+                   and x._type not in (MeetingPostType.COMMON.value, MeetingPostType.SUBMISSION.value,
+                                       MeetingPostType.REGISTRATION.value)).order_by(Post.date.desc())
         return blog_viewer(page, q, '.blog', 'News', 'list')
 
 
@@ -60,13 +60,13 @@ class AbstractsView(View):
              and then follow submission procedure.'''
 
     def dispatch_request(self, event, page=1):
-        m = Meeting.get(id=event, post_type=MeetingPostType.MEETING.value)
+        m = Meeting.get(id=event, _type=MeetingPostType.MEETING.value)
         if not m:
             return redirect(url_for('.blog'))
 
         flash(self.txt, 'warning')
 
-        q = select(x for x in Thesis if x.post_parent == m).order_by(Thesis.id.desc())
+        q = select(x for x in Thesis if x._parent == m).order_by(Thesis.id.desc())
         return blog_viewer(page, q, '.participants', m.title, 'Abstracts',
                            crumb=dict(url=url_for('.blog_post', post=event), title='Abstracts',
                                       parent='Event main page'))
@@ -95,5 +95,5 @@ class ModelsView(View):
     decorators = [db_session]
 
     def dispatch_request(self, page=1):
-        q = Post.select(lambda x: x.post_type == BlogPostType.MODEL.value).order_by(Post.id.desc())
+        q = Post.select(lambda x: x._type == BlogPostType.MODEL.value).order_by(Post.id.desc())
         return blog_viewer(page, q, '.models', 'QSPR', 'Models')

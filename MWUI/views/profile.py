@@ -146,7 +146,7 @@ class ProfileView(View):
             if active_form.validate_on_submit():
                 if active_form.type != MeetingPostType.MEETING:
                     if active_form.meeting_id.data and Meeting.exists(id=active_form.meeting_id.data,
-                                                                      post_type=MeetingPostType.MEETING.value):
+                                                                      _type=MeetingPostType.MEETING.value):
                         return redirect(url_for('.blog_post', post=add_post()))
                     active_form.meeting_id.errors = ['Bad parent']
                 else:
@@ -173,7 +173,7 @@ class ProfileView(View):
             if active_form.validate_on_submit():
                 if active_form.type.is_meeting:
                     if active_form.meeting_id.data and Meeting.exists(id=active_form.meeting_id.data,
-                                                                      post_type=MeetingPostType.MEETING.value):
+                                                                      _type=MeetingPostType.MEETING.value):
                         return redirect(url_for('.blog_post', post=add_post()))
                     active_form.meeting_id.errors = ['Bad parent']
                 else:
@@ -207,7 +207,7 @@ class ProfileView(View):
             active_form = ChangeRoleForm()
             if active_form.validate_on_submit():
                 u = User.get(email=active_form.email.data.lower())
-                u.user_role = active_form.type.value
+                u._role = active_form.type.value
                 flash('Successfully changed %s %s (%s) role' % (u.name, u.surname, u.email))
 
         else:  # admin or GTFO

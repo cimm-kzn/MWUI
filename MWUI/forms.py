@@ -48,7 +48,7 @@ class JsonValidator(object):
 class CheckMeetingExist(object):
     def __call__(self, form, field):
         with db_session:
-            if not Meeting.exists(id=field.data, post_type=MeetingPostType.MEETING.value):
+            if not Meeting.exists(id=field.data, _type=MeetingPostType.MEETING.value):
                 raise ValidationError('Bad meeting post id')
 
 

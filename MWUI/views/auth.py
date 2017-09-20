@@ -67,10 +67,9 @@ class LoginView(View):
                 with db_session:
                     mid = request.cookies.get('meeting')
                     meeting = mid and mid.isdigit() and Meeting.get(id=int(mid))
-                    m = meeting and Email.get(post_parent=meeting.meeting,
-                                              post_type=EmailPostType.MEETING_REGISTRATION.value) or \
-                        Email.select(lambda x: x.post_type == EmailPostType.REGISTRATION.value
-                                     and not x.post_parent).first()
+                    m = meeting and Email.get(_parent=meeting.meeting,
+                                              _type=EmailPostType.MEETING_REGISTRATION.value) or \
+                        Email.select(lambda x: x._type == EmailPostType.REGISTRATION.value and not x._parent).first()
 
                     u = User(email=active_form.email.data.lower(), password=active_form.password.data,
                              name=active_form.name.data, surname=active_form.surname.data,
@@ -96,7 +95,7 @@ class LoginView(View):
                 with db_session:
                     u = User.get(email=active_form.email.data.lower())
                     if u:
-                        m = select(x for x in Email if x.post_type == EmailPostType.FORGOT.value).first()
+                        m = select(x for x in Email if x._type == EmailPostType.FORGOT.value).first()
                         restore = u.gen_restore()
                         attach_files, attach_names = attach_mixin(m)
                         send_mail((m and m.body or '%s\n\nNew password: %s') % (u.full_name, restore),

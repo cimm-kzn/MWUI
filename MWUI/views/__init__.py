@@ -163,7 +163,7 @@ def remove(file, name):
 @view_bp.route('/participants/<int:event>', methods=['GET'])
 @db_session
 def participants(event):
-    m = Meeting.get(id=event, post_type=MeetingPostType.MEETING.value)
+    m = Meeting.get(id=event, _type=MeetingPostType.MEETING.value)
     if not m:
         return redirect(url_for('.blog'))
 

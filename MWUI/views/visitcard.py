@@ -36,10 +36,10 @@ class IndexView(View):
     decorators = [db_session]
 
     def dispatch_request(self):
-        c = select(x for x in BlogPost if x.post_type == BlogPostType.CAROUSEL.value
+        c = select(x for x in BlogPost if x._type == BlogPostType.CAROUSEL.value
                    and x.banner is not None).order_by(BlogPost.id.desc()).limit(BLOG_POSTS_PER_PAGE)
-        ip = select(x for x in Post if x.post_type in (BlogPostType.IMPORTANT.value,
-                                                       MeetingPostType.MEETING.value)).order_by(Post.id.desc()).limit(3)
+        ip = select(x for x in Post if x._type in (BlogPostType.IMPORTANT.value,
+                                                   MeetingPostType.MEETING.value)).order_by(Post.id.desc()).limit(3)
 
         return render_template("home.html", carousel=c, info=ip, title='Welcome to', subtitle=LAB_NAME)
 
@@ -49,10 +49,10 @@ class AboutView(View):
     decorators = [db_session]
 
     def dispatch_request(self):
-        about_us = select(x for x in BlogPost if x.post_type == BlogPostType.ABOUT.value).first()
-        chief = select(x for x in TeamPost if x.post_type == TeamPostType.CHIEF.value).order_by(lambda x:
-                                                                                                x.special['order'])
-        team = select(x for x in TeamPost if x.post_type == TeamPostType.TEAM.value).order_by(TeamPost.id.desc())
+        about_us = select(x for x in BlogPost if x._type == BlogPostType.ABOUT.value).first()
+        chief = select(x for x in TeamPost if x._type == TeamPostType.CHIEF.value).order_by(lambda x:
+                                                                                            x.special['order'])
+        team = select(x for x in TeamPost if x._type == TeamPostType.TEAM.value).order_by(TeamPost.id.desc())
         return render_template("grid.html", title='About', subtitle='Laboratory',
                                about=row(about_us.title, about_us.banner, url_for('.blog_post', post=about_us.id),
                                          about_us.body[:997] + '...' if len(about_us.body) > 1000 else about_us.body,
@@ -72,7 +72,7 @@ class StudentsView(View):
     decorators = [db_session]
 
     def dispatch_request(self):
-        studs = select(x for x in TeamPost if x.post_type == TeamPostType.STUDENT.value).order_by(TeamPost.id.desc())
+        studs = select(x for x in TeamPost if x._type == TeamPostType.STUDENT.value).order_by(TeamPost.id.desc())
         return render_template("grid.html", title='Laboratory', subtitle='students',
                                grid_small=grid(rows=((row(y.title, y.banner, url_for('.blog_post', post=y.id),
                                                           y.role, None) for y in studs[x: x + 4])
@@ -84,7 +84,7 @@ class LessonsView(View):
     decorators = [db_session]
 
     def dispatch_request(self):
-        less = select(x for x in BlogPost if x.post_type == BlogPostType.LESSON.value).order_by(BlogPost.id.desc())
+        less = select(x for x in BlogPost if x._type == BlogPostType.LESSON.value).order_by(BlogPost.id.desc())
         return render_template("grid.html", title='Master', subtitle='courses',
                                grid_small=grid(rows=((row(y.title, y.banner, url_for('.blog_post', post=y.id),
                                                           None, None) for y in less[x: x + 3])

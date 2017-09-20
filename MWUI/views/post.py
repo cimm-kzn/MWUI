@@ -80,7 +80,7 @@ class PostView(View):
         if opened_by_author and post.meeting.thesis_deadline > datetime.utcnow():
             sub = Subscription.get(user=post.author, meeting=post.meeting)
             thesis_types = post.meeting.thesis_types
-            thesis_count = Thesis.select(lambda x: x.post_parent == post.meeting and x.author == post.author).count()
+            thesis_count = Thesis.select(lambda x: x._parent == post.meeting and x.author == post.author).count()
             special_form = ThesisForm(prefix='special', obj=post, body_name=post.body_name,
                                       types=[x for x in ThesisPostType.thesis_types(sub.type, dante=thesis_count > 1)
                                              if x in thesis_types])
@@ -107,7 +107,7 @@ class PostView(View):
                 special_form = MeetForm(prefix='special', obj=sub, types=post.meeting.participation_types)
 
                 if special_form.validate_on_submit():
-                    theses = list(Thesis.select(lambda x: x.post_parent == post.meeting and
+                    theses = list(Thesis.select(lambda x: x._parent == post.meeting and
                                                 x.author == current_user.get_user()))
                     if sub:
                         if special_form.type == MeetingPartType.LISTENER and theses:
@@ -128,7 +128,7 @@ class PostView(View):
                         Subscription(current_user.get_user(), post.meeting, special_form.type)
                         flash('Welcome to meeting!')
 
-                        m = Email.get(post_parent=post.meeting, post_type=EmailPostType.MEETING_THESIS.value)
+                        m = Email.get(_parent=post.meeting, _type=EmailPostType.MEETING_THESIS.value)
                         attach_files, attach_names = attach_mixin(m)
                         send_mail((m and m.body or '%s\n\nYou registered to meeting') % current_user.full_name,
                                   current_user.email, to_name=current_user.full_name, title=m and m.title,
@@ -137,8 +137,8 @@ class PostView(View):
                                   reply_name=m and m.reply_name,
                                   attach_files=attach_files, attach_names=attach_names)
 
-                        rid = select(x.id for x in Post if x.post_parent == post.meeting and
-                                     x.post_type == MeetingPostType.SUBMISSION.value).first()
+                        rid = select(x.id for x in Post if x._parent == post.meeting and
+                                     x._type == MeetingPostType.SUBMISSION.value).first()
                         return redirect(url_for('.blog_post', post=rid))
 
             elif current_user.is_authenticated and post.type == MeetingPostType.SUBMISSION \
@@ -146,7 +146,7 @@ class PostView(View):
 
                 sub = Subscription.get(user=current_user.get_user(), meeting=post.meeting)
                 if sub and sub.type != MeetingPartType.LISTENER:
-                    thesis_count = Thesis.select(lambda x: x.post_parent == post.meeting and
+                    thesis_count = Thesis.select(lambda x: x._parent == post.meeting and
                                                  x.author == current_user.get_user()).count()
                     if thesis_count < post.meeting.thesis_count:
                         thesis_types = post.meeting.thesis_types
