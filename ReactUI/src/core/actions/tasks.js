@@ -12,8 +12,8 @@ export const deleteTask = id => ({
   type: TASKS.DELETE_TASK, id,
 });
 
-export const structureCheck = (id, check) => ({
-  type: TASKS.CHECK_TASK, id, check,
+export const structureCheck = id => ({
+  type: TASKS.CHECK_TASK, id,
 });
 
 export const deleteTasks = arrId => ({

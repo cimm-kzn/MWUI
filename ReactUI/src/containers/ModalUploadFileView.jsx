@@ -35,7 +35,15 @@ class ModalUploadFileView extends Component {
     };
   }
 
-  checkFile() {
+
+  onSubmit(data) {
+    var body = new FormData();
+    Object.keys(data).forEach(( key ) => {
+      body.append(key, data[ key ]);
+    });
+
+    console.log(body);
+
     if (this.state.file) {
       this.props.uploadFile(this.state.file);
     }
@@ -51,7 +59,9 @@ class ModalUploadFileView extends Component {
         <Modal.Header closeButton>
           <Modal.Title>Upload file</Modal.Title>
         </Modal.Header>
+        <form onSubmit={this.onSubmit.bind(this)}>
         <Modal.Body>
+
           <WrapperDropzove
             onDrop={this.onDrop.bind(this)}
             // accept="text/rdf, text/sdf, text/mrv, text/smiles"
@@ -66,9 +76,10 @@ class ModalUploadFileView extends Component {
           </WrapperDropzove>
         </Modal.Body>
         <Modal.Footer>
-          <Button onClick={ this.checkFile.bind(this)}>Upload file</Button>
+          <Button type="submit">Upload file</Button>
           <Button onClick={this.props.closeModal}>Close</Button>
         </Modal.Footer>
+        </form>
       </Modal>
     );
   }

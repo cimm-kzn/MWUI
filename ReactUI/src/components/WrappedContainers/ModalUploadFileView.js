@@ -13,7 +13,7 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = (dispatch, props) => ({
   closeModal: () => dispatch(triggerFileUploadModal()),
   uploadFile: file => dispatch(uploadFileQuery(file)).then((result) => {
-    if (result.status > 200 && result.status < 300) {
+    if (result.status >= 200 && result.status < 300) {
       props.history.push({
         pathname: URL.PREPARE,
         search: queryString.stringify({ task: result.transformed.task }),

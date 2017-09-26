@@ -66,7 +66,12 @@ const ConditionsView = ({
   const addModelType = model => modelList.filter(o => o.value === model)[0].type;
 
   const modelChange = (value) => {
-    addModel(id, value.split(',').map(obj => ({ model: Number(obj), type: addModelType(Number(obj)) })));
+    if(value != '') {
+      addModel(id, value.split(',').map(obj => ({model: Number(obj), type: addModelType(Number(obj))})));
+    }
+    else {
+      addModel(id, []);
+    }
   };
 
   const solventItemChange = (additive, value) => {

@@ -30,20 +30,20 @@ export const tasks = (state = [], action) => {
 
     case TASKS.CHECK_TASK:
       return state.map(task => (task.id === action.id ?
-        { ...task, isCheking: action.check } : task),
+        { ...task, isCheking: !task.isCheking } : task),
       );
 
     case TASKS.SELECT_ALL_TASKS:
       return state.map(task =>
-        ({ ...task, isCheking: 1 }),
+        ({ ...task, isCheking: true }),
       );
 
     case TASKS.DESELECT_ALL_TASKS:
-      return state.map(task => ({ ...task, isCheking: 0 }),
+      return state.map(task => ({ ...task, isCheking: false }),
       );
 
     case TASKS.DELETE_SELECTED_TASKS:
-      return state.filter(task => task.isCheking !== 1);
+      return state.filter(task => task.isCheking === false);
 
     case TASKS.ADD_MODEL:
       return state.map(task => (task.id === action.id ?

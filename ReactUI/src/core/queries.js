@@ -62,7 +62,7 @@ export const getTasks = () => {
 };
 
 export const deleteTasks = (arrId) => {
-  const taskId = queryString.parse(window.location.search)['/prepare/?task'];
+  const taskId = queryString.parse(window.location.hash)['/prepare/?task'];
   return {
     url: API.PREPARE_TASK + taskId,
     body: arrId.map(id => ({ structure: id, todelete: true }))[0],
@@ -74,7 +74,7 @@ export const uploadFile = file => ({
   url: API.UPLOAD_FILE,
   body: file,
   options: { credentials: 'include',
-    headers: { contentType: false,
+    headers: { contentType: 'multipart/form-data',
       cache: false },
   },
 });
