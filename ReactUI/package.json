@@ -35,8 +35,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "build": "react-scripts build && npm run build:clean",
+    "build:clean": "mv build/static/js/*.js ../MWUI/static/js/predictor.js && mv build/static/css/*.css ../MWUI/static/css/predictor.css && rm -r build/static"
   }
 }
