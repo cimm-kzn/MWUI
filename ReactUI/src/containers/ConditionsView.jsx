@@ -5,13 +5,20 @@ import Slider from 'rc-slider';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import * as temp from './conditionTemp';
-import 'react-select/dist/react-select.css';
+
 import 'rc-slider/assets/index.css';
-import '../css/PrepareTaskItem.css';
+import 'react-select/dist/react-select.css';
 
 const ErrorText = styled.span`
   display: block;
   color: red;
+`;
+
+const WrapperConditions = styled(ListGroupItem)`
+height: 85px;
+& .rc-slider-mark{
+    z-index: 0;
+}
 `;
 
 const ConditionsView = ({
@@ -128,7 +135,7 @@ const ConditionsView = ({
           />
           <ErrorText>{ modelErr ? 'Please select model(s)' : ''}</ErrorText>
         </ListGroupItem>
-        <ListGroupItem className="list-gr-item">
+        <WrapperConditions className="list-gr-item">
           <h4>Temperature:&nbsp;
             <span
               className="pointer"
@@ -143,15 +150,15 @@ const ConditionsView = ({
             value={temperature}
             onChange={temp => addTemp(id, temp)}
           />
-        </ListGroupItem>
-        <ListGroupItem className="list-gr-item">
+        </WrapperConditions>
+        <WrapperConditions className="list-gr-item">
           <h4>Pressure: {pressure} (atm)</h4>
           <Slider
             {...temp.pressSlider}
             value={pressure}
             onChange={press => addPress(id, press)}
           />
-        </ListGroupItem>
+        </WrapperConditions>
         <ListGroupItem
           header="Solvents"
         >

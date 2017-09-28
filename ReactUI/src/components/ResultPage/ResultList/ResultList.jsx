@@ -13,7 +13,7 @@ const ResultList = ({ tasks, isLoading, errorRequest, forceRequest }) => (
     {!isLoading && !errorRequest.message ? tasks.map(task =>
       (<div>
         <ResultStructureView base64={task.base64} />
-        <ResultModelsView models={task.modelsResult} />
+        <ResultModelsView task={task} />
       </div>
       )) : ''}
   </Row>

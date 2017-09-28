@@ -13,28 +13,35 @@ text-align: left;
 padding: 2px 2px;
 `;
 
-const ResultModelsView = ({ models }) => (
+const ResultModelsView = ({ task }) => task && (
   <Col md={6}>
-    {models.length ?
-      <span>
-        {models.map(model => (
-          <Panel header={model.name} bsStyle="primary">
-            {model.results.map(result => (<Row>
-              <RightCol md={4}><b>{result.key}:</b></RightCol>
-              <LeftCol md={8}><b>{result.value}</b></LeftCol>
-            </Row>))}
+    <span>
+      { task.modelsResult.map((model) => {
+        const header = `${model.name}, ${task.temperature} K, ${task.pressure} atm,  ${task.additives.map((additive, i) => `${additive.name} (${additive.amount} %)`)}`;
+        return (
+          <Panel header={header} bsStyle="primary">
+            {model.results.map(result => (
+              <Row>
+                <RightCol md={4}><b>{result.key}:</b></RightCol>
+                <LeftCol md={8}><b>{result.value}</b></LeftCol>
+              </Row>
+            ))}
           </Panel>
-        ))}
-      </span> : ''}
+        );
+      },
+      )}
+
+
+    </span>
   </Col>
 );
 
 ResultModelsView.propTypes = {
-  models: PropTypes.array,
+  models: PropTypes.object,
 };
 
 ResultModelsView.defaultProps = {
-  models: [],
+  models: null,
 };
 
 export default ResultModelsView;
