@@ -72,7 +72,8 @@ class StudentsView(View):
     decorators = [db_session]
 
     def dispatch_request(self):
-        studs = select(x for x in TeamPost if x._type == TeamPostType.STUDENT.value).order_by(TeamPost.id.desc())
+        studs = sorted(TeamPost.select(lambda x: x._type == TeamPostType.STUDENT.value),
+                       key=lambda x: x.role, reverse=True)
         return render_template("grid.html", title='Laboratory', subtitle='students',
                                grid_small=grid(rows=((row(y.title, y.banner, url_for('.blog_post', post=y.id),
                                                           y.role, None) for y in studs[x: x + 4])
