@@ -92,8 +92,17 @@ class EventsView(View):
 
 class ModelsView(View):
     methods = ['GET']
-    decorators = [db_session]
+    decorators = [db_session, login_required]
 
     def dispatch_request(self, page=1):
-        q = Post.select(lambda x: x._type == BlogPostType.MODEL.value).order_by(Post.id.desc())
+        q = Post.select(lambda x: x._type == BlogPostType.MODEL.value).order_by(Post.date.desc())
         return blog_viewer(page, q, '.models', 'QSPR', 'Models')
+
+
+class DataView(View):
+    methods = ['GET']
+    decorators = [db_session, login_required]
+
+    def dispatch_request(self, page=1):
+        q = Post.select(lambda x: x._type == BlogPostType.DATA.value).order_by(Post.id.desc())
+        return blog_viewer(page, q, '.data', 'QSPR', 'Data')

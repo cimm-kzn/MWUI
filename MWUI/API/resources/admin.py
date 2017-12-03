@@ -30,7 +30,7 @@ from ...logins import UserLogin
 from ...models import Model, Destination, Additive
 
 
-def auth_admin(f):
+def authenticate(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         auth = request.authorization
@@ -44,11 +44,11 @@ def auth_admin(f):
     return wrapper
 
 
-class AdminResource(Resource):
-    method_decorators = [db_session, auth_admin]
+class AuthResource(Resource):
+    method_decorators = [db_session, authenticate]
 
 
-class RegisterModels(AdminResource):
+class RegisterModels(AuthResource):
     def post(self):
         data = marshal(request.get_json(force=True), ModelRegisterFields.resource_fields)
         models = data if isinstance(data, list) else [data]

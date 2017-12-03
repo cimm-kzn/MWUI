@@ -86,6 +86,7 @@ class BlogPostType(Enum):
     ABOUT = 5
     LESSON = 21
     MODEL = 27
+    DATA = 28
 
 
 class TeamPostType(Enum):

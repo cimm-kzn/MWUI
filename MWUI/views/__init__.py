@@ -25,7 +25,7 @@ from flask_login import login_required, current_user
 from pony.orm import db_session, left_join
 from .admin import PostEditView, AdminPostView, AdminUserView
 from .auth import LoginView, LogoutView
-from .blog import BlogView, AbstractsView, ThesesView, EventsView, ModelsView
+from .blog import BlogView, AbstractsView, ThesesView, EventsView, ModelsView, DataView
 from .post import PostView
 from .profile import ProfileView
 from .visitcard import IndexView, AboutView, StudentsView, LessonsView
@@ -89,6 +89,10 @@ view_bp.add_url_rule('/abstracts/<int:event>/<int:page>', view_func=abstracts_vi
 models_view = ModelsView.as_view('models')
 view_bp.add_url_rule('/models', view_func=models_view)
 view_bp.add_url_rule('/models/<int:page>', view_func=models_view)
+
+data_view = DataView.as_view('data')
+view_bp.add_url_rule('/databases', view_func=data_view)
+view_bp.add_url_rule('/databases/<int:page>', view_func=data_view)
 
 
 @view_bp.errorhandler(404)

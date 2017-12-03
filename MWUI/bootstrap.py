@@ -161,11 +161,12 @@ def top_nav():
             user_menu.insert(3, View('Admin Posts', '.admin_post'))
 
         rsg = RightSubgroup(View('Search', '.search'),
-                            Subgroup('Modeling', View('Modeling', '.predictor'), Separator(),
-                                     View('Available Models', '.models'), View('History', '.results')),
+                            Subgroup('Modeling', View('Modeling', '.predictor'), View('History', '.results'),
+                                     Separator(),
+                                     View('Available Models', '.models'), View('Modeled Data', '.data')),
                             Subgroup(current_user.full_name, *user_menu))
     else:
         rsg = RightSubgroup(View('Searching', '.search'), View('Modeling', '.predictor'),
                             View('Login', '.login', next=get_redirect_target() or request.path))
 
-    return Navbar(View(LAB_SHORT, '.index'), *[lsg, rsg])
+    return Navbar(View(LAB_SHORT, '.index'), lsg, rsg)
