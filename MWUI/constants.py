@@ -196,6 +196,7 @@ class Glyph(Enum):
 
     LESSON = 'education'
     MODEL = 'education'
+    DATA = 'tasks'
 
 
 class FormRoute(Enum):
