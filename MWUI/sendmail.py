@@ -59,8 +59,8 @@ def send_mail(message, to_mail, to_name=None, from_name=None, subject=None, bann
     msg.attach(MIMEText(message, 'plain'))
     msg.attach(MIMEText(render_template('email.html',
                                         body=markdown(message, renderer=CustomMisakaRenderer(flags=0 | HTML_ESCAPE),
-                                                      tables=True, underline=True, math=True, strikethrough=True,
-                                                      superscript=True, footnotes=True, smartypants=False),
+                                                      underline=True, math=True, strikethrough=True, superscript=True,
+                                                      tables=True, footnotes=True, autolink=True),
                                         banner=banner, title=title), 'html'))
 
     if attach_files:

@@ -39,6 +39,7 @@ def init():
     from .logins import load_user
     from .models import db, User
     from .views import view_bp
+    from .vk import vk_bp
 
     if DEBUG:
         sql_debug(True)
@@ -68,8 +69,8 @@ def init():
     nav.register_element('top_nav', top_nav)
     Bootstrap(app)
 
-    Misaka(app, renderer=CustomMisakaRenderer(flags=0 | HTML_ESCAPE), tables=True,
-           underline=True, math=True, strikethrough=True, superscript=True, footnotes=True, smartypants=False)
+    Misaka(app, renderer=CustomMisakaRenderer(flags=0 | HTML_ESCAPE), tables=True, autolink=True,
+           underline=True, math=True, strikethrough=True, superscript=True, footnotes=True)
 
     login_manager = LoginManager()
     login_manager.init_app(app)
@@ -79,5 +80,6 @@ def init():
     app_url = PurePosixPath('/') / (PORTAL_NON_ROOT or '')
     app.register_blueprint(api_bp, url_prefix=(app_url / 'api').as_posix())
     app.register_blueprint(view_bp, url_prefix=app_url.as_posix() if PORTAL_NON_ROOT else None)
+    app.register_blueprint(vk_bp, url_prefix=(app_url / 'vk_api').as_posix())
 
     return app
