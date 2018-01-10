@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2016, 2017 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2016-2018 Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -21,8 +21,8 @@
 from flask import request
 from flask_restful import marshal
 from pony.orm import db_session
-from .common import (AuthResource, swagger, dynamic_docstring, additives_check, fetch_task, format_results, abort,
-                     redis, results_fetch)
+from .common import additives_check, fetch_task, format_results, abort, redis, results_fetch
+from ..common import AuthResource, swagger, dynamic_docstring
 from ..structures import TaskPostResponseFields, TaskStructureFields, TaskGetResponseFields
 from ...constants import StructureStatus, TaskStatus, ResultType
 from ...models import Model, Additive
@@ -60,7 +60,7 @@ class ModelTask(AuthResource):
         available model results response types: {0}
         """
         page = results_fetch.parse_args().get('page')
-        return format_results(task, fetch_task(task, TaskStatus.DONE, page=page)), 200
+        return format_results(task, fetch_task(task, TaskStatus.PROCESSED, page=page)), 200
 
     @swagger.operation(
         notes='Create modeling task',
@@ -131,9 +131,9 @@ class ModelTask(AuthResource):
         if not structures:
             abort(400, message='invalid structure data')
 
-        new_job = redis.new_job(structures, result['user'], result['type'], TaskStatus.MODELING)
+        new_job = redis.new_job(structures, result['user'], result['type'], TaskStatus.PROCESSING)
         if new_job is None:
             abort(500, message='modeling server error')
 
-        return dict(task=new_job['id'], status=TaskStatus.MODELING.value, type=result['type'].value,
+        return dict(task=new_job['id'], status=TaskStatus.PROCESSING.value, type=result['type'].value,
                     date=new_job['created_at'].strftime("%Y-%m-%d %H:%M:%S"), user=result['user']), 201

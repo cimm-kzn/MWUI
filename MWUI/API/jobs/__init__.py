@@ -18,7 +18,9 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-
-
-def version():
-    return '2.5.0'
+from .create import UploadTask, CreateTask
+from .deploy import RegisterModels
+from .meta import ExampleView, AvailableModels, BatchDownload
+from .model import ModelTask
+from .prepare import PrepareTask
+from .save import ResultsTask

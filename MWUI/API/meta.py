@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2016, 2017 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2016-2018 Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -18,38 +18,19 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
+from flask import request
+from flask_login import login_user
+from flask_restful import Resource
 from pony.orm import db_session
 from .common import AuthResource, swagger, dynamic_docstring
-from ..structures import ModelListFields, AdditivesListFields
-from ...constants import AdditiveType, ModelType, TaskType, TaskStatus, StructureType, StructureStatus, ResultType
-from ...models import Model, Additive
+from .structures import AdditivesListFields, LogInFields
+from ..constants import AdditiveType, ModelType, TaskType, TaskStatus, StructureType, StructureStatus, ResultType
+from ..logins import UserLogin
+from ..models import Additive
 
 
 additives_types_desc = ', '.join('{0.value} - {0.name}'.format(x) for x in AdditiveType)
 models_types_desc = ', '.join('{0.value} - {0.name}'.format(x) for x in ModelType)
-
-
-class AvailableModels(AuthResource):
-    @swagger.operation(
-        notes='Get available models',
-        nickname='modellist',
-        responseClass=ModelListFields.__name__,
-        responseMessages=[dict(code=200, message="models list"), dict(code=401, message="user not authenticated")])
-    @dynamic_docstring(models_types_desc)
-    def get(self):
-        """
-        Get available models list
-
-        response format:
-        example - chemical structure in in smiles or marvin or cml format
-        description - description of model. in markdown format.
-        name - model name
-        type - model type: {0}
-        model - id
-        """
-        with db_session:
-            models = list(Model.get_models_dict(skip_destinations=True, skip_example=False, raw=True).values())
-        return models, 200
 
 
 class AvailableAdditives(AuthResource):
@@ -97,3 +78,31 @@ class MagicNumbers(AuthResource):
     @staticmethod
     def __to_dict(enum):
         return {x.name: x.value for x in enum}
+
+
+class LogIn(Resource):
+    @swagger.operation(
+        notes='App login',
+        nickname='login',
+        parameters=[dict(name='credentials', description='User credentials', required=True,
+                         allowMultiple=False, dataType=LogInFields.__name__, paramType='body')],
+        responseMessages=[dict(code=200, message="logged in"),
+                          dict(code=400, message="invalid data"),
+                          dict(code=403, message="bad credentials")])
+    def post(self):
+        """
+        Get auth token
+
+        Token returned in headers as remember_token.
+        for use task api send in requests headers Cookie: 'remember_token=_token_'
+        """
+        data = request.get_json(force=True)
+        if data:
+            username = data.get('user')
+            password = data.get('password')
+            if username and password:
+                user = UserLogin.get(username.lower(), password)
+                if user:
+                    login_user(user, remember=True)
+                    return dict(message='logged in'), 200
+        return dict(message='bad credentials'), 403

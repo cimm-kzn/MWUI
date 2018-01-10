@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2016, 2017 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2016-2018 Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -23,7 +23,8 @@ from flask import request, Response
 from flask_restful import marshal, Resource
 from pony.orm import db_session, flush
 from time import sleep
-from .common import abort, redis
+from .common import redis
+from ..common import abort
 from ..structures import ModelRegisterFields
 from ...constants import StructureStatus, TaskStatus, UserRole, TaskType, AdditiveType
 from ...logins import UserLogin

@@ -50,5 +50,5 @@ class AddStructure(AuthResource):
         pass
 
     def post(self, task):
-        result, ended_at = fetch_task(task, TaskStatus.DONE)
+        result, ended_at = fetch_task(task, TaskStatus.PROCESSED)
 

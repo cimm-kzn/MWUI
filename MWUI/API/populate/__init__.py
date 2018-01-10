@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2017, 2018 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2018 Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -19,6 +19,3 @@
 #  MA 02110-1301, USA.
 #
 
-
-def version():
-    return '2.5.0'

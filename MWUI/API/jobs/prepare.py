@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2016, 2017 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2016-2018 Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -21,8 +21,8 @@
 from flask import request
 from flask_restful import marshal
 from pony.orm import db_session
-from .common import (AuthResource, swagger, dynamic_docstring, additives_check, fetch_task, format_results, abort,
-                     redis, results_fetch)
+from .common import additives_check, fetch_task, format_results, abort, redis, results_fetch
+from ..common import AuthResource, swagger, dynamic_docstring
 from ..structures import TaskPostResponseFields, TaskStructureFields, TaskGetResponseFields
 from ...constants import StructureStatus, TaskStatus, ModelType, ResultType, StructureType
 from ...models import Model, Additive

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2016, 2017 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2016-2018 Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -27,7 +27,8 @@ from typing import Dict, Tuple
 from uuid import uuid4
 from validators import url
 from werkzeug import datastructures
-from .common import abort, swagger, dynamic_docstring, AuthResource, redis, additives_check
+from .common import redis, additives_check
+from ..common import abort, swagger, dynamic_docstring, AuthResource
 from ..structures import TaskPostResponseFields, TaskStructureFields
 from ...config import UPLOAD_ROOT
 from ...constants import StructureStatus, TaskStatus, TaskType, AdditiveType

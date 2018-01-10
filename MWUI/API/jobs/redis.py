@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2016 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2016-2018 Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -24,15 +24,14 @@ from pickle import dumps, loads
 from redis import Redis, ConnectionError
 from rq import Queue
 from uuid import uuid4
-from ..constants import TaskStatus, StructureStatus, ModelType, TaskType, ResultType
-from ..config import RESULTS_PER_PAGE
+from ...constants import TaskStatus, StructureStatus, ModelType, TaskType, ResultType
 
 
 class RedisCombiner(object):
-    def __init__(self, host='localhost', port=6379, password=None, result_ttl=86400, job_timeout=3600):
+    def __init__(self, host='localhost', port=6379, password=None, result_ttl=86400, job_timeout=3600, chunks=50):
         self.__result_ttl = result_ttl
         self.__job_timeout = job_timeout
-
+        self.__chunks = chunks
         self.__tasks = Redis(host=host, port=port, password=password)
 
     def __new_worker(self, destinations):
@@ -88,7 +87,7 @@ class RedisCombiner(object):
 
         for s in structures:
             # check for models in structures
-            if status == TaskStatus.MODELING:
+            if status == TaskStatus.PROCESSING:
                 if s['status'] != StructureStatus.CLEAR:  # modeling task. accept only clear structures.
                     continue
                 models = [x for x in s['models'] if x['type'] != ModelType.PREPARER]
@@ -127,15 +126,15 @@ class RedisCombiner(object):
                     for ((dest, w), m), s in ((model_worker[m], s) for m, s in model_struct.items())]
 
             tmp = {}
-            for x in range(0, len(unused_structures), RESULTS_PER_PAGE):  # store structures in chunks.
+            for x in range(0, len(unused_structures), self.__chunks):  # store structures in chunks.
                 _id = str(uuid4())
-                chunk = {s['structure']: s for s in unused_structures[x: x + RESULTS_PER_PAGE]}
+                chunk = {s['structure']: s for s in unused_structures[x: x + self.__chunks]}
                 self.__tasks.set(_id, dumps(chunk), ex=self.__result_ttl)
                 for s in chunk:
                     tmp[s] = _id
 
             job = dict(structures=tmp, jobs=jobs, user=user, type=_type,
-                       status=TaskStatus.DONE if status == TaskStatus.MODELING else TaskStatus.PREPARED)
+                       status=TaskStatus.PROCESSED if status == TaskStatus.PROCESSING else TaskStatus.PREPARED)
 
             _id = str(uuid4())
             now = datetime.utcnow()
@@ -175,7 +174,7 @@ class RedisCombiner(object):
             for s_id, _id in result['structures'].items():
                 chunks[_id].append(s_id)
 
-            partial_chunk = next((k for k, v in chunks.items() if len(v) < RESULTS_PER_PAGE), None)
+            partial_chunk = next((k for k, v in chunks.items() if len(v) < self.__chunks), None)
 
             for j, model in sub_jobs_fin:
                 for s in j.result:
@@ -197,7 +196,7 @@ class RedisCombiner(object):
                         ch[s_id] = s
                         result['structures'][s_id] = partial_chunk
 
-                        if len(ch) == RESULTS_PER_PAGE:
+                        if len(ch) == self.__chunks:
                             partial_chunk = None
 
                 j.delete()

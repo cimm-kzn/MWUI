@@ -18,26 +18,22 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-from flask import Blueprint, send_from_directory, redirect, url_for
-from flask_login import current_user
+from flask import Blueprint
 from flask_restful import Api
 from importlib.util import find_spec
-from pony.orm import db_session
-from .resources import (CreateTask, UploadTask, PrepareTask, ModelTask, ResultsTask, AvailableAdditives, LogIn,
-                        AvailableModels, RegisterModels, MagicNumbers)
-from .resources.common import redis, abort
-from ..config import UPLOAD_PATH, SWAGGER
-from ..constants import TaskType, ModelType
-from ..models import Model
+from .jobs import (CreateTask, UploadTask, PrepareTask, ModelTask, ResultsTask, AvailableModels, RegisterModels,
+                   ExampleView, BatchDownload)
+from .meta import AvailableAdditives, MagicNumbers, LogIn
+from ..config import SWAGGER
+
 
 api_bp = Blueprint('api', __name__)
+api = Api(api_bp)
 
 if SWAGGER and find_spec('flask_restful_swagger'):
     from flask_restful_swagger import swagger
 
-    api = swagger.docs(Api(api_bp), apiVersion='1.0', description='MWUI API', api_spec_url='/doc/spec')
-else:
-    api = Api(api_bp)
+    api = swagger.docs(api, apiVersion='2.0', description='MWUI API', api_spec_url='/doc/spec')
 
 
 api.add_resource(CreateTask, '/task/create/<int:_type>')
@@ -51,27 +47,5 @@ api.add_resource(MagicNumbers, '/resources/magic')
 api.add_resource(RegisterModels, '/admin/models')
 api.add_resource(LogIn, '/auth')
 
-
-@api_bp.route('/task/batch_file/<string:file>', methods=['GET'])
-def batch_file(file):
-    return send_from_directory(directory=UPLOAD_PATH, filename=file)
-
-
-@api_bp.route('/example/<int:_id>', methods=['GET'])
-@db_session
-def example(_id):
-    """
-    Get example task
-    """
-    m = Model.get(id=_id)
-
-    if not m or m.type == ModelType.PREPARER:
-        return redirect(url_for('.index'))
-
-    _type = TaskType.SEARCHING if TaskType.SEARCHING.name in m.type.name else TaskType.MODELING
-    new_job = redis.new_job([m.example], current_user.id, _type)
-
-    if new_job is None:
-        abort(500)
-
-    return redirect(url_for('view.predictor') + '#/prepare/?task=%s' % new_job['id'])
+api_bp.add_url_rule('/task/batch_file/<string:file>', view_func=BatchDownload.as_view('batch_file'))
+api_bp.add_url_rule('/example/<int:_id>', view_func=ExampleView.as_view('example'))

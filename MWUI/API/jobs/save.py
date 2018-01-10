@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2016, 2017 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2016-2018 Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -20,7 +20,8 @@
 #
 from flask_login import current_user
 from pony.orm import db_session
-from .common import AuthResource, swagger, fetch_task, abort, results_fetch
+from .common import fetch_task, abort, results_fetch
+from ..common import AuthResource, swagger
 from ..structures import TaskPostResponseFields, TaskGetResponseFields
 from ...config import RESULTS_PER_PAGE
 from ...constants import TaskType, TaskStatus
@@ -66,7 +67,7 @@ class ResultsTask(AuthResource):
             if page:
                 structures = structures[RESULTS_PER_PAGE * (page - 1): RESULTS_PER_PAGE * page]
 
-        return dict(task=task, status=TaskStatus.DONE.value, date=result.date.strftime("%Y-%m-%d %H:%M:%S"),
+        return dict(task=task, status=TaskStatus.PROCESSED.value, date=result.date.strftime("%Y-%m-%d %H:%M:%S"),
                     type=result._type, user=result.user.id, structures=structures), 200
 
     @swagger.operation(
@@ -90,12 +91,12 @@ class ResultsTask(AuthResource):
         only modeled tasks can be saved.
         failed models in structures skipped.
         """
-        result, ended_at = fetch_task(task, TaskStatus.DONE)
+        result, ended_at = fetch_task(task, TaskStatus.PROCESSED)
         if result['type'] == TaskType.SEARCHING:
             abort(406, message='task type is invalid. only modeling tasks acceptable')
 
         with db_session:
             _task = Task(result['structures'], type=result['type'], date=ended_at, user=User[current_user.id])
 
-        return dict(task=_task.id, status=TaskStatus.DONE.value, date=ended_at.strftime("%Y-%m-%d %H:%M:%S"),
+        return dict(task=_task.id, status=TaskStatus.PROCESSED.value, date=ended_at.strftime("%Y-%m-%d %H:%M:%S"),
                     type=result['type'].value, user=current_user.id), 201
