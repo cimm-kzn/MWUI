@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2017 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2017, 2018 Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -19,10 +19,12 @@
 #  MA 02110-1301, USA.
 #
 from datetime import datetime
+from flask_restful import marshal
 from pony.orm import PrimaryKey, Required, Optional, Set, Json
+from .utils import filter_kwargs
+from ..API.structures import TaskStructureResponseFields, TaskStructureFields
 from ..config import DEBUG
-from ..constants import TaskType, ResultType, StructureType, StructureStatus, ModelType, AdditiveType
-from ..utils import filter_kwargs, jsonify_structures
+from ..constants import TaskType, StructureType, StructureStatus, ModelType, AdditiveType
 
 
 def load_tables(db, schema):
@@ -38,7 +40,7 @@ def load_tables(db, schema):
         def __init__(self, example, **kwargs):
             _type = kwargs.pop('type', ModelType.MOLECULE_MODELING).value
             tmp = dict(data=example['data'], pressure=example['pressure'], temperature=example['temperature'],
-                       type=example['type'].value,
+                       type=example['type'].value, description=example['description'],
                        additives=[dict(name=x['name'], amount=x['amount']) for x in example['additives']])
             super().__init__(_type=_type, _example=tmp, **filter_kwargs(kwargs))
 
@@ -50,41 +52,37 @@ def load_tables(db, schema):
         def example(self):
             return self._get_example()
 
-        def _get_example(self, skip_models=False, raw=False):
-            additives = {a.name: dict(additive=a.id, name=a.name, structure=a.structure,
-                                      type=a._type if raw else a.type) for a in Additive.select()}
-            tmp = self._example.copy()
+        def _get_example(self, skip_models=False):
+            additives = Additive.get_additives_dict('name')
+            example = self._example.copy()
+
             alist = []
-            for a in tmp['additives']:
+            for a in example['additives']:
                 ai = a['name']
                 if ai in additives:
                     alist.append(dict(amount=a['amount'], **additives[ai]))
 
-            if raw:
-                tmp.update(type=tmp['type'], status=StructureStatus.CLEAR.value)
-            else:
-                tmp.update(type=StructureType(tmp['type']), status=StructureStatus.CLEAR)
+            models = [dict(type=self.type, model=self.id, name=self.name,
+                           destinations=self.destinations)] if not skip_models else []
 
-            tmp.update(structure=1, additives=alist,
-                       models=[dict(type=self._type if raw else self.type, model=self.id, name=self.name,
-                                    destinations=self.destinations)] if not skip_models else [])
-            return tmp
+            example.update(models=models, type=StructureType(example['type']), status=StructureStatus.CLEAR,
+                           structure=1, additives=alist)
+            return example
 
         @classmethod
-        def get_models_dict(cls, skip_prep=True, skip_destinations=False, skip_example=True, raw=False):
+        def get_models_dict(cls, skip_prep=True, skip_destinations=False, skip_example=True):
             res = {}
             for m in cls.select(lambda x: x._type != ModelType.PREPARER.value) if skip_prep else cls.select():
-                res[m.id] = tmp = dict(model=m.id, name=m.name, description=m.description,
-                                       type=m._type if raw else m.type)
+                res[m.id] = tmp = dict(model=m.id, name=m.name, description=m.description, type=m.type)
                 if not skip_destinations:
                     tmp['destinations'] = m.destinations
                 if not skip_example:
-                    tmp['example'] = m._get_example(skip_models=True, raw=raw)
+                    tmp['example'] = m._get_example(skip_models=True)
             return res
 
         @classmethod
-        def get_preparer_model(cls, raw=False):
-            return next(dict(model=m.id, name=m.name, description=m.description, type=m._type if raw else m.type,
+        def get_preparer_model(cls):
+            return next(dict(model=m.id, name=m.name, description=m.description, type=m.type,
                              destinations=m.destinations)
                         for m in cls.select(lambda x: x._type == ModelType.PREPARER.value))
 
@@ -120,9 +118,8 @@ def load_tables(db, schema):
             return AdditiveType(self._type)
 
         @classmethod
-        def get_additives_dict(cls, key='id', raw=False):
-            return {getattr(a, key): dict(additive=a.id, name=a.name, structure=a.structure,
-                                          type=a._type if raw else a.type)
+        def get_additives_dict(cls, key='id'):
+            return {getattr(a, key): dict(additive=a.id, name=a.name, structure=a.structure, type=a.type)
                     for a in cls.select()}
 
     class Task(db.Entity):
@@ -135,27 +132,14 @@ def load_tables(db, schema):
 
         def __init__(self, structures, **kwargs):
             _type = kwargs.pop('type', TaskType.MODELING).value
-            super().__init__(_type=_type, _data=jsonify_structures(structures), **kwargs)
+            structures = marshal(structures, TaskStructureResponseFields.resource_fields)
+            super().__init__(_type=_type, _data=structures, **kwargs)
 
         @property
         def type(self):
             return TaskType(self._type)
 
-        def get_data(self, raw=False):
-            if not raw:
-                out = []
-                for s in self._data:
-                    out.append(dict(status=StructureStatus(s['status']), type=StructureType(s['type']),
-                                    structure=s['structure'],
-                                    data=s['data'], pressure=s['pressure'], temperature=s['temperature'],
-                                    additives=[dict(additive=a['additive'], name=a['name'], structure=a['structure'],
-                                                    type=AdditiveType(a['type']), amount=a['amount'])
-                                               for a in s['additives']],
-                                    models=[dict(type=ModelType(m['type']), model=m['model'], name=m['name'],
-                                                 results=[dict(type=ResultType(r['type']), key=r['key'],
-                                                               value=r['value'])
-                                                          for r in m['results']]) for m in s['models']]))
-                return out
-            return self._data
+        def get_data(self):
+            return marshal(self._data, TaskStructureFields.resource_fields)
 
     return Task, Model, Destination, Additive

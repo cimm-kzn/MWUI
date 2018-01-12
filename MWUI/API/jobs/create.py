@@ -18,20 +18,20 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-from flask import url_for, request
+from flask import url_for
 from flask_login import current_user
-from flask_restful import reqparse, marshal
+from flask_restful import reqparse, marshal_with
+from flask_restful.inputs import url
 from pathlib import Path
 from pony.orm import db_session
 from typing import Dict, Tuple
 from uuid import uuid4
-from validators import url
-from werkzeug import datastructures
-from .common import redis, additives_check
+from werkzeug.datastructures import FileStorage
+from .common import redis, additives_check, request_json_parser, request_arguments_parser
 from ..common import abort, swagger, dynamic_docstring, AuthResource
 from ..structures import TaskPostResponseFields, TaskStructureFields
 from ...config import UPLOAD_ROOT
-from ...constants import StructureStatus, TaskStatus, TaskType, AdditiveType
+from ...constants import StructureStatus, TaskStatus, TaskType, AdditiveType, StructureType
 from ...models import Model, Additive
 
 
@@ -52,8 +52,10 @@ class CreateTask(AuthResource):
                           dict(code=401, message="user not authenticated"),
                           dict(code=403, message="invalid task type"),
                           dict(code=500, message="modeling server error")])
+    @marshal_with(TaskPostResponseFields.resource_fields)
+    @request_json_parser(TaskStructureFields.resource_fields)
     @dynamic_docstring(AdditiveType.SOLVENT, TaskStatus.PREPARING, TaskType.MODELING, TaskType.SEARCHING)
-    def post(self, _type):
+    def post(self, _type, data):
         """
         Create new task
 
@@ -79,8 +81,11 @@ class CreateTask(AuthResource):
         except ValueError:
             abort(403, message='invalid task type [%s]. valid values are %s' % (_type, task_types_desc))
 
-        data = marshal(request.get_json(force=True), TaskStructureFields.resource_fields)
-        data = [data] if not isinstance(data, list) else data if _type == TaskType.MODELING else data[:1]
+        if not isinstance(data, list):
+            data = [data]
+        if _type != TaskType.MODELING:
+            data = data[:1]
+
         with db_session:
             additives = Additive.get_additives_dict()
             preparer = Model.get_preparer_model()
@@ -88,10 +93,9 @@ class CreateTask(AuthResource):
         structures = []
         for s, d in enumerate(data, start=1):
             if d['data']:
-                structures.append(dict(structure=s, data=d['data'], pressure=d['pressure'],
-                                       temperature=d['temperature'],
-                                       additives=additives_check(d['additives'], additives),
-                                       models=[preparer.copy()], status=StructureStatus.RAW))
+                d.update(structure=s, additives=additives_check(d['additives'], additives),
+                         models=[preparer.copy()], status=StructureStatus.RAW, type=StructureType.UNDEFINED)
+                structures.append(d)
 
         if not structures:
             abort(400, message='invalid structure data')
@@ -101,14 +105,14 @@ class CreateTask(AuthResource):
         if new_job is None:
             abort(500, message='modeling server error')
 
-        return dict(task=new_job['id'], status=TaskStatus.PREPARING.value, type=_type.value,
-                    date=new_job['created_at'].strftime("%Y-%m-%d %H:%M:%S"), user=current_user.id), 201
+        return dict(task=new_job['id'], status=TaskStatus.PREPARING, type=_type, date=new_job['created_at'],
+                    user=current_user), 201
 
 
 uf_post = reqparse.RequestParser()
-uf_post.add_argument('file.url', type=str)
-uf_post.add_argument('file.path', type=str)
-uf_post.add_argument('structures', type=datastructures.FileStorage, location='files')
+uf_post.add_argument('file.url', type=url, dest='file_url')
+uf_post.add_argument('file.path', type=str, dest='file_path')
+uf_post.add_argument('structures', type=FileStorage, location='files')
 
 
 class UploadTask(AuthResource):
@@ -123,7 +127,9 @@ class UploadTask(AuthResource):
                           dict(code=400, message="structure file required"),
                           dict(code=403, message="invalid task type"),
                           dict(code=500, message="modeling server error")])
-    def post(self) -> Tuple[Dict, int]:
+    @marshal_with(TaskPostResponseFields.resource_fields)
+    @request_arguments_parser(uf_post)
+    def post(self, structures=None, file_url=None, file_path=None) -> Tuple[Dict, int]:
         """
         Structures file upload
 
@@ -159,24 +165,18 @@ class UploadTask(AuthResource):
 
         see task/create doc about acceptable conditions values and additives types and response structure.
         """
-
-        args = uf_post.parse_args()
-
-        file_url = None
-        if args['file.url']:  # smart frontend
-            if url(args['file.url']):
-                file_url = args['file.url']
-        elif args['file.path']:  # NGINX upload
-            file_name = Path(args['file.path']).name
-            if (UPLOAD_ROOT / file_name).exists():
+        if file_url is None:  # smart frontend
+            if file_path:  # NGINX upload
+                file_name = Path(file_path).name
+                if (UPLOAD_ROOT / file_name).exists():
+                    file_url = url_for('.batch_file', file=file_name, _external=True)
+            elif structures:  # flask
+                file_name = str(uuid4())
+                structures.save((UPLOAD_ROOT / file_name).as_posix())
                 file_url = url_for('.batch_file', file=file_name, _external=True)
-        elif args['structures']:  # flask
-            file_name = str(uuid4())
-            args['structures'].save((UPLOAD_ROOT / file_name).as_posix())
-            file_url = url_for('.batch_file', file=file_name, _external=True)
 
-        if file_url is None:
-            abort(400, message='structure file required')
+            if file_url is None:
+                abort(400, message='structure file required')
 
         with db_session:
             preparer = Model.get_preparer_model()
@@ -185,5 +185,5 @@ class UploadTask(AuthResource):
         if new_job is None:
             abort(500, message='modeling server error')
 
-        return dict(task=new_job['id'], status=TaskStatus.PREPARING.value, type=TaskType.MODELING.value,
-                    date=new_job['created_at'].strftime("%Y-%m-%d %H:%M:%S"), user=current_user.id), 201
+        return dict(task=new_job['id'], status=TaskStatus.PREPARING, type=TaskType.MODELING, date=new_job['created_at'],
+                    user=current_user), 201

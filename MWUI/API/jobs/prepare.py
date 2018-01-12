@@ -18,12 +18,13 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-from flask import request
-from flask_restful import marshal
+from flask_login import current_user
+from flask_restful import marshal_with
 from pony.orm import db_session
-from .common import additives_check, fetch_task, format_results, abort, redis, results_fetch
+from .common import (additives_check, fetch_task, abort, redis, results_fetch, request_arguments_parser,
+                     request_json_parser)
 from ..common import AuthResource, swagger, dynamic_docstring
-from ..structures import TaskPostResponseFields, TaskStructureFields, TaskGetResponseFields
+from ..structures import TaskPostResponseFields, TaskStructureUpdateFields, TaskGetResponseFields
 from ...constants import StructureStatus, TaskStatus, ModelType, ResultType, StructureType
 from ...models import Model, Additive
 
@@ -44,9 +45,12 @@ class PrepareTask(AuthResource):
                           dict(code=406, message='task status is invalid. only validation tasks acceptable'),
                           dict(code=500, message="modeling server error"),
                           dict(code=512, message='task not ready')])
+    @marshal_with(TaskGetResponseFields.resource_fields)
+    @request_arguments_parser(results_fetch)
+    @fetch_task(TaskStatus.PREPARED)
     @dynamic_docstring(ModelType.PREPARER, StructureStatus.CLEAR, StructureStatus.RAW, StructureStatus.HAS_ERROR,
                        ResultType.TEXT, StructureType.REACTION, StructureType.MOLECULE)
-    def get(self, task):
+    def get(self, task, job, ended_at):
         """
         Task with validated structure and conditions data
 
@@ -69,8 +73,8 @@ class PrepareTask(AuthResource):
         type: data type = {4.value} [{4.name}] - plain text information
         value: string - body
         """
-        page = results_fetch.parse_args().get('page')
-        return format_results(task, fetch_task(task, TaskStatus.PREPARED, page=page)), 200
+        return dict(task=task, date=ended_at, status=job['status'], type=job['type'], user=current_user,
+                    structures=job['structures']), 200
 
     @swagger.operation(
         notes='Create revalidation task',
@@ -79,7 +83,8 @@ class PrepareTask(AuthResource):
         parameters=[dict(name='task', description='Task ID', required=True,
                          allowMultiple=False, dataType='str', paramType='path'),
                     dict(name='structures', description='Structure[s] of molecule or reaction with optional conditions',
-                         required=True, allowMultiple=False, dataType=TaskStructureFields.__name__, paramType='body')],
+                         required=True, allowMultiple=False, dataType=TaskStructureUpdateFields.__name__,
+                         paramType='body')],
         responseMessages=[dict(code=201, message="revalidation task created"),
                           dict(code=400, message="invalid structure data"),
                           dict(code=401, message="user not authenticated"),
@@ -88,9 +93,12 @@ class PrepareTask(AuthResource):
                           dict(code=406, message='task status is invalid. only validation tasks acceptable'),
                           dict(code=500, message="modeling server error"),
                           dict(code=512, message='task not ready')])
+    @marshal_with(TaskPostResponseFields.resource_fields)
+    @fetch_task(TaskStatus.PREPARED)
+    @request_json_parser(TaskStructureUpdateFields.resource_fields)
     @dynamic_docstring(StructureStatus.CLEAR, StructureType.REACTION, ModelType.REACTION_MODELING,
                        StructureType.MOLECULE, ModelType.MOLECULE_MODELING, StructureStatus.HAS_ERROR)
-    def post(self, task):
+    def post(self, task, data, job, ended_at):
         """
         Revalidate task structures and conditions
 
@@ -118,10 +126,8 @@ class PrepareTask(AuthResource):
 
         see also task/create doc.
         """
-        data = marshal(request.get_json(force=True), TaskStructureFields.resource_fields)
-        result = fetch_task(task, TaskStatus.PREPARED)[0]
-        prepared = {s['structure']: s for s in result['structures']}
-        tmp = {x['structure']: x for x in (data if isinstance(data, list) else [data])}
+        prepared = {s['structure']: s for s in job['structures']}
+        tmp = {x['structure']: x for x in data} if isinstance(data, list) else {data['structure']: data}
 
         if 0 in tmp:
             abort(400, message='invalid structure data')
@@ -145,12 +151,12 @@ class PrepareTask(AuthResource):
 
                 if d['data']:
                     ps['data'], ps['status'], ps['models'] = d['data'], StructureStatus.RAW, [preparer.copy()]
-                elif s['status'] == StructureStatus.RAW:  # renew preparer model.
+                elif ps['status'] == StructureStatus.RAW:  # renew preparer model.
                     ps['models'] = [preparer.copy()]
                 elif ps['status'] == StructureStatus.CLEAR:
                     if d['models'] is not None:
                         ps['models'] = [models[m['model']].copy() for m in d['models'] if m['model'] in models and
-                                        models[m['model']]['type'].compatible(ps['type'], result['type'])]
+                                        models[m['model']]['type'].compatible(ps['type'], job['type'])]
                     else:  # recheck models for existing
                         ps['models'] = [models[m['model']].copy() for m in ps['models'] if m['model'] in models
                                         if m['type'] != ModelType.PREPARER]
@@ -166,17 +172,17 @@ class PrepareTask(AuthResource):
                 if d['pressure']:
                     ps['pressure'] = d['pressure']
 
+                if d['description']:
+                    ps['description'] = d['description']
+
             structures.append(ps)
 
         if not structures:
             abort(400, message='invalid structure data')
 
-        new_job = redis.new_job(structures, result['user'], result['type'], TaskStatus.PREPARING)
+        new_job = redis.new_job(structures, job['user'], job['type'], TaskStatus.PREPARING)
         if new_job is None:
             abort(500, message='modeling server error')
 
-        return dict(task=new_job['id'], status=TaskStatus.PREPARING.value, type=result['type'].value,
-                    date=new_job['created_at'].strftime("%Y-%m-%d %H:%M:%S"), user=result['user']), 201
-
-
-
+        return dict(task=new_job['id'], status=TaskStatus.PREPARING, type=job['type'], date=new_job['created_at'],
+                    user=current_user), 201

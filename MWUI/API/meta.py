@@ -20,7 +20,7 @@
 #
 from flask import request
 from flask_login import login_user
-from flask_restful import Resource
+from flask_restful import Resource, marshal_with
 from pony.orm import db_session
 from .common import AuthResource, swagger, dynamic_docstring
 from .structures import AdditivesListFields, LogInFields
@@ -39,6 +39,7 @@ class AvailableAdditives(AuthResource):
         nickname='additives',
         responseClass=AdditivesListFields.__name__,
         responseMessages=[dict(code=200, message="additives list"), dict(code=401, message="user not authenticated")])
+    @marshal_with(AdditivesListFields.resource_fields)
     @dynamic_docstring(additives_types_desc)
     def get(self):
         """
@@ -50,10 +51,8 @@ class AvailableAdditives(AuthResource):
         structure - chemical structure in smiles or marvin or cml format
         type - additive type: {0}
         """
-        out = []
         with db_session:
-            for x in Additive.get_additives_dict(raw=True).values():
-                out.append(x)
+            out = list(Additive.get_additives_dict().values())
         return out, 200
 
 

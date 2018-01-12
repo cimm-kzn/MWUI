@@ -19,8 +19,9 @@
 #  MA 02110-1301, USA.
 #
 from flask_login import current_user
+from flask_restful import marshal_with
 from pony.orm import db_session
-from .common import fetch_task, abort, results_fetch
+from .common import fetch_task, abort, results_fetch, request_arguments_parser
 from ..common import AuthResource, swagger
 from ..structures import TaskPostResponseFields, TaskGetResponseFields
 from ...config import RESULTS_PER_PAGE
@@ -42,7 +43,8 @@ class ResultsTask(AuthResource):
                           dict(code=403, message='user access deny. you do not have permission to this task'),
                           dict(code=404, message='invalid task id. perhaps this task has already been removed'),
                           dict(code=406, message='task status is invalid. only validation tasks acceptable')])
-    def get(self, task):
+    @request_arguments_parser(results_fetch)
+    def get(self, task, page=None):
         """
         Task with modeling results of structures with conditions
 
@@ -54,7 +56,6 @@ class ResultsTask(AuthResource):
         except ValueError:
             abort(404, message='invalid task id. Use int Luke')
 
-        page = results_fetch.parse_args().get('page')
         with db_session:
             result = Task.get(id=task)
             if not result:
@@ -63,7 +64,7 @@ class ResultsTask(AuthResource):
             if result.user.id != current_user.id:
                 abort(403, message='User access deny. You do not have permission to this task')
 
-            structures = result.get_data(raw=True)
+            structures = result.get_data()
             if page:
                 structures = structures[RESULTS_PER_PAGE * (page - 1): RESULTS_PER_PAGE * page]
 
@@ -84,19 +85,19 @@ class ResultsTask(AuthResource):
                           dict(code=406, message='task type is invalid. only modeling tasks acceptable'),
                           dict(code=500, message="modeling server error"),
                           dict(code=512, message='task not ready')])
-    def post(self, task):
+    @marshal_with(TaskPostResponseFields.resource_fields)
+    @fetch_task(TaskStatus.PROCESSED)
+    def post(self, task, job, ended_at):
         """
         Store in database modeled task
 
         only modeled tasks can be saved.
         failed models in structures skipped.
         """
-        result, ended_at = fetch_task(task, TaskStatus.PROCESSED)
-        if result['type'] == TaskType.SEARCHING:
+        if job['type'] == TaskType.SEARCHING:
             abort(406, message='task type is invalid. only modeling tasks acceptable')
 
         with db_session:
-            _task = Task(result['structures'], type=result['type'], date=ended_at, user=User[current_user.id])
+            _task = Task(job['structures'], type=job['type'], date=ended_at, user=User[current_user.id])
 
-        return dict(task=_task.id, status=TaskStatus.PROCESSED.value, date=ended_at.strftime("%Y-%m-%d %H:%M:%S"),
-                    type=result['type'].value, user=current_user.id), 201
+        return dict(task=_task.id, status=TaskStatus.PROCESSED, date=ended_at, type=job['type'], user=current_user), 201

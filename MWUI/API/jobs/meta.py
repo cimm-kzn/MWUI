@@ -21,6 +21,7 @@
 from flask import redirect, url_for, send_from_directory
 from flask.views import View
 from flask_login import current_user
+from flask_restful import marshal_with
 from pony.orm import db_session
 from .common import redis
 from ..common import AuthResource, swagger, dynamic_docstring, abort, authenticate
@@ -61,6 +62,7 @@ class AvailableModels(AuthResource):
         nickname='modellist',
         responseClass=ModelListFields.__name__,
         responseMessages=[dict(code=200, message="models list"), dict(code=401, message="user not authenticated")])
+    @marshal_with(ModelListFields.resource_fields)
     @dynamic_docstring(models_types_desc)
     def get(self):
         """
@@ -74,7 +76,7 @@ class AvailableModels(AuthResource):
         model - id
         """
         with db_session:
-            models = list(Model.get_models_dict(skip_destinations=True, skip_example=False, raw=True).values())
+            models = list(Model.get_models_dict(skip_destinations=True, skip_example=False).values())
         return models, 200
 
 

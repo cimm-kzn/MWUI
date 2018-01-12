@@ -54,6 +54,7 @@ class ModelType(Enum):
 class TaskType(Enum):
     MODELING = 0
     SEARCHING = 1
+    POPULATE = 2
 
 
 class AdditiveType(Enum):

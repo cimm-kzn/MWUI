@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2017 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2017, 2018 Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -23,10 +23,10 @@ from datetime import datetime
 from hashlib import md5
 from pony.orm import PrimaryKey, Required, Optional, Set, Json
 from pycountry import countries
+from .utils import filter_kwargs
 from ..config import DEBUG
 from ..constants import (UserRole, ProfileDegree, ProfileStatus, Glyph, BlogPostType,
                          MeetingPostType, ThesisPostType, EmailPostType, TeamPostType, MeetingPartType)
-from ..utils import filter_kwargs
 
 
 def load_tables(db, schema):
