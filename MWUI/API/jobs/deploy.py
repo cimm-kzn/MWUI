@@ -20,10 +20,10 @@
 #
 from functools import wraps
 from flask import request, Response
-from flask_restful import marshal, Resource
+from flask_restful import Resource
 from pony.orm import db_session, flush
 from time import sleep
-from .common import redis
+from .common import redis, request_json_parser
 from ..common import abort
 from ..structures import ModelRegisterFields
 from ...constants import StructureStatus, TaskStatus, UserRole, TaskType, AdditiveType
@@ -50,19 +50,18 @@ class AuthResource(Resource):
 
 
 class RegisterModels(AuthResource):
-    def post(self):
-        data = marshal(request.get_json(force=True), ModelRegisterFields.resource_fields)
-        models = data if isinstance(data, list) else [data]
+    @request_json_parser(ModelRegisterFields.resource_fields)
+    def post(self, data):
+        if not isinstance(data, list):
+            data = [data]
+
         available = {x['name']: [(d['host'], d['port'], d['name']) for d in x['destinations']]
                      for x in Model.get_models_dict(skip_prep=False).values()}
         additives = Additive.get_additives_dict(key='name')
         preparer = Model.get_preparer_model()
 
-        if not models:
-            abort(400, message='invalid data')
-
         report, structures = [], []
-        for n, m in enumerate(models):
+        for n, m in enumerate(data, start=1):
             if not m['destinations']:
                 continue
             if m['name'] in available:
@@ -77,7 +76,7 @@ class RegisterModels(AuthResource):
                                        destinations=[dict(host=x.host, port=x.port, name=x.name) for x in tmp]))
                 continue
 
-            d = m['example']
+            d = m['example'].copy()
             if d['data']:
                 alist = []
                 for a in d['additives'] or []:
@@ -85,9 +84,9 @@ class RegisterModels(AuthResource):
                     if ai in additives and (0 < a['amount'] <= 1 if additives[ai]['type'] == AdditiveType.SOLVENT
                                             else a['amount'] > 0):
                         alist.append(dict(amount=a['amount'], **additives[ai]))
-                structures.append(dict(structure=n + 1, data=d['data'], pressure=d['pressure'], additives=alist,
-                                       temperature=d['temperature'], models=[preparer.copy()],
-                                       status=StructureStatus.RAW))
+                d.update(structure=n, models=[preparer.copy()], status=StructureStatus.RAW, additives=alist)
+                structures.append(d)
+
         if not (structures or report):
             abort(400, message='invalid example data or models already exists')
 
@@ -106,7 +105,7 @@ class RegisterModels(AuthResource):
 
             for x in job['result']['structures']:
                 if x['status'] == StructureStatus.CLEAR:
-                    m = models[x['structure'] - 1]
+                    m = data[x['structure'] - 1]
                     tmp = []
                     model = Model(type=m['type'], name=m['name'], description=m['description'], example=x)
                     flush()

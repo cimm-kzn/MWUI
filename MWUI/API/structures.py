@@ -18,7 +18,9 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-from flask_restful.fields import Nested, String, Integer, Float, Boolean, List, DateTime, MarshallingException
+from flask_restful import marshal
+from flask_restful.fields import (Nested, String, Integer, Float, Boolean, List, DateTime,
+                                  MarshallingException, is_indexable_but_not_string, get_value)
 from importlib.util import find_spec
 from ..config import SWAGGER
 from ..constants import ModelType, StructureStatus, StructureType
@@ -68,35 +70,52 @@ class UserResponseField(Integer):
         return value.id
 
 
+class ListDefault(List):
+    def output(self, key, data):
+        value = get_value(key if self.attribute is None else self.attribute, data)
+
+        if value is None:
+            return self.default.copy() if hasattr(self.default, 'copy') else self.default
+
+        # we cannot really test for external dict behavior
+        if is_indexable_but_not_string(value) and not isinstance(value, dict):
+            return self.format(value)
+
+        return [marshal(value, self.container.nested)]
+
+
 @swagger.model
-class AdditivesFields:
+class AdditiveFields:
     """
     additive from list of accessible
     amount - is part of total volume for solvents or model specific for another substances
     """
-    resource_fields = dict(additive=Integer, amount=Float, name=String)
+    common_fields = dict(additive=Integer, name=String)
+    resource_fields = dict(amount=Float, **common_fields)
 
 
 @swagger.model
-class AdditivesResponseFields:
-    resource_fields = dict(structure=String, type=TypeResponseField, **AdditivesFields.resource_fields)
+class AdditiveResponseFields:
+    common_fields = dict(structure=String, type=TypeResponseField)
+    resource_fields = dict(**common_fields, **AdditiveFields.resource_fields)
 
 
 @swagger.model
-class ModelsFields:
+class ModelFields:
     resource_fields = dict(model=Integer, name=String)
 
 
 @swagger.model
-class ModelResultsResponseFields:
+class ModelResultResponseFields:
     resource_fields = dict(type=TypeResponseField, key=String, value=String)
 
 
 @swagger.model
-@swagger.nested(results=ModelResultsResponseFields.__name__)
-class ModelsResponseFields:
-    resource_fields = dict(type=TypeResponseField, results=List(Nested(ModelResultsResponseFields.resource_fields)),
-                           **ModelsFields.resource_fields)
+@swagger.nested(results=ModelResultResponseFields.__name__)
+class ModelResponseFields:
+    common_fields = dict(type=TypeResponseField, description=String, **ModelFields.resource_fields)
+    resource_fields = dict(results=ListDefault(Nested(ModelResultResponseFields.resource_fields), default=[]),
+                           **common_fields)
 
 
 @swagger.model
@@ -105,35 +124,61 @@ class DescriptionFields:
 
 
 @swagger.model
-@swagger.nested(additives=AdditivesFields.__name__, models=ModelsFields.__name__,
+@swagger.nested(additives=AdditiveFields.__name__, models=ModelFields.__name__, description=DescriptionFields.__name__)
+class TaskStructureCreateFields:
+    common_fields = dict(temperature=Float(298), pressure=Float(1),
+                         description=ListDefault(Nested(DescriptionFields.resource_fields), default=[]))
+    additives_field = dict(additives=ListDefault(Nested(AdditiveFields.resource_fields), default=[]))
+    data_field = dict(data=String)
+
+    resource_fields = dict(**common_fields, **additives_field, **data_field)
+
+
+@swagger.model
+@swagger.nested(additives=AdditiveFields.__name__, models=ModelFields.__name__, description=DescriptionFields.__name__)
+class TaskStructureModelFields:
+    structure_field = dict(structure=Integer)
+    to_delete_fields = dict(todelete=Boolean(False))
+    models_field = dict(models=ListDefault(Nested(ModelFields.resource_fields), default=[]))
+
+    resource_fields = dict(**structure_field, **to_delete_fields, **models_field,
+                           **TaskStructureCreateFields.common_fields, **TaskStructureCreateFields.additives_field)
+
+
+@swagger.model
+@swagger.nested(additives=AdditiveFields.__name__, models=ModelFields.__name__,
                 description=DescriptionFields.__name__)
+class TaskStructurePrepareFields:
+    resource_fields = dict(**TaskStructureCreateFields.data_field, **TaskStructureModelFields.resource_fields)
+
+
+@swagger.model
+@swagger.nested(additives=AdditiveFields.__name__, models=ModelFields.__name__, description=DescriptionFields.__name__)
 class TaskStructureFields:
-    common_fields = dict(structure=Integer, data=String, temperature=Float(298), pressure=Float(1),
-                         description=List(Nested(DescriptionFields.resource_fields)))
-    resource_fields = dict(additives=List(Nested(AdditivesFields.resource_fields)),
-                           models=List(Nested(ModelsFields.resource_fields)),
-                           status=type_field_factory(StructureStatus), type=type_field_factory(StructureType),
+    common_fields = dict(**TaskStructureCreateFields.common_fields, **TaskStructureCreateFields.data_field,
+                         **TaskStructureModelFields.structure_field)
+    resource_fields = dict(status=type_field_factory(StructureStatus), type=type_field_factory(StructureType),
+                           **TaskStructureCreateFields.additives_field, **TaskStructureModelFields.models_field,
                            **common_fields)
 
 
 @swagger.model
-@swagger.nested(additives=AdditivesFields.__name__, models=ModelsFields.__name__,
-                description=DescriptionFields.__name__)
-class TaskStructureUpdateFields:
-    resource_fields = dict(todelete=Boolean(False), **TaskStructureFields.resource_fields)
-
-
-@swagger.model
-@swagger.nested(additives=AdditivesResponseFields.__name__, models=ModelsResponseFields.__name__,
+@swagger.nested(additives=AdditiveResponseFields.__name__, models=ModelResponseFields.__name__,
                 description=DescriptionFields.__name__)
 class TaskStructureResponseFields:
-    resource_fields = dict(additives=List(Nested(AdditivesResponseFields.resource_fields)),
-                           models=List(Nested(ModelsResponseFields.resource_fields)),
+    """
+    data structure which returned as response
+    """
+    resource_fields = dict(models=ListDefault(Nested(ModelResponseFields.resource_fields), default=[]),
+                           additives=ListDefault(Nested(AdditiveResponseFields.resource_fields), default=[]),
                            status=TypeResponseField, type=TypeResponseField, **TaskStructureFields.common_fields)
 
 
 @swagger.model
 class TaskPostResponseFields:
+    """
+    response for post query on task creation, revalidation or modeling
+    """
     resource_fields = dict(task=String, status=TypeResponseField, type=TypeResponseField,
                            date=DateTime(dt_format='iso8601'), user=UserResponseField)
 
@@ -141,7 +186,10 @@ class TaskPostResponseFields:
 @swagger.model
 @swagger.nested(structures=TaskStructureResponseFields.__name__)
 class TaskGetResponseFields:
-    resource_fields = dict(structures=List(Nested(TaskStructureResponseFields.resource_fields)),
+    """
+    response for get query with preparation or modeling results
+    """
+    resource_fields = dict(structures=ListDefault(Nested(TaskStructureResponseFields.resource_fields), default=[]),
                            **TaskPostResponseFields.resource_fields)
 
 
@@ -150,13 +198,31 @@ class TaskGetResponseFields:
 
 
 @swagger.model
-class AdditivesListFields:
-    resource_fields = dict(additive=Integer, name=String, structure=String, type=TypeResponseField)
+class AdditiveMagicResponseFields:
+    """
+    response about available additives
+    """
+    resource_fields = dict(**AdditiveFields.common_fields, **AdditiveResponseFields.common_fields)
 
 
 @swagger.model
-class ModelListFields:
-    resource_fields = dict(example=String, description=String, type=TypeResponseField, name=String, model=Integer)
+@swagger.nested(additives=AdditiveResponseFields.__name__, description=DescriptionFields.__name__)
+class TaskStructureMagicResponseFields:
+    """
+    data structure which returned as response
+    """
+    resource_fields = dict(additives=ListDefault(Nested(AdditiveResponseFields.resource_fields), default=[]),
+                           type=TypeResponseField, **TaskStructureFields.common_fields)
+
+
+@swagger.model
+@swagger.nested(example=TaskStructureMagicResponseFields.__name__)
+class ModelMagicResponseFields:
+    """
+    response about available models
+    """
+    resource_fields = dict(example=Nested(TaskStructureMagicResponseFields.resource_fields),
+                           **ModelResponseFields.common_fields)
 
 
 """ model deploy 
@@ -164,16 +230,16 @@ class ModelListFields:
 
 
 @swagger.model
-class DestinationsFields:
+class DestinationFields:
     resource_fields = dict(host=String, port=Integer(6379), password=String, name=String)
 
 
 @swagger.model
-@swagger.nested(destinations=DestinationsFields.__name__, example=TaskStructureFields.__name__)
+@swagger.nested(destinations=DestinationFields.__name__, example=TaskStructureCreateFields.__name__)
 class ModelRegisterFields:
-    resource_fields = dict(example=Nested(TaskStructureFields.resource_fields), description=String, name=String,
-                           type=type_field_factory(ModelType),
-                           destinations=List(Nested(DestinationsFields.resource_fields)))
+    resource_fields = dict(name=String, type=type_field_factory(ModelType),
+                           destinations=List(Nested(DestinationFields.resource_fields)),
+                           example=Nested(TaskStructureCreateFields.resource_fields))
 
 
 """ auth

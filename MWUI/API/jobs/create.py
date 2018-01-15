@@ -29,7 +29,7 @@ from uuid import uuid4
 from werkzeug.datastructures import FileStorage
 from .common import redis, additives_check, request_json_parser, request_arguments_parser
 from ..common import abort, swagger, dynamic_docstring, AuthResource
-from ..structures import TaskPostResponseFields, TaskStructureFields
+from ..structures import TaskPostResponseFields, TaskStructureCreateFields
 from ...config import UPLOAD_ROOT
 from ...constants import StructureStatus, TaskStatus, TaskType, AdditiveType, StructureType
 from ...models import Model, Additive
@@ -46,14 +46,15 @@ class CreateTask(AuthResource):
         parameters=[dict(name='_type', description='Task type ID: %s' % task_types_desc, required=True,
                          allowMultiple=False, dataType='int', paramType='path'),
                     dict(name='structures', description='Structure[s] of molecule or reaction with optional conditions',
-                         required=True, allowMultiple=False, dataType=TaskStructureFields.__name__, paramType='body')],
+                         required=True, allowMultiple=False, dataType=TaskStructureCreateFields.__name__,
+                         paramType='body')],
         responseMessages=[dict(code=201, message="validation task created"),
                           dict(code=400, message="invalid structure data"),
                           dict(code=401, message="user not authenticated"),
                           dict(code=403, message="invalid task type"),
                           dict(code=500, message="modeling server error")])
     @marshal_with(TaskPostResponseFields.resource_fields)
-    @request_json_parser(TaskStructureFields.resource_fields)
+    @request_json_parser(TaskStructureCreateFields.resource_fields)
     @dynamic_docstring(AdditiveType.SOLVENT, TaskStatus.PREPARING, TaskType.MODELING, TaskType.SEARCHING)
     def post(self, _type, data):
         """
@@ -61,8 +62,6 @@ class CreateTask(AuthResource):
 
         possible to send list of TaskStructureFields if task type is {2.value} [{2.name}].
         e.g. [TaskStructureFields1, TaskStructureFields2,...]
-
-        todelete, status, type and models fields not usable
 
         data field is required. field should be a string containing marvin document or cml or smiles/smirks
         additive should be in list of available additives.

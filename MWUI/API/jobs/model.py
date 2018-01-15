@@ -24,7 +24,7 @@ from pony.orm import db_session
 from .common import (additives_check, fetch_task, abort, redis, results_fetch, request_arguments_parser,
                      request_json_parser)
 from ..common import AuthResource, swagger, dynamic_docstring
-from ..structures import TaskPostResponseFields, TaskStructureUpdateFields, TaskGetResponseFields
+from ..structures import TaskPostResponseFields, TaskStructureModelFields, TaskGetResponseFields
 from ...constants import StructureStatus, TaskStatus, ResultType
 from ...models import Model, Additive
 
@@ -73,7 +73,7 @@ class ModelTask(AuthResource):
         parameters=[dict(name='task', description='Task ID', required=True,
                          allowMultiple=False, dataType='str', paramType='path'),
                     dict(name='structures', description='Conditions and selected models for structure[s]',
-                         required=True, allowMultiple=False, dataType=TaskStructureUpdateFields.__name__,
+                         required=True, allowMultiple=False, dataType=TaskStructureModelFields.__name__,
                          paramType='body')],
         responseMessages=[dict(code=201, message="modeling task created"),
                           dict(code=400, message="invalid structure data"),
@@ -85,13 +85,12 @@ class ModelTask(AuthResource):
                           dict(code=512, message='task not ready')])
     @marshal_with(TaskPostResponseFields.resource_fields)
     @fetch_task(TaskStatus.PREPARED)
-    @request_json_parser(TaskStructureUpdateFields.resource_fields)
+    @request_json_parser(TaskStructureModelFields.resource_fields)
     def post(self, task, data, job, ended_at):
         """
         Modeling task structures and conditions
 
         send only changed conditions or todelete marks. see task/prepare doc.
-        data, status and type fields unusable.
         """
         prepared = {s['structure']: s for s in job['structures']}
         tmp = {x['structure']: x for x in data} if isinstance(data, list) else {data['structure']: data}

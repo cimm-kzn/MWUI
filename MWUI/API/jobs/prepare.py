@@ -24,7 +24,7 @@ from pony.orm import db_session
 from .common import (additives_check, fetch_task, abort, redis, results_fetch, request_arguments_parser,
                      request_json_parser)
 from ..common import AuthResource, swagger, dynamic_docstring
-from ..structures import TaskPostResponseFields, TaskStructureUpdateFields, TaskGetResponseFields
+from ..structures import TaskPostResponseFields, TaskStructurePrepareFields, TaskGetResponseFields
 from ...constants import StructureStatus, TaskStatus, ModelType, ResultType, StructureType
 from ...models import Model, Additive
 
@@ -83,7 +83,7 @@ class PrepareTask(AuthResource):
         parameters=[dict(name='task', description='Task ID', required=True,
                          allowMultiple=False, dataType='str', paramType='path'),
                     dict(name='structures', description='Structure[s] of molecule or reaction with optional conditions',
-                         required=True, allowMultiple=False, dataType=TaskStructureUpdateFields.__name__,
+                         required=True, allowMultiple=False, dataType=TaskStructurePrepareFields.__name__,
                          paramType='body')],
         responseMessages=[dict(code=201, message="revalidation task created"),
                           dict(code=400, message="invalid structure data"),
@@ -95,7 +95,7 @@ class PrepareTask(AuthResource):
                           dict(code=512, message='task not ready')])
     @marshal_with(TaskPostResponseFields.resource_fields)
     @fetch_task(TaskStatus.PREPARED)
-    @request_json_parser(TaskStructureUpdateFields.resource_fields)
+    @request_json_parser(TaskStructurePrepareFields.resource_fields)
     @dynamic_docstring(StructureStatus.CLEAR, StructureType.REACTION, ModelType.REACTION_MODELING,
                        StructureType.MOLECULE, ModelType.MOLECULE_MODELING, StructureStatus.HAS_ERROR)
     def post(self, task, data, job, ended_at):
@@ -109,8 +109,6 @@ class PrepareTask(AuthResource):
         unchanged data server kept as is. except structures with status {5.value} [{5.name}]. 
         this structures if not modified will be removed from task. 
 
-        structures status and type fields not usable
-
         todelete field marks structure for delete.
         example json: [{{"structure": 5, "todetele": true}}]
         structure with id 5 in task will be removed from list.
@@ -120,7 +118,7 @@ class PrepareTask(AuthResource):
         models field usable if structure has status = {0.value} [{0.name}] and don't changed.
         for structure type = {1.value} [{1.name}] acceptable only model types = {2.value} [{2.name}]
         and vice versa for type = {3.value} [{3.name}] only model types = {4.value} [{4.name}].
-        only model id field needed. e.g. [{{"models": [{{model: 1}}], "structure": 3}}]
+        only model id field required. e.g. [{{"models": [{{model: 1}}], "structure": 3}}]
 
         for SEARCH type tasks models field unusable.
 

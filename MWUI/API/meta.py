@@ -23,7 +23,7 @@ from flask_login import login_user
 from flask_restful import Resource, marshal_with
 from pony.orm import db_session
 from .common import AuthResource, swagger, dynamic_docstring
-from .structures import AdditivesListFields, LogInFields
+from .structures import AdditiveMagicResponseFields, LogInFields
 from ..constants import AdditiveType, ModelType, TaskType, TaskStatus, StructureType, StructureStatus, ResultType
 from ..logins import UserLogin
 from ..models import Additive
@@ -37,9 +37,9 @@ class AvailableAdditives(AuthResource):
     @swagger.operation(
         notes='Get available additives',
         nickname='additives',
-        responseClass=AdditivesListFields.__name__,
+        responseClass=AdditiveMagicResponseFields.__name__,
         responseMessages=[dict(code=200, message="additives list"), dict(code=401, message="user not authenticated")])
-    @marshal_with(AdditivesListFields.resource_fields)
+    @marshal_with(AdditiveMagicResponseFields.resource_fields)
     @dynamic_docstring(additives_types_desc)
     def get(self):
         """

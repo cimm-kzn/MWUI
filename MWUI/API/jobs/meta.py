@@ -25,7 +25,7 @@ from flask_restful import marshal_with
 from pony.orm import db_session
 from .common import redis
 from ..common import AuthResource, swagger, dynamic_docstring, abort, authenticate
-from ..structures import ModelListFields
+from ..structures import ModelMagicResponseFields
 from ...config import UPLOAD_PATH
 from ...constants import ModelType, TaskType
 from ...models import Model
@@ -60,9 +60,9 @@ class AvailableModels(AuthResource):
     @swagger.operation(
         notes='Get available models',
         nickname='modellist',
-        responseClass=ModelListFields.__name__,
+        responseClass=ModelMagicResponseFields.__name__,
         responseMessages=[dict(code=200, message="models list"), dict(code=401, message="user not authenticated")])
-    @marshal_with(ModelListFields.resource_fields)
+    @marshal_with(ModelMagicResponseFields.resource_fields)
     @dynamic_docstring(models_types_desc)
     def get(self):
         """
