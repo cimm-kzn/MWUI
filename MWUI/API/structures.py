@@ -193,6 +193,11 @@ class TaskGetResponseFields:
                            **TaskPostResponseFields.resource_fields)
 
 
+@swagger.model
+class TaskDeleteResponseFields:
+    resource_fields = TaskPostResponseFields.resource_fields
+
+
 """ magic 
 """
 
@@ -249,3 +254,12 @@ class ModelRegisterFields:
 @swagger.model
 class LogInFields:
     resource_fields = dict(user=String, password=String)
+
+
+""" db lists
+"""
+
+
+@swagger.model
+class TasksList:
+    resource_fields = dict(task=String, date=DateTime(dt_format='iso8601'))

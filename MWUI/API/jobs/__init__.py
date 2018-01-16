@@ -23,4 +23,4 @@ from .deploy import RegisterModels
 from .meta import ExampleView, AvailableModels, BatchDownload
 from .model import ModelTask
 from .prepare import PrepareTask
-from .save import ResultsTask
+from .save import ResultsTask, ResultsTaskList

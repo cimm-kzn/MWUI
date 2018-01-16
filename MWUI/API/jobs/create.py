@@ -23,12 +23,11 @@ from flask_login import current_user
 from flask_restful import reqparse, marshal_with
 from flask_restful.inputs import url
 from pathlib import Path
-from pony.orm import db_session
 from typing import Dict, Tuple
 from uuid import uuid4
 from werkzeug.datastructures import FileStorage
-from .common import redis, additives_check, request_json_parser, request_arguments_parser
-from ..common import abort, swagger, dynamic_docstring, AuthResource
+from .common import redis, additives_check, request_json_parser
+from ..common import abort, swagger, dynamic_docstring, DBAuthResource, request_arguments_parser
 from ..structures import TaskPostResponseFields, TaskStructureCreateFields
 from ...config import UPLOAD_ROOT
 from ...constants import StructureStatus, TaskStatus, TaskType, AdditiveType, StructureType
@@ -38,7 +37,7 @@ from ...models import Model, Additive
 task_types_desc = ', '.join('{0.value} - {0.name}'.format(x) for x in TaskType)
 
 
-class CreateTask(AuthResource):
+class CreateTask(DBAuthResource):
     @swagger.operation(
         notes='Create validation task',
         nickname='create',
@@ -85,9 +84,8 @@ class CreateTask(AuthResource):
         if _type != TaskType.MODELING:
             data = data[:1]
 
-        with db_session:
-            additives = Additive.get_additives_dict()
-            preparer = Model.get_preparer_model()
+        additives = Additive.get_additives_dict()
+        preparer = Model.get_preparer_model()
 
         structures = []
         for s, d in enumerate(data, start=1):
@@ -114,7 +112,7 @@ uf_post.add_argument('file.path', type=str, dest='file_path')
 uf_post.add_argument('structures', type=FileStorage, location='files')
 
 
-class UploadTask(AuthResource):
+class UploadTask(DBAuthResource):
     @swagger.operation(
         notes='Create validation task from uploaded structures file',
         nickname='upload',
@@ -177,8 +175,7 @@ class UploadTask(AuthResource):
             if file_url is None:
                 abort(400, message='structure file required')
 
-        with db_session:
-            preparer = Model.get_preparer_model()
+        preparer = Model.get_preparer_model()
 
         new_job = redis.new_file_job(file_url, preparer, current_user.id, TaskType.MODELING)
         if new_job is None:

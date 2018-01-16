@@ -125,10 +125,11 @@ def load_tables(db, schema):
     class Task(db.Entity):
         _table_ = '%s_task' % schema if DEBUG else (schema, 'task')
         id = PrimaryKey(int, auto=True)
+        task = Required(str, unique=True, sql_type='CHARACTER(36)')
         date = Required(datetime, default=datetime.utcnow)
         _type = Required(int, column='type')
         user = Required('User')
-        _data = Required(Json, column='data')
+        _data = Required(Json, column='data', lazy=True)
 
         def __init__(self, structures, **kwargs):
             _type = kwargs.pop('type', TaskType.MODELING).value

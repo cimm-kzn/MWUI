@@ -30,7 +30,7 @@ from ..constants import (UserRole, ProfileDegree, ProfileStatus, Glyph, BlogPost
 
 
 def load_tables(db, schema):
-    class MeetingMixin(object):
+    class MeetingMixin:
         @property
         def meeting_id(self):
             return self.meeting.id

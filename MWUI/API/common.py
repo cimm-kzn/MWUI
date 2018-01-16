@@ -22,6 +22,7 @@ from flask_login import current_user
 from flask_restful import Resource
 from functools import wraps
 from importlib.util import find_spec
+from pony.orm import db_session
 from werkzeug.exceptions import HTTPException, Aborter
 from ..config import SWAGGER
 
@@ -70,8 +71,27 @@ def authenticate(f):
     return wrapper
 
 
+def request_arguments_parser(parser):
+    """
+    parse arguments of requests and pass it as function keyword arguments
+    :param parser: RequestParser
+    """
+    def dec(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            parsed_kwargs = parser.parse_args()
+            return f(*args, **kwargs, **parsed_kwargs)
+
+        return wrapper
+    return dec
+
+
 class AuthResource(Resource):
     method_decorators = [authenticate]
+
+
+class DBAuthResource(AuthResource):
+    method_decorators = AuthResource.method_decorators + [db_session]
 
 
 class Abort512(HTTPException):

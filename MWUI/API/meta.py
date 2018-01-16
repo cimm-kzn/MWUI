@@ -21,8 +21,7 @@
 from flask import request
 from flask_login import login_user
 from flask_restful import Resource, marshal_with
-from pony.orm import db_session
-from .common import AuthResource, swagger, dynamic_docstring
+from .common import AuthResource, DBAuthResource, swagger, dynamic_docstring
 from .structures import AdditiveMagicResponseFields, LogInFields
 from ..constants import AdditiveType, ModelType, TaskType, TaskStatus, StructureType, StructureStatus, ResultType
 from ..logins import UserLogin
@@ -33,7 +32,7 @@ additives_types_desc = ', '.join('{0.value} - {0.name}'.format(x) for x in Addit
 models_types_desc = ', '.join('{0.value} - {0.name}'.format(x) for x in ModelType)
 
 
-class AvailableAdditives(AuthResource):
+class AvailableAdditives(DBAuthResource):
     @swagger.operation(
         notes='Get available additives',
         nickname='additives',
@@ -51,9 +50,7 @@ class AvailableAdditives(AuthResource):
         structure - chemical structure in smiles or marvin or cml format
         type - additive type: {0}
         """
-        with db_session:
-            out = list(Additive.get_additives_dict().values())
-        return out, 200
+        return list(Additive.get_additives_dict().values()), 200
 
 
 class MagicNumbers(AuthResource):

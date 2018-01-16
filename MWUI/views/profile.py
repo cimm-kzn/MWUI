@@ -65,7 +65,7 @@ class ProfileView(View):
             tabs[0]['active'] = True
             active_form = ProfileForm(obj=current_user.get_user())
             if active_form.validate_on_submit():
-                u = User.get(id=current_user.id)
+                u = current_user.get_user()
                 u.name = active_form.name.data
                 u.surname = active_form.surname.data
                 u.country = active_form.country.data
@@ -97,8 +97,7 @@ class ProfileView(View):
             tabs[1]['active'] = True
             active_form = ReLoginForm()
             if active_form.validate_on_submit():
-                u = User.get(id=current_user.id)
-                u.change_token()
+                current_user.get_user().change_token()
                 logout_user()
                 flash('Successfully logged out from all devices')
                 return redirect(url_for('.login'))
@@ -108,8 +107,7 @@ class ProfileView(View):
             tabs[2]['active'] = True
             active_form = ChangePasswordForm()
             if active_form.validate_on_submit():
-                u = User.get(id=current_user.id)
-                u.change_password(active_form.password.data)
+                current_user.get_user().change_password(active_form.password.data)
                 logout_user()
                 flash('Successfully changed password')
                 return redirect(url_for('.login'))

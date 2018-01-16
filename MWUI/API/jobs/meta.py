@@ -24,7 +24,7 @@ from flask_login import current_user
 from flask_restful import marshal_with
 from pony.orm import db_session
 from .common import redis
-from ..common import AuthResource, swagger, dynamic_docstring, abort, authenticate
+from ..common import DBAuthResource, swagger, dynamic_docstring, abort, authenticate
 from ..structures import ModelMagicResponseFields
 from ...config import UPLOAD_PATH
 from ...constants import ModelType, TaskType
@@ -56,7 +56,7 @@ class ExampleView(View):
         return redirect(url_for('view.predictor') + '#/prepare/?task=%s' % new_job['id'])
 
 
-class AvailableModels(AuthResource):
+class AvailableModels(DBAuthResource):
     @swagger.operation(
         notes='Get available models',
         nickname='modellist',
@@ -75,9 +75,7 @@ class AvailableModels(AuthResource):
         type - model type: {0}
         model - id
         """
-        with db_session:
-            models = list(Model.get_models_dict(skip_destinations=True, skip_example=False).values())
-        return models, 200
+        return list(Model.get_models_dict(skip_destinations=True, skip_example=False).values()), 200
 
 
 class BatchDownload(View):

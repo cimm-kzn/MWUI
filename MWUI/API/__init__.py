@@ -21,8 +21,7 @@
 from flask import Blueprint
 from flask_restful import Api
 from importlib.util import find_spec
-from .jobs import (CreateTask, UploadTask, PrepareTask, ModelTask, ResultsTask, AvailableModels, RegisterModels,
-                   ExampleView, BatchDownload)
+from .jobs import *
 from .meta import AvailableAdditives, MagicNumbers, LogIn
 from ..config import SWAGGER
 
@@ -41,6 +40,7 @@ api.add_resource(UploadTask, '/task/upload')
 api.add_resource(PrepareTask, '/task/prepare/<string:task>')
 api.add_resource(ModelTask, '/task/model/<string:task>')
 api.add_resource(ResultsTask, '/task/results/<string:task>')
+api.add_resource(ResultsTaskList, '/task/results')
 api.add_resource(AvailableAdditives, '/resources/additives')
 api.add_resource(AvailableModels, '/resources/models')
 api.add_resource(MagicNumbers, '/resources/magic')

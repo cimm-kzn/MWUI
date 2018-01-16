@@ -45,11 +45,11 @@ def authenticate(f):
     return wrapper
 
 
-class AuthResource(Resource):
-    method_decorators = [db_session, authenticate]
+class DBAuthResource(Resource):
+    method_decorators = [authenticate, db_session]
 
 
-class RegisterModels(AuthResource):
+class RegisterModels(DBAuthResource):
     @request_json_parser(ModelRegisterFields.resource_fields)
     def post(self, data):
         if not isinstance(data, list):

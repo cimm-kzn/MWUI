@@ -74,16 +74,16 @@ class AbstractsView(View):
 
 class ThesesView(View):
     methods = ['GET']
-    decorators = [db_session, login_required]
+    decorators = [login_required, db_session]
 
     def dispatch_request(self, page=1):
-        q = select(x for x in Thesis if x.author.id == current_user.id).order_by(Thesis.id.desc())
+        q = select(x for x in Thesis if x.author == current_user.get_user()).order_by(Thesis.id.desc())
         return blog_viewer(page, q, '.theses', 'Events', 'Abstracts')
 
 
 class EventsView(View):
     methods = ['GET']
-    decorators = [db_session, login_required]
+    decorators = [login_required, db_session]
 
     def dispatch_request(self, page=1):
         q = select(x.meeting for x in Subscription if x.user == current_user.get_user()).order_by(Meeting.id.desc())
@@ -92,7 +92,7 @@ class EventsView(View):
 
 class ModelsView(View):
     methods = ['GET']
-    decorators = [db_session, login_required]
+    decorators = [login_required, db_session]
 
     def dispatch_request(self, page=1):
         q = Post.select(lambda x: x._type == BlogPostType.MODEL.value).order_by(Post.date.desc())
@@ -101,7 +101,7 @@ class ModelsView(View):
 
 class DataView(View):
     methods = ['GET']
-    decorators = [db_session, login_required]
+    decorators = [login_required, db_session]
 
     def dispatch_request(self, page=1):
         q = Post.select(lambda x: x._type == BlogPostType.DATA.value).order_by(Post.id.desc())

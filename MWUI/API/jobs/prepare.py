@@ -20,16 +20,14 @@
 #
 from flask_login import current_user
 from flask_restful import marshal_with
-from pony.orm import db_session
-from .common import (additives_check, fetch_task, abort, redis, results_fetch, request_arguments_parser,
-                     request_json_parser)
-from ..common import AuthResource, swagger, dynamic_docstring
+from .common import additives_check, fetch_task, abort, redis, results_fetch, request_json_parser
+from ..common import DBAuthResource, swagger, dynamic_docstring, request_arguments_parser
 from ..structures import TaskPostResponseFields, TaskStructurePrepareFields, TaskGetResponseFields
 from ...constants import StructureStatus, TaskStatus, ModelType, ResultType, StructureType
 from ...models import Model, Additive
 
 
-class PrepareTask(AuthResource):
+class PrepareTask(DBAuthResource):
     @swagger.operation(
         notes='Get validated task',
         nickname='prepared',
@@ -130,10 +128,9 @@ class PrepareTask(AuthResource):
         if 0 in tmp:
             abort(400, message='invalid structure data')
 
-        with db_session:
-            preparer = Model.get_preparer_model()
-            additives = Additive.get_additives_dict()
-            models = Model.get_models_dict()
+        preparer = Model.get_preparer_model()
+        additives = Additive.get_additives_dict()
+        models = Model.get_models_dict()
 
         structures = []
         for s, ps in prepared.items():

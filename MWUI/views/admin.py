@@ -40,7 +40,7 @@ cell = namedtuple('TableCell', ('url', 'text'))
 
 class PostEditView(View):
     methods = ['GET', 'POST']
-    decorators = [db_session, login_required]
+    decorators = [login_required, db_session]
 
     def dispatch_request(self, post):
         if not current_user.role_is(UserRole.ADMIN):
@@ -139,7 +139,7 @@ class PostEditView(View):
 
 class AdminPostView(View):
     methods = ['GET']
-    decorators = [db_session, login_required]
+    decorators = [login_required, db_session]
 
     def dispatch_request(self, page=1):
         if not current_user.role_is(UserRole.ADMIN):
@@ -162,7 +162,7 @@ class AdminPostView(View):
 
 class AdminUserView(View):
     methods = ['GET']
-    decorators = [db_session, login_required]
+    decorators = [login_required, db_session]
 
     def dispatch_request(self, page=1):
         if not current_user.role_is(UserRole.ADMIN):

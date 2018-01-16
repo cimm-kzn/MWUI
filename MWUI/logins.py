@@ -30,8 +30,6 @@ def load_user(token):
     if user:
         return UserLogin(user)
 
-    return None
-
 
 class UserLogin(UserMixin):
     def __init__(self, user):
@@ -77,4 +75,3 @@ class UserLogin(UserMixin):
                 user.change_token()
                 user.change_password(password)
                 return UserLogin(user)
-        return None

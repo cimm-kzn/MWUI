@@ -20,16 +20,15 @@
 #
 from flask_login import current_user
 from flask_restful import marshal_with
-from pony.orm import db_session
-from .common import fetch_task, abort, results_fetch, request_arguments_parser
-from ..common import AuthResource, swagger
-from ..structures import TaskPostResponseFields, TaskGetResponseFields
+from .common import fetch_task, abort, results_fetch
+from ..common import DBAuthResource, swagger, request_arguments_parser
+from ..structures import TaskPostResponseFields, TaskGetResponseFields, TasksList, TaskDeleteResponseFields
 from ...config import RESULTS_PER_PAGE
 from ...constants import TaskType, TaskStatus
-from ...models import Task, User
+from ...models import Task
 
 
-class ResultsTask(AuthResource):
+class ResultsTask(DBAuthResource):
     @swagger.operation(
         notes='Get saved modeled task',
         nickname='saved',
@@ -43,6 +42,7 @@ class ResultsTask(AuthResource):
                           dict(code=403, message='user access deny. you do not have permission to this task'),
                           dict(code=404, message='invalid task id. perhaps this task has already been removed'),
                           dict(code=406, message='task status is invalid. only validation tasks acceptable')])
+    @marshal_with(TaskGetResponseFields.resource_fields)
     @request_arguments_parser(results_fetch)
     def get(self, task, page=None):
         """
@@ -51,25 +51,13 @@ class ResultsTask(AuthResource):
         all structures include only models with nonempty results lists.
         see /task/model get doc.
         """
-        try:
-            task = int(task)
-        except ValueError:
-            abort(404, message='invalid task id. Use int Luke')
+        result = self.__get_task(task)
+        structures = result.get_data()
+        if page:
+            structures = structures[RESULTS_PER_PAGE * (page - 1): RESULTS_PER_PAGE * page]
 
-        with db_session:
-            result = Task.get(id=task)
-            if not result:
-                abort(404, message='Invalid task id. Perhaps this task has already been removed')
-
-            if result.user.id != current_user.id:
-                abort(403, message='User access deny. You do not have permission to this task')
-
-            structures = result.get_data()
-            if page:
-                structures = structures[RESULTS_PER_PAGE * (page - 1): RESULTS_PER_PAGE * page]
-
-        return dict(task=task, status=TaskStatus.PROCESSED.value, date=result.date.strftime("%Y-%m-%d %H:%M:%S"),
-                    type=result._type, user=result.user.id, structures=structures), 200
+        return dict(task=task, status=TaskStatus.PROCESSED, date=result.date, type=result.type, user=current_user,
+                    structures=structures), 200
 
     @swagger.operation(
         notes='Save modeled task',
@@ -83,6 +71,7 @@ class ResultsTask(AuthResource):
                           dict(code=404, message='invalid task id. perhaps this task has already been removed'),
                           dict(code=406, message='task status is invalid. only modeled tasks acceptable'),
                           dict(code=406, message='task type is invalid. only modeling tasks acceptable'),
+                          dict(code=409, message='task already exists in db'),
                           dict(code=500, message="modeling server error"),
                           dict(code=512, message='task not ready')])
     @marshal_with(TaskPostResponseFields.resource_fields)
@@ -94,10 +83,56 @@ class ResultsTask(AuthResource):
         only modeled tasks can be saved.
         failed models in structures skipped.
         """
-        if job['type'] == TaskType.SEARCHING:
+        if job['type'] != TaskType.MODELING:
             abort(406, message='task type is invalid. only modeling tasks acceptable')
 
-        with db_session:
-            _task = Task(job['structures'], type=job['type'], date=ended_at, user=User[current_user.id])
+        if Task.exists(task=task):
+            abort(409, message='task already exists in db')
 
-        return dict(task=_task.id, status=TaskStatus.PROCESSED, date=ended_at, type=job['type'], user=current_user), 201
+        Task(job['structures'], type=job['type'], date=ended_at, user=current_user.get_user(), task=task)
+
+        return dict(task=task, status=TaskStatus.PROCESSED, date=ended_at, type=job['type'], user=current_user), 201
+
+    @swagger.operation(
+        notes='Delete saved modeled task',
+        nickname='delete',
+        responseClass=TaskDeleteResponseFields.__name__,
+        parameters=[dict(name='task', description='Task ID', required=True,
+                         allowMultiple=False, dataType='str', paramType='path')],
+        responseMessages=[dict(code=202, message="task deleted"),
+                          dict(code=401, message="user not authenticated"),
+                          dict(code=403, message='user access deny. you do not have permission to this task'),
+                          dict(code=404, message='invalid task id. perhaps this task has already been removed')])
+    @marshal_with(TaskDeleteResponseFields.resource_fields)
+    def delete(self, task):
+        """
+        Delete task from db
+        """
+        result = self.__get_task(task)
+        resp = dict(task=task, status=TaskStatus.PROCESSED, date=result.date, type=result.type, user=current_user)
+        result.delete()
+        return resp, 202
+
+    @staticmethod
+    def __get_task(task):
+        result = Task.get(task=task)
+        if not result:
+            abort(404, message='Invalid task id. Perhaps this task has already been removed')
+
+        if result.user.id != current_user.id:
+            abort(403, message='User access deny. You do not have permission to this task')
+        return result
+
+
+class ResultsTaskList(DBAuthResource):
+    @swagger.operation(
+        notes='Get list of saved tasks',
+        nickname='saved_list',
+        responseClass=TasksList.__name__,
+        responseMessages=[dict(code=200, message="saved tasks"), dict(code=401, message="user not authenticated")])
+    @marshal_with(TasksList.resource_fields)
+    def get(self):
+        """
+        Get current user's saved tasks
+        """
+        return list(Task.select(lambda x: x.user == current_user.get_user()))

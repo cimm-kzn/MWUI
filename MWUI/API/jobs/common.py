@@ -38,21 +38,6 @@ results_fetch.add_argument('page', type=positive,
                            help='Page number of results. by default all pages return. {error_msg}')
 
 
-def request_arguments_parser(parser):
-    """
-    parse arguments of requests and pass it as function keyword arguments
-    :param parser: RequestParser
-    """
-    def dec(f):
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            parsed_kwargs = parser.parse_args()
-            return f(*args, **kwargs, **parsed_kwargs)
-
-        return wrapper
-    return dec
-
-
 def request_json_parser(resource_fields):
     def dec(f):
         @wraps(f)
