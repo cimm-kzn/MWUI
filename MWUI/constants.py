@@ -162,7 +162,7 @@ class MeetingPartType(Enum):
 
     @property
     def fancy(self):
-        names = dict(ORAL='Oral/Plenary Presentation', POSTER='Poster Presentation', LISTENER='Without Presentation',
+        names = dict(ORAL='Oral Presentation', POSTER='Poster Presentation', LISTENER='Without Presentation',
                      EXTRAMURAL='Extramural Participation')
         return names[self.name]
 

@@ -35,8 +35,9 @@ from ..models import User, Meeting, Post, Attachment, Subscription
 
 
 table = namedtuple('Table', ('header', 'rows'))
-row = namedtuple('TableRow', ('number', 'participant', 'country', 'status', 'degree', 'presentation', 'town',
+row_admin = namedtuple('TableRow', ('number', 'participant', 'country', 'status', 'degree', 'presentation', 'town',
                               'affiliation', 'email'))
+row = namedtuple('TableRow', ('number', 'participant', 'country', 'status', 'degree', 'presentation'))
 cell = namedtuple('TableCell', ('url', 'text'))
 
 
@@ -181,9 +182,11 @@ def participants(event):
     list(left_join(x for x in User for s in x.subscriptions if s.meeting == m))
     subs = Subscription.select(lambda x: x.meeting == m).order_by(Subscription.id.desc())
 
-    data = [row(n, cell(url_for('.user', _user=x.user.id), x.user.full_name), x.user.country_name,
-                x.user.sci_status.fancy, x.user.sci_degree.fancy, x.type.fancy,
-                x.user.town, x.user.affiliation, x.user.email)
+    data = [row_admin(n, cell(url_for('.user', _user=x.user.id), x.user.full_name), x.user.country_name,
+                      x.user.sci_status.fancy, x.user.sci_degree.fancy, x.type.fancy, x.user.town, x.user.affiliation,
+                      x.user.email) if admin else
+            row(n, cell(url_for('.user', _user=x.user.id), x.user.full_name), x.user.country_name,
+                x.user.sci_status.fancy, x.user.sci_degree.fancy, x.type.fancy)
             for n, x in enumerate(subs, start=1)]
 
     return render_template('table.html', table=table(header=header, rows=data), title=m.title, subtitle='Participants',
