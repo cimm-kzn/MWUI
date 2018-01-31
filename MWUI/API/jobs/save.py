@@ -19,10 +19,11 @@
 #  MA 02110-1301, USA.
 #
 from flask_login import current_user
-from flask_restful import marshal_with
+from flask_restful import marshal_with, marshal
 from .common import fetch_task, abort, results_fetch
 from ..common import DBAuthResource, swagger, request_arguments_parser
-from ..structures import TaskPostResponseFields, TaskGetResponseFields, TasksList, TaskDeleteResponseFields
+from ..structures import (TaskPostResponseFields, TaskGetResponseFields, TasksList, TaskDeleteResponseFields,
+                          TaskStructureResponseFields, TaskStructureFields)
 from ...config import RESULTS_PER_PAGE
 from ...constants import TaskType, TaskStatus
 from ...models import Task
@@ -52,7 +53,7 @@ class ResultsTask(DBAuthResource):
         see /task/model get doc.
         """
         result = self.__get_task(task)
-        structures = result.get_data()
+        structures = marshal(result.data, TaskStructureFields.resource_fields)
         if page:
             structures = structures[RESULTS_PER_PAGE * (page - 1): RESULTS_PER_PAGE * page]
 
@@ -88,8 +89,8 @@ class ResultsTask(DBAuthResource):
 
         if Task.exists(task=task):
             abort(409, message='task already exists in db')
-
-        Task(job['structures'], type=job['type'], date=ended_at, user=current_user.get_user(), task=task)
+        data = marshal(job['structures'], TaskStructureResponseFields.resource_fields)
+        Task(data, type=job['type'], date=ended_at, user=current_user.get_user(), task=task)
 
         return dict(task=task, status=TaskStatus.PROCESSED, date=ended_at, type=job['type'], user=current_user), 201
 

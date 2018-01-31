@@ -19,10 +19,8 @@
 #  MA 02110-1301, USA.
 #
 from datetime import datetime
-from flask_restful import marshal
 from pony.orm import PrimaryKey, Required, Optional, Set, Json
 from .utils import filter_kwargs
-from ..API.structures import TaskStructureResponseFields, TaskStructureFields
 from ..config import DEBUG
 from ..constants import TaskType, StructureType, StructureStatus, ModelType, AdditiveType
 
@@ -129,18 +127,14 @@ def load_tables(db, schema):
         date = Required(datetime, default=datetime.utcnow)
         _type = Required(int, column='type')
         user = Required('User')
-        _data = Required(Json, column='data', lazy=True)
+        data = Required(Json, lazy=True)
 
-        def __init__(self, structures, **kwargs):
+        def __init__(self, data, **kwargs):
             _type = kwargs.pop('type', TaskType.MODELING).value
-            structures = marshal(structures, TaskStructureResponseFields.resource_fields)
-            super().__init__(_type=_type, _data=structures, **kwargs)
+            super().__init__(_type=_type, data=data, **kwargs)
 
         @property
         def type(self):
             return TaskType(self._type)
-
-        def get_data(self):
-            return marshal(self._data, TaskStructureFields.resource_fields)
 
     return Task, Model, Destination, Additive

@@ -237,6 +237,8 @@ def load_tables(db, schema):
                 if ae:
                     if ae.cited != i.cited:
                         ae.cited = i.cited
+                    if ae.date != i.date:
+                        ae.date = i.date
                 else:
                     cls.__add_article(i)
 
@@ -303,8 +305,10 @@ def load_tables(db, schema):
                                                   .replace('<inf>', '').replace('</inf>', ''),
                                journal=i['prism:publicationName'], volume=i.get('prism:volume'),
                                issue=i.get('prism:issueIdentifier'), pages=i.get('prism:pageRange'),
-                               date=datetime.strptime(i['prism:coverDate'], '%Y-%m-%d'), doi=i.get('prism:doi'),
-                               cited=int(i['citedby-count']), issn=i.get('prism:issn'), scopus_id=i['dc:identifier'])
+                               date=datetime.strptime(i['prism:coverDate'], '%Y-%m-%d')
+                               if 'prism:coverDate' in i else datetime.utcnow(),
+                               doi=i.get('prism:doi'), cited=int(i['citedby-count']), issn=i.get('prism:issn'),
+                               scopus_id=i['dc:identifier'])
                        for i in data['entry'] if 'prism:publicationName' in i]
 
             return results, total
