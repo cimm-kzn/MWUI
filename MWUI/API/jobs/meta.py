@@ -27,7 +27,7 @@ from .common import redis
 from ..common import DBAuthResource, swagger, dynamic_docstring, abort, authenticate
 from ..structures import ModelMagicResponseFields
 from ...config import UPLOAD_PATH
-from ...constants import ModelType, TaskType
+from ...constants import ModelType
 from ...models import Model
 
 
@@ -43,13 +43,10 @@ class ExampleView(View):
         Get example task
         """
         m = Model.get(id=_id)
-
         if not m or m.type == ModelType.PREPARER:
-            return redirect(url_for('view.index'))
+            abort(404)
 
-        _type = TaskType.SEARCHING if TaskType.SEARCHING.name in m.type.name else TaskType.MODELING
-        new_job = redis.new_job([m.example], current_user.id, _type)
-
+        new_job = redis.new_job([m.example], current_user.id, m.type.get_task_type())
         if new_job is None:
             abort(500)
 

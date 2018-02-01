@@ -38,6 +38,10 @@ else:
 
             return decorator
 
+        @staticmethod
+        def docs(api, *args, **kwargs):
+            return api
+
     swagger = Swagger()
 
 

@@ -50,11 +50,16 @@ class ModelType(Enum):
     def compatible(self, structure_type, task_type):
         return self.name == '%s_%s' % (structure_type.name, task_type.name)
 
+    def get_task_type(self):
+        if self in (self.PREPARER, self.MOLECULE_MODELING, self.REACTION_MODELING):
+            return TaskType.MODELING
+        return TaskType.SEARCHING
+
 
 class TaskType(Enum):
     MODELING = 0
     SEARCHING = 1
-    POPULATE = 2
+    POPULATING = 2
 
 
 class AdditiveType(Enum):

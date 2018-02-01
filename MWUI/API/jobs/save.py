@@ -20,8 +20,8 @@
 #
 from flask_login import current_user
 from flask_restful import marshal_with, marshal
-from .common import fetch_task, abort, results_fetch
 from ..common import DBAuthResource, swagger, request_arguments_parser
+from ..jobs.common import fetch_task, abort, results_fetch
 from ..structures import (TaskPostResponseFields, TaskGetResponseFields, TasksList, TaskDeleteResponseFields,
                           TaskStructureResponseFields, TaskStructureFields)
 from ...config import RESULTS_PER_PAGE
@@ -29,7 +29,7 @@ from ...constants import TaskType, TaskStatus
 from ...models import Task
 
 
-class ResultsTask(DBAuthResource):
+class SavedTask(DBAuthResource):
     @swagger.operation(
         notes='Get saved modeled task',
         nickname='saved',
@@ -125,7 +125,7 @@ class ResultsTask(DBAuthResource):
         return result
 
 
-class ResultsTaskList(DBAuthResource):
+class SavedTasksList(DBAuthResource):
     @swagger.operation(
         notes='Get list of saved tasks',
         nickname='saved_list',

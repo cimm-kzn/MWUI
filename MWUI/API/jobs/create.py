@@ -54,7 +54,8 @@ class CreateTask(DBAuthResource):
                           dict(code=500, message="modeling server error")])
     @marshal_with(TaskPostResponseFields.resource_fields)
     @request_json_parser(TaskStructureCreateFields.resource_fields)
-    @dynamic_docstring(AdditiveType.SOLVENT, TaskStatus.PREPARING, TaskType.MODELING, TaskType.SEARCHING)
+    @dynamic_docstring(AdditiveType.SOLVENT, TaskStatus.PREPARING,
+                       TaskType.MODELING, TaskType.SEARCHING, TaskType.POPULATING)
     def post(self, _type, data):
         """
         Create new task
@@ -71,7 +72,7 @@ class CreateTask(DBAuthResource):
         date: creation date time
         status: {1.value} [{1.name}]
         task: task id
-        type: {2.value} [{2.name}] or {3.value} [{3.name}]
+        type: {2.value} [{2.name}] or {3.value} [{3.name}] or {4.value} [{4.name}]
         user: user id
         """
         try:

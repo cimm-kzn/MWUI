@@ -18,34 +18,10 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-from flask import Blueprint
-from flask_restful import Api
-from importlib.util import find_spec
-from .jobs import *
+from .jobs import api as jobs_api, api_bp as jobs_bp
 from .meta import AvailableAdditives, MagicNumbers, LogIn
-from ..config import SWAGGER
 
 
-api_bp = Blueprint('api', __name__)
-api = Api(api_bp)
-
-if SWAGGER and find_spec('flask_restful_swagger'):
-    from flask_restful_swagger import swagger
-
-    api = swagger.docs(api, apiVersion='2.0', description='MWUI API', api_spec_url='/doc/spec')
-
-
-api.add_resource(CreateTask, '/task/create/<int:_type>')
-api.add_resource(UploadTask, '/task/upload')
-api.add_resource(PrepareTask, '/task/prepare/<string:task>')
-api.add_resource(ModelTask, '/task/model/<string:task>')
-api.add_resource(ResultsTask, '/task/results/<string:task>')
-api.add_resource(ResultsTaskList, '/task/results')
-api.add_resource(AvailableAdditives, '/resources/additives')
-api.add_resource(AvailableModels, '/resources/models')
-api.add_resource(MagicNumbers, '/resources/magic')
-api.add_resource(RegisterModels, '/admin/models')
-api.add_resource(LogIn, '/auth')
-
-api_bp.add_url_rule('/task/batch_file/<string:file>', view_func=BatchDownload.as_view('batch_file'))
-api_bp.add_url_rule('/example/<int:_id>', view_func=ExampleView.as_view('example'))
+jobs_api.add_resource(AvailableAdditives, '/resources/additives')
+jobs_api.add_resource(MagicNumbers, '/resources/magic')
+jobs_api.add_resource(LogIn, '/auth')

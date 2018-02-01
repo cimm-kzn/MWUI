@@ -32,14 +32,14 @@ results_types_desc = ', '.join('{0.value} - {0.name}'.format(x) for x in ResultT
 
 class ModelTask(DBAuthResource):
     @swagger.operation(
-        notes='Get modeled task',
-        nickname='modeled',
+        notes='Get processed task',
+        nickname='processed',
         responseClass=TaskGetResponseFields.__name__,
         parameters=[dict(name='task', description='Task ID', required=True,
                          allowMultiple=False, dataType='str', paramType='path'),
                     dict(name='page', description='Results pagination', required=False,
                          allowMultiple=False, dataType='int', paramType='query')],
-        responseMessages=[dict(code=200, message="modeled task"),
+        responseMessages=[dict(code=200, message="processed task"),
                           dict(code=401, message="user not authenticated"),
                           dict(code=403, message='user access deny. you do not have permission to this task'),
                           dict(code=404, message='invalid task id. perhaps this task has already been removed'),
@@ -52,7 +52,7 @@ class ModelTask(DBAuthResource):
     @dynamic_docstring(results_types_desc)
     def get(self, task, job, ended_at):
         """
-        Task with results of structures with conditions modeling
+        Task with results of structures processing
 
         all structures include models with results lists.
         failed models contain empty results lists.
@@ -65,15 +65,15 @@ class ModelTask(DBAuthResource):
                     structures=job['structures']), 200
 
     @swagger.operation(
-        notes='Create modeling task',
-        nickname='modeling',
+        notes='Create processing task',
+        nickname='processing',
         responseClass=TaskPostResponseFields.__name__,
         parameters=[dict(name='task', description='Task ID', required=True,
                          allowMultiple=False, dataType='str', paramType='path'),
                     dict(name='structures', description='Conditions and selected models for structure[s]',
                          required=True, allowMultiple=False, dataType=TaskStructureModelFields.__name__,
                          paramType='body')],
-        responseMessages=[dict(code=201, message="modeling task created"),
+        responseMessages=[dict(code=201, message="processing task created"),
                           dict(code=400, message="invalid structure data"),
                           dict(code=401, message="user not authenticated"),
                           dict(code=403, message='user access deny. you do not have permission to this task'),
@@ -86,7 +86,7 @@ class ModelTask(DBAuthResource):
     @request_json_parser(TaskStructureModelFields.resource_fields)
     def post(self, task, data, job, ended_at):
         """
-        Modeling task structures and conditions
+        Process task
 
         send only changed conditions or todelete marks. see task/prepare doc.
         """

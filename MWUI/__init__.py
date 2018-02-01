@@ -32,7 +32,7 @@ def init():
     from misaka import HTML_ESCAPE
     from pathlib import PurePosixPath
     from pony.orm import sql_debug
-    from .API import api_bp
+    from .API import jobs_bp
     from .bootstrap import top_nav, CustomBootstrapRenderer, CustomMisakaRenderer
     from .config import (PORTAL_NON_ROOT, SECRET_KEY, DEBUG, LAB_NAME, RESIZE_URL, IMAGES_PATH,
                          MAX_UPLOAD_SIZE, YANDEX_METRIKA)
@@ -78,7 +78,7 @@ def init():
     login_manager.user_loader(load_user)
 
     app_url = PurePosixPath('/') / (PORTAL_NON_ROOT or '')
-    app.register_blueprint(api_bp, url_prefix=(app_url / 'api').as_posix())
+    app.register_blueprint(jobs_bp, url_prefix=(app_url / 'api').as_posix())
     app.register_blueprint(view_bp, url_prefix=app_url.as_posix() if PORTAL_NON_ROOT else None)
     app.register_blueprint(vk_bp, url_prefix=(app_url / 'vk_api').as_posix())
 
