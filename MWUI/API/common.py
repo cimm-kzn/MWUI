@@ -42,6 +42,17 @@ else:
         def docs(api, *args, **kwargs):
             return api
 
+        @staticmethod
+        def nested(*args, **kwargs):
+            def decorator(f):
+                return f
+
+            return decorator
+
+        @staticmethod
+        def model(f):
+            return f
+
     swagger = Swagger()
 
 

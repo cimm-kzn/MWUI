@@ -24,8 +24,8 @@ from flask_restful import Resource
 from pony.orm import db_session, flush
 from time import sleep
 from .common import redis, request_json_parser
+from .marshal import ModelRegisterFields
 from ..common import abort
-from ..structures import ModelRegisterFields
 from ...constants import StructureStatus, TaskStatus, UserRole, TaskType, AdditiveType
 from ...logins import UserLogin
 from ...models import Model, Destination, Additive

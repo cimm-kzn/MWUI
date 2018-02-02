@@ -24,8 +24,8 @@ from flask_login import current_user
 from flask_restful import marshal_with
 from pony.orm import db_session
 from .common import redis
+from .marshal import ModelMagicResponseFields
 from ..common import DBAuthResource, swagger, dynamic_docstring, abort, authenticate
-from ..structures import ModelMagicResponseFields
 from ...config import UPLOAD_PATH
 from ...constants import ModelType
 from ...models import Model

@@ -20,10 +20,10 @@
 #
 from flask_login import current_user
 from flask_restful import marshal_with, marshal
+from .marshal import (TaskPostResponseFields, TaskGetResponseFields, TasksList, TaskDeleteResponseFields,
+                      TaskStructureResponseFields, TaskStructureFields)
 from ..common import DBAuthResource, swagger, request_arguments_parser
 from ..jobs.common import fetch_task, abort, results_fetch
-from ..structures import (TaskPostResponseFields, TaskGetResponseFields, TasksList, TaskDeleteResponseFields,
-                          TaskStructureResponseFields, TaskStructureFields)
 from ...config import RESULTS_PER_PAGE
 from ...constants import TaskType, TaskStatus
 from ...models import Task
@@ -129,11 +129,19 @@ class SavedTasksList(DBAuthResource):
     @swagger.operation(
         notes='Get list of saved tasks',
         nickname='saved_list',
+        parameters=[dict(name='page', description='Results pagination', required=False,
+                         allowMultiple=False, dataType='int', paramType='query')],
         responseClass=TasksList.__name__,
-        responseMessages=[dict(code=200, message="saved tasks"), dict(code=401, message="user not authenticated")])
+        responseMessages=[dict(code=200, message="saved tasks"),
+                          dict(code=400, message="page must be a positive integer or None"),
+                          dict(code=401, message="user not authenticated")])
     @marshal_with(TasksList.resource_fields)
-    def get(self):
+    @request_arguments_parser(results_fetch)
+    def get(self, page=None):
         """
         Get current user's saved tasks
         """
-        return list(Task.select(lambda x: x.user == current_user.get_user()))
+        q = Task.select(lambda x: x.user == current_user.get_user())
+        if page is not None:
+            q = q.page(page, pagesize=RESULTS_PER_PAGE)
+        return list(q)

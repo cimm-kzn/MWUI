@@ -62,6 +62,8 @@ class UserLogin(UserMixin):
         return self.__user.role
 
     def role_is(self, role):
+        if isinstance(role, (list, tuple)):
+            return any(self.__user.role == x for x in role)
         return self.__user.role == role
 
     @staticmethod

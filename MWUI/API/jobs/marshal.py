@@ -21,27 +21,9 @@
 from flask_restful import marshal
 from flask_restful.fields import (Nested, String, Integer, Float, Boolean, List, DateTime,
                                   MarshallingException, is_indexable_but_not_string, get_value)
-from importlib.util import find_spec
-from ..config import SWAGGER
-from ..constants import ModelType, StructureStatus, StructureType
-
-
-if SWAGGER and find_spec('flask_restful_swagger'):
-    from flask_restful_swagger import swagger
-else:
-    class Swagger:
-        @staticmethod
-        def nested(*args, **kwargs):
-            def decorator(f):
-                return f
-
-            return decorator
-
-        @staticmethod
-        def model(f):
-            return f
-
-    swagger = Swagger()
+from ..common import swagger
+from ..marshal import TypeResponseField, AdditiveFields, AdditiveResponseFields
+from ...constants import ModelType, StructureStatus, StructureType
 
 
 def type_field_factory(_type):
@@ -58,11 +40,6 @@ def type_field_factory(_type):
 
     TypeField.__name__ = '%sField' % _type.__name__
     return TypeField
-
-
-class TypeResponseField(Integer):
-    def format(self, value):
-        return value.value
 
 
 class UserResponseField(Integer):
@@ -82,22 +59,6 @@ class ListDefault(List):
             return self.format(value)
 
         return [marshal(value, self.container.nested)]
-
-
-@swagger.model
-class AdditiveFields:
-    """
-    additive from list of accessible
-    amount - is part of total volume for solvents or model specific for another substances
-    """
-    common_fields = dict(additive=Integer, name=String)
-    resource_fields = dict(amount=Float, **common_fields)
-
-
-@swagger.model
-class AdditiveResponseFields:
-    common_fields = dict(structure=String, type=TypeResponseField)
-    resource_fields = dict(**common_fields, **AdditiveFields.resource_fields)
 
 
 @swagger.model
@@ -198,16 +159,8 @@ class TaskDeleteResponseFields:
     resource_fields = TaskPostResponseFields.resource_fields
 
 
-""" magic 
+""" magic
 """
-
-
-@swagger.model
-class AdditiveMagicResponseFields:
-    """
-    response about available additives
-    """
-    resource_fields = dict(**AdditiveFields.common_fields, **AdditiveResponseFields.common_fields)
 
 
 @swagger.model
@@ -230,7 +183,7 @@ class ModelMagicResponseFields:
                            **ModelResponseFields.common_fields)
 
 
-""" model deploy 
+""" model deploy
 """
 
 
@@ -245,15 +198,6 @@ class ModelRegisterFields:
     resource_fields = dict(name=String, type=type_field_factory(ModelType),
                            destinations=List(Nested(DestinationFields.resource_fields)),
                            example=Nested(TaskStructureCreateFields.resource_fields))
-
-
-""" auth
-"""
-
-
-@swagger.model
-class LogInFields:
-    resource_fields = dict(user=String, password=String)
 
 
 """ db lists

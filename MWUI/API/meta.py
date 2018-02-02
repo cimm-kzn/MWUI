@@ -22,7 +22,7 @@ from flask import request
 from flask_login import login_user
 from flask_restful import Resource, marshal_with
 from .common import AuthResource, DBAuthResource, swagger, dynamic_docstring
-from .structures import AdditiveMagicResponseFields, LogInFields
+from .marshal import AdditiveMagicResponseFields, LogInFields
 from ..constants import AdditiveType, ModelType, TaskType, TaskStatus, StructureType, StructureStatus, ResultType
 from ..logins import UserLogin
 from ..models import Additive

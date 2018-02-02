@@ -21,8 +21,8 @@
 from flask_login import current_user
 from flask_restful import marshal_with
 from .common import additives_check, fetch_task, abort, redis, results_fetch, request_json_parser
+from .marshal import TaskPostResponseFields, TaskStructureModelFields, TaskGetResponseFields
 from ..common import DBAuthResource, swagger, dynamic_docstring, request_arguments_parser
-from ..structures import TaskPostResponseFields, TaskStructureModelFields, TaskGetResponseFields
 from ...constants import StructureStatus, TaskStatus, ResultType
 from ...models import Model, Additive
 
@@ -40,6 +40,7 @@ class ModelTask(DBAuthResource):
                     dict(name='page', description='Results pagination', required=False,
                          allowMultiple=False, dataType='int', paramType='query')],
         responseMessages=[dict(code=200, message="processed task"),
+                          dict(code=400, message="page must be a positive integer or None"),
                           dict(code=401, message="user not authenticated"),
                           dict(code=403, message='user access deny. you do not have permission to this task'),
                           dict(code=404, message='invalid task id. perhaps this task has already been removed'),

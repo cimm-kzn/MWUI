@@ -19,20 +19,23 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
+from datetime import datetime
+from flask import Flask, Blueprint
+from flask_bootstrap import Bootstrap
+from flask_login import LoginManager
+from flask_misaka import Misaka
+from flask_nav import Nav, register_renderer
+from flask_resize import Resize
+from misaka import HTML_ESCAPE
+from pathlib import PurePosixPath
+from pony.orm import sql_debug
 
 
 def init():
-    from datetime import datetime
-    from flask import Flask
-    from flask_bootstrap import Bootstrap
-    from flask_login import LoginManager
-    from flask_misaka import Misaka
-    from flask_nav import Nav, register_renderer
-    from flask_resize import Resize
-    from misaka import HTML_ESCAPE
-    from pathlib import PurePosixPath
-    from pony.orm import sql_debug
-    from .API import jobs_bp
+    # monkey-patch the Blueprint object to allow addition of URL map converters
+    Blueprint.add_app_url_map_converter = add_app_url_map_converter
+
+    from .API import jobs_bp, db_bp
     from .bootstrap import top_nav, CustomBootstrapRenderer, CustomMisakaRenderer
     from .config import (PORTAL_NON_ROOT, SECRET_KEY, DEBUG, LAB_NAME, RESIZE_URL, IMAGES_PATH,
                          MAX_UPLOAD_SIZE, YANDEX_METRIKA)
@@ -79,7 +82,24 @@ def init():
 
     app_url = PurePosixPath('/') / (PORTAL_NON_ROOT or '')
     app.register_blueprint(jobs_bp, url_prefix=(app_url / 'api').as_posix())
+    app.register_blueprint(db_bp, url_prefix=(app_url / 'db_api').as_posix())
     app.register_blueprint(view_bp, url_prefix=app_url.as_posix() if PORTAL_NON_ROOT else None)
     app.register_blueprint(vk_bp, url_prefix=(app_url / 'vk_api').as_posix())
 
     return app
+
+
+def add_app_url_map_converter(self, func, name=None):
+    """
+    Register a custom URL map converters, available application wide.
+    :param name: the optional name of the filter, otherwise the function name
+                 will be used.
+    """
+
+    def register_converter(state):
+        state.app.url_map.converters[name or func.__name__] = func
+
+    self.record_once(register_converter)
+
+
+__all__ = [init.__name__]

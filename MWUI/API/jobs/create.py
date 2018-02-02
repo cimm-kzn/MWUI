@@ -27,8 +27,8 @@ from typing import Dict, Tuple
 from uuid import uuid4
 from werkzeug.datastructures import FileStorage
 from .common import redis, additives_check, request_json_parser
+from .marshal import TaskPostResponseFields, TaskStructureCreateFields
 from ..common import abort, swagger, dynamic_docstring, DBAuthResource, request_arguments_parser
-from ..structures import TaskPostResponseFields, TaskStructureCreateFields
 from ...config import UPLOAD_ROOT
 from ...constants import StructureStatus, TaskStatus, TaskType, AdditiveType, StructureType
 from ...models import Model, Additive
