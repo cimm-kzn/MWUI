@@ -22,8 +22,8 @@ from flask_login import current_user
 from flask_restful import marshal_with, marshal
 from .marshal import (TaskPostResponseFields, TaskGetResponseFields, TasksList, TaskDeleteResponseFields,
                       TaskStructureResponseFields, TaskStructureFields)
-from ..common import DBAuthResource, swagger, request_arguments_parser
-from ..jobs.common import fetch_task, abort, results_fetch
+from .common import fetch_task, results_fetch
+from ..common import DBAuthResource, swagger, request_arguments_parser, abort
 from ...config import RESULTS_PER_PAGE
 from ...constants import TaskType, TaskStatus
 from ...models import Task

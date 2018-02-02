@@ -18,4 +18,10 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
+from flask_restful.fields import DateTime, Integer
+from ..common import swagger
 
+
+@swagger.model
+class RecordsList:
+    resource_fields = dict(id=Integer, date=DateTime(dt_format='iso8601'), user_id=Integer)

@@ -20,9 +20,9 @@
 #
 from flask_login import current_user
 from flask_restful import marshal_with
-from .common import additives_check, fetch_task, abort, redis, results_fetch, request_json_parser
+from .common import additives_check, fetch_task, redis, results_fetch, request_json_parser
 from .marshal import TaskPostResponseFields, TaskStructurePrepareFields, TaskGetResponseFields
-from ..common import DBAuthResource, swagger, dynamic_docstring, request_arguments_parser
+from ..common import DBAuthResource, swagger, dynamic_docstring, request_arguments_parser, abort
 from ...constants import StructureStatus, TaskStatus, ModelType, ResultType, StructureType
 from ...models import Model, Additive
 
