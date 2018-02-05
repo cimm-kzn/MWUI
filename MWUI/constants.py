@@ -82,6 +82,7 @@ class UserRole(Enum):
     ADMIN = 2
     DATA_MANAGER = 3
     SECRETARY = 4
+    DATA_FILLER = 5
 
 
 class BlogPostType(Enum):

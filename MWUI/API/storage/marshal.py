@@ -20,8 +20,10 @@
 #
 from flask_restful.fields import DateTime, Integer
 from ..common import swagger
+from ..marshal import TypeResponseField, UserResponseField
 
 
 @swagger.model
-class RecordsList:
-    resource_fields = dict(id=Integer, date=DateTime(dt_format='iso8601'), user_id=Integer)
+class RecordResponseFields:
+    resource_fields = dict(id=Integer, date=DateTime(dt_format='iso8601'), type=TypeResponseField,
+                           user=UserResponseField)

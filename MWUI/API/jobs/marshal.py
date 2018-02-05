@@ -18,47 +18,11 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-from flask_restful import marshal
-from flask_restful.fields import (Nested, String, Integer, Float, Boolean, List, DateTime,
-                                  MarshallingException, is_indexable_but_not_string, get_value)
+from flask_restful.fields import Nested, String, Integer, Float, Boolean, List, DateTime
 from ..common import swagger
-from ..marshal import TypeResponseField, AdditiveFields, AdditiveResponseFields
+from ..marshal import (TypeResponseField, AdditiveFields, AdditiveResponseFields, UserResponseField, ListDefault,
+                       type_field_factory)
 from ...constants import ModelType, StructureStatus, StructureType
-
-
-def type_field_factory(_type):
-    class TypeField(Integer):
-        def __init__(self, default=0, **kwargs):
-            super().__init__(default=_type(default), **kwargs)
-
-        def format(self, value):
-            try:
-                mt = _type(value)
-            except ValueError as ve:
-                raise MarshallingException(ve)
-            return mt
-
-    TypeField.__name__ = '%sField' % _type.__name__
-    return TypeField
-
-
-class UserResponseField(Integer):
-    def format(self, value):
-        return value.id
-
-
-class ListDefault(List):
-    def output(self, key, data):
-        value = get_value(key if self.attribute is None else self.attribute, data)
-
-        if value is None:
-            return self.default.copy() if hasattr(self.default, 'copy') else self.default
-
-        # we cannot really test for external dict behavior
-        if is_indexable_but_not_string(value) and not isinstance(value, dict):
-            return self.format(value)
-
-        return [marshal(value, self.container.nested)]
 
 
 @swagger.model

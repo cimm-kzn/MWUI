@@ -37,7 +37,7 @@ api.add_resource(CreateTask, '/task/create/<int:_type>')
 api.add_resource(UploadTask, '/task/upload')
 api.add_resource(PrepareTask, '/task/prepare/<string:task>')
 api.add_resource(ModelTask, '/task/process/<string:task>', '/task/model/<string:task>')  # model deprecated
-api.add_resource(SavedTask, '/task/save/<string:task>', '/task/results/<string:task>')  # results deprecated
+api.add_resource(SavedTask, '/task/saves/<string:task>', '/task/results/<string:task>')  # results deprecated
 api.add_resource(SavedTasksList, '/task/saves')
 
 api.add_resource(AvailableModels, '/resources/models')

@@ -36,9 +36,9 @@ class DBNameConverter(BaseConverter):
 class DBTableConverter(BaseConverter):
     def to_python(self, value):
         if value in ('Molecule', 'mol', 'molecule', 'm', 'M'):
-            return 0
+            return 'MOLECULE'
         if value in ('Reaction', 'reaction', 'r', 'R'):
-            return 1
+            return 'REACTION'
         raise ValidationError()
 
 
