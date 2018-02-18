@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2017 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2017, 2018 Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -85,14 +85,17 @@ class PostView(View):
                                       types=[x for x in ThesisPostType.thesis_types(sub.type, dante=thesis_count > 1)
                                              if x in thesis_types])
             if special_form.validate_on_submit():
-                post.title = special_form.title.data
-                post.body = special_form.body.data
-                post.update_type(special_form.type)
+                if special_form.affiliations_validate():
+                    post.title = special_form.title.data
+                    post.body = special_form.body.data
+                    post.update_type(special_form.type)
+                    post.affiliations = special_form.affiliations.data
+                    post.authors = special_form.authors.data
 
-                if special_form.banner_field.data:
-                    post.banner = save_upload(special_form.banner_field.data, images=True)
-                if special_form.attachment.data:
-                    post.add_attachment(*save_upload(special_form.attachment.data))
+                    if special_form.banner_field.data:
+                        post.banner = save_upload(special_form.banner_field.data, images=True)
+                    if special_form.attachment.data:
+                        post.add_attachment(*save_upload(special_form.attachment.data))
 
             return special_form
 
@@ -155,12 +158,14 @@ class PostView(View):
                                                          ThesisPostType.thesis_types(sub.type, dante=thesis_count > 0)
                                                          if x in thesis_types])
                         if special_form.validate_on_submit():
-                            banner_name, file_name = combo_save(special_form.banner_field, special_form.attachment)
-                            t = Thesis(post.meeting_id, type=special_form.type,
-                                       title=special_form.title.data, body=special_form.body.data,
-                                       banner=banner_name, attachments=file_name, author=current_user.get_user())
-                            commit()
-                            return redirect(url_for('.blog_post', post=t.id))
+                            if special_form.affiliations_validate():
+                                banner_name, file_name = combo_save(special_form.banner_field, special_form.attachment)
+                                t = Thesis(post.meeting_id, type=special_form.type,
+                                           title=special_form.title.data, body=special_form.body.data,
+                                           banner=banner_name, attachments=file_name, author=current_user.get_user(),
+                                           affiliations=special_form.affiliations.data, authors=special_form.authors.data)
+                                commit()
+                                return redirect(url_for('.blog_post', post=t.id))
 
             crumb = dict(url=url_for('.blog_post', post=post.meeting_id), title=post.title, parent='Event main page')
         else:

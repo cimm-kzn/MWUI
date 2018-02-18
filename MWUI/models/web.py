@@ -350,14 +350,16 @@ def load_tables(db, schema):
     class Thesis(Post, MeetingMixin):
         def __init__(self, meeting, **kwargs):
             _type = kwargs.pop('type', ThesisPostType.POSTER).value
+            affiliations = kwargs.pop('affiliations')
+            authors = kwargs.pop('authors')
             parent = Meeting[meeting]
 
-            if parent.type != MeetingPostType.MEETING:
-                raise Exception('Invalid Meeting id')
-            if parent.deadline < datetime.utcnow():
-                raise Exception('Deadline left')
+            assert parent.type == MeetingPostType.MEETING, 'Invalid Meeting id'
+            assert parent.deadline > datetime.utcnow(), 'Deadline left'
 
             super().__init__(_type=_type, _parent=parent, **filter_kwargs(kwargs))
+            self.affiliations = affiliations
+            self.authors = authors
 
         @property
         def body_name(self):
@@ -373,6 +375,44 @@ def load_tables(db, schema):
         @property
         def meeting(self):
             return self._parent
+
+        @property
+        def authors(self):
+            return self.special and self.special.get('authors') or []
+
+        @authors.setter
+        def authors(self, authors):
+            assert isinstance(authors, list)
+            assert isinstance(authors[0], dict)
+            fields = {'first_name', 'second_name', 'affiliation'}
+            assert all(fields == set(x) for x in authors)
+            aff_len = len(self.affiliations)
+            assert all(x['affiliation'] <= aff_len for x in authors)
+            if not self.special:
+                self.special = dict(authors=authors)
+            else:
+                self.special['authors'] = authors
+
+        def update_authors(self, authors):
+            self.authors = authors
+
+        @property
+        def affiliations(self):
+            return self.special and self.special.get('affiliations') or []
+
+        @affiliations.setter
+        def affiliations(self, affiliations):
+            assert isinstance(affiliations, list)
+            assert isinstance(affiliations[0], dict)
+            fields = {'affiliation', 'town', 'country'}
+            assert all(fields == set(x) for x in affiliations)
+            if not self.special:
+                self.special = dict(affiliations=affiliations)
+            else:
+                self.special['affiliations'] = affiliations
+
+        def update_affiliations(self, affiliations):
+            self.affiliations = affiliations
 
     class Email(Post, MeetingMixin):
         def __init__(self, from_name=None, reply_name=None, reply_mail=None, meeting=None, **kwargs):

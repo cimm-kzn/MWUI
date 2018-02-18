@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2017 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2017, 2018 Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -129,12 +129,17 @@ class PostEditView(View):
             if hasattr(p, 'update_thesis_types') and special_form.thesis_types:
                 p.update_thesis_types(special_form.thesis_types)
 
+            if hasattr(p, 'update_authors') and special_form.authors.data:
+                p.update_authors(special_form.authors.data)
+
+            if hasattr(p, 'update_affiliations') and special_form.affiliations.data:
+                p.update_affiliations(special_form.affiliations.data)
+
         crumb = dict(url=url_for('.admin_post'), title='Edit', parent='Admin')
         attachments = list(p.attachments)
-        special_field = None
 
         return render_template("post.html", title=p.title, post=p, crumb=crumb, deletable=True,
-                               special_form=special_form, special_field=special_field, attachments=attachments)
+                               special_form=special_form, special_field=None, attachments=attachments)
 
 
 class AdminPostView(View):

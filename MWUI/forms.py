@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2016, 2017 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2016-2018  Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -23,50 +23,42 @@ from flask import url_for, redirect
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from json import loads
 from imghdr import what
 from itertools import chain
 from pony.orm import db_session
 from pycountry import countries
 from werkzeug.datastructures import FileStorage
-from wtforms import (StringField, validators, BooleanField, SubmitField, PasswordField, ValidationError,
+from wtforms import (StringField, BooleanField, SubmitField, PasswordField, ValidationError, Form, FormField, FieldList,
                      TextAreaField, SelectField, HiddenField, IntegerField, DateTimeField, SelectMultipleField)
+from wtforms.validators import DataRequired, Optional, EqualTo, Email as ValidatorEmail, NumberRange
 from .constants import (BlogPostType, UserRole, ThesisPostType, ProfileDegree, ProfileStatus, MeetingPostType,
                         EmailPostType, TeamPostType, MeetingPartType)
 from .models import User, Meeting
 from .redirect import get_redirect_target, is_safe_url
 
 
-class JsonValidator(object):
-    def __call__(self, form, field):
-        try:
-            loads(field.data)
-        except Exception:
-            raise ValidationError('Bad Json')
-
-
-class CheckMeetingExist(object):
+class CheckMeetingExist:
     def __call__(self, form, field):
         with db_session:
             if not Meeting.exists(id=field.data, _type=MeetingPostType.MEETING.value):
                 raise ValidationError('Bad meeting post id')
 
 
-class CheckUserFree(object):
+class CheckUserFree:
     def __call__(self, form, field):
         with db_session:
             if User.exists(email=field.data.lower()):
                 raise ValidationError('User exist. Please Log in or if you forgot password use restore procedure')
 
 
-class CheckUserExist(object):
+class CheckUserExist:
     def __call__(self, form, field):
         with db_session:
             if not User.exists(email=field.data.lower()):
                 raise ValidationError('User not found')
 
 
-class VerifyPassword(object):
+class VerifyPassword:
     def __call__(self, form, field):
         with db_session:
             user = User.get(id=current_user.id)
@@ -74,7 +66,7 @@ class VerifyPassword(object):
                 raise ValidationError('Bad password')
 
 
-class VerifyImage(object):
+class VerifyImage:
     def __init__(self, types):
         self.__types = types
 
@@ -113,16 +105,16 @@ class DeleteButtonForm(CustomForm):
 
 
 class ProfileForm(CustomForm):
-    name = StringField('Name *', [validators.DataRequired()])
-    surname = StringField('Surname *', [validators.DataRequired()])
+    name = StringField('Name', [DataRequired()])
+    surname = StringField('Surname', [DataRequired()])
     banner_field = FileField('Photo', validators=[FileAllowed('jpg jpe jpeg png'.split(), 'JPEG or PNG images only'),
                                                   VerifyImage('jpeg png'.split())])
-    degree = SelectField('Degree *', [validators.DataRequired()], choices=[(x.value, x.fancy) for x in ProfileDegree],
+    degree = SelectField('Degree', [DataRequired()], choices=[(x.value, x.fancy) for x in ProfileDegree],
                          coerce=int)
-    status = SelectField('Status *', [validators.DataRequired()], choices=[(x.value, x.fancy) for x in ProfileStatus],
+    status = SelectField('Status', [DataRequired()], choices=[(x.value, x.fancy) for x in ProfileStatus],
                          coerce=int)
 
-    country = SelectField('Country *', [validators.DataRequired()], choices=[(x.alpha_3, x.name) for x in countries])
+    country = SelectField('Country', [DataRequired()], choices=[(x.alpha_3, x.name) for x in countries])
     town = StringField('Town')
     affiliation = StringField('Affiliation')
     position = StringField('Position')
@@ -131,17 +123,16 @@ class ProfileForm(CustomForm):
 
 
 class Email(CustomForm):
-    email = StringField('Email', [validators.DataRequired(), validators.Email(), CheckUserExist()])
+    email = StringField('Email', [DataRequired(), ValidatorEmail(), CheckUserExist()])
 
 
 class Password(CustomForm):
-    password = PasswordField('Password *', [validators.DataRequired(),
-                                            validators.EqualTo('confirm', message='Passwords must match')])
-    confirm = PasswordField('Repeat Password *', [validators.DataRequired()])
+    password = PasswordField('Password', [DataRequired(), EqualTo('confirm', message='Passwords must match')])
+    confirm = PasswordField('Repeat Password', [DataRequired()])
 
 
 class RegistrationForm(ProfileForm, Password):
-    email = StringField('Email *', [validators.DataRequired(), validators.Email(), CheckUserFree()])
+    email = StringField('Email', [DataRequired(), ValidatorEmail(), CheckUserFree()])
     submit_btn = SubmitField('Register')
 
     __order = ('csrf_token', 'next', 'email', 'password', 'confirm', 'name', 'surname', 'degree',
@@ -153,23 +144,23 @@ class RegistrationForm(ProfileForm, Password):
 
 
 class LoginForm(Email):
-    password = PasswordField('Password', [validators.DataRequired()])
+    password = PasswordField('Password', [DataRequired()])
     remember = BooleanField('Remember me')
     submit_btn = SubmitField('Log in')
 
 
 class ReLoginForm(CustomForm):
-    password = PasswordField('Password', [validators.DataRequired(), VerifyPassword()])
+    password = PasswordField('Password', [DataRequired(), VerifyPassword()])
     submit_btn = SubmitField('Log out')
 
 
 class ChangePasswordForm(Password):
-    old_password = PasswordField('Old Password *', [validators.DataRequired(), VerifyPassword()])
+    old_password = PasswordField('Old Password', [DataRequired(), VerifyPassword()])
     submit_btn = SubmitField('Change Password')
 
 
 class ForgotPasswordForm(CustomForm):
-    email = StringField('Email', [validators.DataRequired(), validators.Email()])
+    email = StringField('Email', [DataRequired(), ValidatorEmail()])
     submit_btn = SubmitField('Restore')
 
 
@@ -178,7 +169,7 @@ class LogoutForm(CustomForm):
 
 
 class ChangeRoleForm(Email):
-    role_type = SelectField('Role Type', [validators.DataRequired()],
+    role_type = SelectField('Role Type', [DataRequired()],
                             choices=[(x.value, x.name) for x in UserRole], coerce=int)
     submit_btn = SubmitField('Change Role')
 
@@ -192,7 +183,7 @@ class BanUserForm(Email):
 
 
 class MeetForm(CustomForm):
-    part_type = SelectField('Participation Type', [validators.DataRequired()],
+    part_type = SelectField('Participation Type', [DataRequired()],
                             choices=[(x.value, x.fancy) for x in MeetingPartType], coerce=int)
     submit_btn = SubmitField('Confirm')
 
@@ -207,8 +198,8 @@ class MeetForm(CustomForm):
 
 
 class CommonPost(CustomForm):
-    title = StringField('Title *', [validators.DataRequired()])
-    body = TextAreaField('Message *', [validators.DataRequired()])
+    title = StringField('Title', [DataRequired()])
+    body = TextAreaField('Message', [DataRequired()])
     banner_field = FileField('Graphical Abstract',
                              validators=[FileAllowed('jpg jpe jpeg png'.split(), 'JPEG or PNG images only'),
                                          VerifyImage('jpeg png'.split())])
@@ -220,22 +211,49 @@ class CommonPost(CustomForm):
         super(CommonPost, self).__init__(*args, **kwargs)
 
 
+class Authors(Form):
+    first_name = StringField('First Name', [DataRequired()])
+    second_name = StringField('Second Name', [DataRequired()])
+    affiliation = IntegerField('Affiliation Number', [DataRequired(), NumberRange(min=1)])
+
+
+class Affiliations(Form):
+    affiliation = StringField('Organization', [DataRequired()])
+    town = StringField('Town', [DataRequired()])
+    country = SelectField('Country', [DataRequired()], choices=[(x.alpha_3, x.name) for x in countries])
+
+
 class ThesisForm(CommonPost):
-    post_type = SelectField('Presentation Type *', [validators.DataRequired()],
+    post_type = SelectField('Presentation Type', [DataRequired()],
                             choices=[(x.value, x.fancy) for x in ThesisPostType], coerce=int)
+    authors = FieldList(FormField(Authors), min_entries=1)
+    affiliations = FieldList(FormField(Affiliations), min_entries=1)
     submit_btn = SubmitField('Confirm')
 
-    __order = ('csrf_token', 'next', 'title', 'body', 'banner_field', 'attachment', 'post_type', 'submit_btn')
+    __order = ('csrf_token', 'next', 'title', 'body', 'banner_field', 'attachment', 'post_type', 'authors',
+               'affiliations', 'submit_btn')
 
     def __init__(self, *args, body_name=None, types=None, **kwargs):
         super(ThesisForm, self).__init__(self.__order, *args, **kwargs)
         if types is not None:
             self.post_type.choices = [(x.value, x.fancy) for x in types]
-        self.body.label.text = body_name and '%s *' % body_name or 'Short Abstract'
+        self.body.label.text = body_name or 'Short Abstract'
+        for n, x in enumerate(self.affiliations.entries, start=1):
+            x.label.text = 'Affiliation: %d' % n
+        for n, x in enumerate(self.authors.entries, start=1):
+            x.label.text = 'Author: %d' % n
 
     @property
     def type(self):
         return ThesisPostType(self.post_type.data)
+
+    def affiliations_validate(self):
+        flag = True
+        for x in self.authors:
+            if x.affiliation.data > len(self.affiliations):
+                x.affiliation.errors = ['Affiliation number out of list']
+                flag = False
+        return flag
 
 
 class Post(CommonPost):
@@ -244,7 +262,7 @@ class Post(CommonPost):
 
 
 class PostForm(Post):
-    post_type = SelectField('Post Type', [validators.DataRequired()],
+    post_type = SelectField('Post Type', [DataRequired()],
                             choices=[(x.value, x.name) for x in BlogPostType], coerce=int)
 
     __order = ('csrf_token', 'next', 'title', 'body', 'slug', 'banner_field', 'attachment', 'post_type', 'submit_btn')
@@ -258,17 +276,17 @@ class PostForm(Post):
 
 
 class MeetingForm(Post):
-    post_type = SelectField('Post Type', [validators.DataRequired()],
+    post_type = SelectField('Post Type', [DataRequired()],
                             choices=[(x.value, x.name) for x in MeetingPostType], coerce=int)
-    thesis_count = IntegerField('Posters Count', [validators.Optional()])
-    deadline = DateTimeField('Deadline', [validators.Optional()], format='%d/%m/%Y %H:%M')
-    thesis_deadline = DateTimeField('Poster Deadline', [validators.Optional()], format='%d/%m/%Y %H:%M')
-    meeting_id = IntegerField('Meeting page', [validators.Optional(), CheckMeetingExist()])
-    order = IntegerField('Order', [validators.Optional()])
+    thesis_count = IntegerField('Posters Count', [Optional()])
+    deadline = DateTimeField('Deadline', [Optional()], format='%d/%m/%Y %H:%M')
+    thesis_deadline = DateTimeField('Poster Deadline', [Optional()], format='%d/%m/%Y %H:%M')
+    meeting_id = IntegerField('Meeting page', [Optional(), CheckMeetingExist()])
+    order = IntegerField('Order', [Optional()])
     body_name = StringField('Body Name')
-    participation_types_id = SelectMultipleField('Participation Types', [validators.Optional()],
+    participation_types_id = SelectMultipleField('Participation Types', [Optional()],
                                                  choices=[(x.value, x.name) for x in MeetingPartType], coerce=int)
-    thesis_types_id = SelectMultipleField('Presentation Types', [validators.Optional()],
+    thesis_types_id = SelectMultipleField('Presentation Types', [Optional()],
                                           choices=[(x.value, x.name) for x in ThesisPostType], coerce=int)
 
     __order = ('csrf_token', 'next', 'title', 'body', 'slug', 'banner_field', 'attachment', 'post_type', 'thesis_count',
@@ -292,12 +310,12 @@ class MeetingForm(Post):
 
 
 class EmailForm(Post):
-    post_type = SelectField('Post Type', [validators.DataRequired()],
+    post_type = SelectField('Post Type', [DataRequired()],
                             choices=[(x.value, x.name) for x in EmailPostType], coerce=int)
     from_name = StringField('From Name')
     reply_name = StringField('Reply Name')
-    reply_mail = StringField('Reply email', [validators.Optional(), validators.Email()])
-    meeting_id = IntegerField('Meeting page', [validators.Optional(), CheckMeetingExist()])
+    reply_mail = StringField('Reply email', [Optional(), ValidatorEmail()])
+    meeting_id = IntegerField('Meeting page', [Optional(), CheckMeetingExist()])
 
     __order = ('csrf_token', 'next', 'title', 'body', 'slug', 'banner_field', 'attachment', 'post_type', 'from_name',
                'reply_mail', 'reply_name', 'meeting_id', 'submit_btn')
@@ -311,10 +329,10 @@ class EmailForm(Post):
 
 
 class TeamForm(Post):
-    post_type = SelectField('Member Type', [validators.DataRequired()],
+    post_type = SelectField('Member Type', [DataRequired()],
                             choices=[(x.value, x.name) for x in TeamPostType], coerce=int)
-    role = StringField('Role', [validators.DataRequired()])
-    order = IntegerField('Order', [validators.Optional()])
+    role = StringField('Role', [DataRequired()])
+    order = IntegerField('Order', [Optional()])
     scopus = StringField('Scopus')
 
     __order = ('csrf_token', 'next', 'title', 'body', 'slug', 'banner_field', 'attachment', 'post_type', 'role',
