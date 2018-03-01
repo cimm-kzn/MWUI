@@ -23,13 +23,20 @@ from flask import redirect, url_for, render_template, flash
 from flask.views import View
 from flask_login import current_user
 from pony.orm import db_session, select, commit
+from ._forms import ThesisForm, MeetForm
+from ._sendmail import send_mail, attach_mixin
+from ._upload import save_upload, combo_save
 from ..constants import (UserRole, BlogPostType, MeetingPostType, EmailPostType, TeamPostType, MeetingPartType,
                          ThesisPostType)
-from ..forms import ThesisForm, MeetForm
+from ..config import SCOPUS_ENABLE
 from ..models import Email, Post, Thesis, Subscription
-from ..scopus import get_articles
-from ..sendmail import send_mail, attach_mixin
-from ..upload import save_upload, combo_save
+
+
+if SCOPUS_ENABLE:
+    from ._scopus import get_articles
+else:
+    def get_articles(_):
+        pass
 
 
 class PostView(View):

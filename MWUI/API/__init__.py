@@ -18,15 +18,25 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-from .jobs import api as jobs_api, api_bp as jobs_bp
-from .storage import api as db_api, api_bp as db_bp
-from .meta import AvailableAdditives, MagicNumbers, LogIn
 
 
-jobs_api.add_resource(AvailableAdditives, '/resources/additives')
-jobs_api.add_resource(MagicNumbers, '/resources/magic')
-jobs_api.add_resource(LogIn, '/auth')
+def load_jobs():
+    from .jobs import api, api_bp
+    __add_magic(api)
+    return api_bp
 
-db_api.add_resource(AvailableAdditives, '/resources/additives')
-db_api.add_resource(MagicNumbers, '/resources/magic')
-db_api.add_resource(LogIn, '/auth')
+
+def load_cgrdb():
+    from .storage import api, api_bp
+    __add_magic(api)
+    return api_bp
+
+
+def __add_magic(api):
+    from .meta import AvailableAdditives, MagicNumbers, LogIn
+    api.add_resource(AvailableAdditives, '/resources/additives')
+    api.add_resource(MagicNumbers, '/resources/magic')
+    api.add_resource(LogIn, '/auth')
+
+
+__all__ = [load_cgrdb.__name__, load_jobs.__name__]

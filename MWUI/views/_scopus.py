@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2017 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2017, 2018 Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -21,8 +21,8 @@
 from pony.orm import db_session
 from redis import Redis, ConnectionError
 from rq import Queue
-from .config import REDIS_SCOPUS, SCOPUS_TTL, REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_JOB_TIMEOUT
-from .models import Author
+from ..config import REDIS_SCOPUS, SCOPUS_TTL, REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_JOB_TIMEOUT
+from ..models import Author
 
 
 def get_articles(author_id):

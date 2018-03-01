@@ -27,7 +27,7 @@ Email SPAM sender.
 from MWUI import init
 from pandas import read_csv
 from MWUI.models import Email
-from MWUI.sendmail import send_mail, attach_mixin
+from MWUI.views._sendmail import send_mail, attach_mixin
 
 
 app = init()

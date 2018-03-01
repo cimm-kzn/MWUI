@@ -20,11 +20,10 @@
 #  MA 02110-1301, USA.
 #
 from pathlib import Path
-from os.path import expanduser  # python 3.4 ad-hoc
 from sys import stderr
 from traceback import format_exc
 
-
+VIEW_ENABLE = True
 UPLOAD_PATH = 'upload'
 IMAGES_PATH = 'upload/images'
 MAX_UPLOAD_SIZE = 16 * 1024 * 1024
@@ -37,7 +36,10 @@ SWAGGER = False
 
 LAB_NAME = 'Kazan Chemoinformatics and Molecular Modeling Laboratory'
 LAB_SHORT = 'CIMM'
+
 BLOG_POSTS_PER_PAGE = 10
+
+SCOPUS_ENABLE = False
 SCOPUS_API_KEY = None
 SCOPUS_TTL = 86400 * 7
 SCOPUS_SUBJECT_LIST = '1600'
@@ -60,6 +62,9 @@ DB_MAIN = None
 DB_PRED = None
 DB_SCOPUS = None
 
+JOBS_ENABLE = False
+CGRDB_ENABLE = False
+
 REDIS_HOST = 'localhost'
 REDIS_PORT = 6379
 REDIS_PASSWORD = None
@@ -70,6 +75,7 @@ REDIS_SCOPUS = 'scopus'
 
 RESULTS_PER_PAGE = 50
 
+VK_ENABLE = False
 VK_CONFIRM_TOKEN = None
 VK_SECRET = None
 VK_AUTHOR = 1
@@ -80,12 +86,12 @@ config_list = ('UPLOAD_PATH', 'PORTAL_NON_ROOT', 'SECRET_KEY', 'RESIZE_URL', 'MA
                'LAB_NAME', 'LAB_SHORT', 'BLOG_POSTS_PER_PAGE', 'SCOPUS_API_KEY', 'SCOPUS_TTL', 'RESULTS_PER_PAGE',
                'SMTP_HOST', 'SMTP_PORT', 'SMTP_LOGIN', 'SMTP_PASSWORD', 'SMTP_MAIL', 'MAIL_INKEY', 'MAIL_SIGNER',
                'SCOPUS_SUBJECT_LIST', 'DB_SCOPUS', 'REDIS_SCOPUS', 'DB_PORT', 'VK_CONFIRM_TOKEN', 'VK_SECRET',
-               'VK_AUTHOR')
+               'VK_AUTHOR', 'VK_ENABLE', 'CGRDB_ENABLE', 'JOBS_ENABLE', 'SCOPUS_ENABLE', 'VIEW_ENABLE')
 
 config_load_list = ['DEBUG']
 config_load_list.extend(config_list)
 
-config_dirs = [x / '.MWUI.ini' for x in (Path(__file__).parent, Path(expanduser('~')), Path('/etc'))]
+config_dirs = [x / '.MWUI.ini' for x in (Path(__file__).parent, Path.home(), Path('/etc'))]
 
 if not any(x.exists() for x in config_dirs):
     with config_dirs[1].open('w') as f:
@@ -107,3 +113,12 @@ with next(x for x in config_dirs if x.exists()).open() as f:
 IMAGES_ROOT = Path(IMAGES_PATH)
 UPLOAD_ROOT = Path(UPLOAD_PATH)
 SCOPUS_SUBJECT = [int(x) for x in SCOPUS_SUBJECT_LIST.split(',')]
+
+if CGRDB_ENABLE and not JOBS_ENABLE:
+    JOBS_ENABLE = True
+
+if SCOPUS_ENABLE and not VIEW_ENABLE:
+    SCOPUS_ENABLE = False
+
+if VK_ENABLE and not VIEW_ENABLE:
+    VK_ENABLE = False

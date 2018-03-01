@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2017 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2017, 2018 Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 from os.path import splitext
 from uuid import uuid4
 from werkzeug.utils import secure_filename
-from .config import UPLOAD_ROOT, IMAGES_ROOT
+from ..config import UPLOAD_ROOT, IMAGES_ROOT
 
 
 def save_upload(field, images=False):

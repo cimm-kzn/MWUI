@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2017 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2017, 2018 Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -19,13 +19,17 @@
 #  MA 02110-1301, USA.
 #
 from pony.orm import Database
-from .predictions import load_tables as save
-from .web import load_tables as main
-from .scopus import load_tables as scopus
-from ..config import DB_MAIN, DB_PRED, DB_SCOPUS
+from .web import load_tables as _main
+from ..config import DB_MAIN, SCOPUS_ENABLE, JOBS_ENABLE
 
 db = Database()
+User, Subscription, Post, BlogPost, TeamPost, Meeting, Thesis, Email, Attachment = _main(db, DB_MAIN)
 
-User, Subscription, Post, BlogPost, TeamPost, Meeting, Thesis, Email, Attachment = main(db, DB_MAIN)
-Task, Model, Destination, Additive = save(db, DB_PRED)
-Author, Journal = scopus(db, DB_SCOPUS)
+if JOBS_ENABLE:
+    from .predictions import load_tables as _save
+    from ..config import DB_PRED
+    Task, Model, Destination, Additive = _save(db, DB_PRED)
+if SCOPUS_ENABLE:
+    from .scopus import load_tables as _scopus
+    from ..config import DB_SCOPUS
+    Author, Journal = _scopus(db, DB_SCOPUS)

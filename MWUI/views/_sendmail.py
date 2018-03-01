@@ -29,8 +29,8 @@ from redis import Redis, ConnectionError
 from rq import Queue
 from subprocess import Popen, PIPE
 from .bootstrap import CustomMisakaRenderer
-from .config import (LAB_NAME, SMTP_MAIL, REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_MAIL, UPLOAD_ROOT,
-                     MAIL_INKEY, MAIL_SIGNER, REDIS_JOB_TIMEOUT)
+from ..config import (LAB_NAME, SMTP_MAIL, REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_MAIL, UPLOAD_ROOT,
+                      MAIL_INKEY, MAIL_SIGNER, REDIS_JOB_TIMEOUT)
 
 
 def send_mail(message, to_mail, to_name=None, from_name=None, subject=None, banner=None, title=None,

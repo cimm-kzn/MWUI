@@ -22,11 +22,12 @@ from flask import Blueprint
 from flask_restful import Api
 from .create import UploadTask, CreateTask
 from .deploy import RegisterModels
-from .meta import ExampleView, AvailableModels, BatchDownload
+from .meta import AvailableModels, BatchDownload
 from .model import ModelTask
 from .prepare import PrepareTask
 from .save import SavedTask, SavedTasksList
 from ..common import swagger
+from ...config import VIEW_ENABLE
 
 
 api_bp = Blueprint('api', __name__)
@@ -44,4 +45,7 @@ api.add_resource(AvailableModels, '/resources/models')
 api.add_resource(RegisterModels, '/admin/models')
 
 api_bp.add_url_rule('/task/batch_file/<string:file>', view_func=BatchDownload.as_view('batch_file'))
-api_bp.add_url_rule('/example/<int:_id>', view_func=ExampleView.as_view('example'))
+
+if VIEW_ENABLE:
+    from .meta import ExampleView
+    api_bp.add_url_rule('/example/<int:_id>', view_func=ExampleView.as_view('example'))

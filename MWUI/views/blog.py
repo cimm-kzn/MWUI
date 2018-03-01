@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2017 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2017, 2018 Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@ from flask import redirect, url_for, render_template, flash
 from flask.views import View
 from flask_login import login_required, current_user
 from pony.orm import db_session, select
-from ..bootstrap import Pagination
+from .bootstrap import Pagination
 from ..config import BLOG_POSTS_PER_PAGE
 from ..constants import MeetingPostType, BlogPostType
 from ..models import Meeting, Post, Thesis, Subscription

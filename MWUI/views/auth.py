@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2017 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2017, 2018 Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -22,12 +22,12 @@ from flask import redirect, url_for, render_template, flash, request
 from flask.views import View
 from flask_login import login_user, logout_user, login_required, current_user
 from pony.orm import db_session, select
+from ._forms import LoginForm, RegistrationForm, ForgotPasswordForm, LogoutForm
+from ._redirect import get_redirect_target
+from ._sendmail import send_mail, attach_mixin
 from ..constants import FormRoute, EmailPostType
-from ..forms import LoginForm, RegistrationForm, ForgotPasswordForm, LogoutForm
 from ..logins import UserLogin
 from ..models import User, Email, Meeting
-from ..redirect import get_redirect_target
-from ..sendmail import send_mail, attach_mixin
 
 
 class LoginView(View):

@@ -24,12 +24,12 @@ from flask import redirect, url_for, render_template
 from flask.views import View
 from flask_login import current_user, login_required
 from pony.orm import db_session
-from ..bootstrap import Pagination
+from ._forms import PostForm, MeetingForm, EmailForm, ThesisForm, TeamForm
+from ._upload import save_upload
+from .bootstrap import Pagination
 from ..config import BLOG_POSTS_PER_PAGE
 from ..constants import UserRole
-from ..forms import PostForm, MeetingForm, EmailForm, ThesisForm, TeamForm
 from ..models import Post, Subscription, User
-from ..upload import save_upload
 
 
 table = namedtuple('Table', ('header', 'rows'))

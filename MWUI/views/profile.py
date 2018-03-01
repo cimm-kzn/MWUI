@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2017 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2017, 2018 Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -22,11 +22,11 @@ from flask import redirect, url_for, render_template, flash
 from flask.views import View
 from flask_login import logout_user, login_required, current_user
 from pony.orm import db_session, commit
-from ..constants import UserRole, MeetingPostType, FormRoute
-from ..forms import (ReLoginForm, ChangePasswordForm, PostForm, ChangeRoleForm, BanUserForm,
+from ._forms import (ReLoginForm, ChangePasswordForm, PostForm, ChangeRoleForm, BanUserForm,
                      ProfileForm, MeetingForm, EmailForm, TeamForm)
+from ._upload import combo_save, save_upload
+from ..constants import UserRole, MeetingPostType, FormRoute
 from ..models import User, BlogPost, Email, Meeting, TeamPost
-from ..upload import combo_save, save_upload
 
 
 class ProfileView(View):

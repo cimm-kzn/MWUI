@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2016, 2017 Ramil Nugmanov <stsouko@live.ru>
+#  Copyright 2016-2018 Ramil Nugmanov <stsouko@live.ru>
 #  This file is part of MWUI.
 #
 #  MWUI is free software; you can redistribute it and/or modify
@@ -23,6 +23,7 @@ from datetime import datetime
 from flask import redirect, url_for, render_template, Blueprint, abort, make_response
 from flask_login import login_required, current_user
 from pony.orm import db_session, left_join
+from ._forms import DeleteButtonForm
 from .admin import PostEditView, AdminPostView, AdminUserView
 from .auth import LoginView, LogoutView
 from .blog import BlogView, AbstractsView, ThesesView, EventsView, ModelsView, DataView
@@ -30,13 +31,12 @@ from .post import PostView
 from .profile import ProfileView
 from .visitcard import IndexView, AboutView, StudentsView, LessonsView
 from ..constants import UserRole, MeetingPostType
-from ..forms import DeleteButtonForm
 from ..models import User, Meeting, Post, Attachment, Subscription
 
 
 table = namedtuple('Table', ('header', 'rows'))
 row_admin = namedtuple('TableRow', ('number', 'participant', 'country', 'status', 'degree', 'presentation', 'town',
-                              'affiliation', 'email'))
+                                    'affiliation', 'email'))
 row = namedtuple('TableRow', ('number', 'participant', 'country', 'status', 'degree', 'presentation'))
 cell = namedtuple('TableCell', ('url', 'text'))
 
@@ -172,11 +172,11 @@ def participants(event):
     if not m:
         return redirect(url_for('.blog'))
 
-    admin = True if current_user.is_authenticated and (current_user.role_is(UserRole.ADMIN) or
-                                                       current_user.role_is(UserRole.SECRETARY)) else False
+    _admin = True if current_user.is_authenticated and (current_user.role_is(UserRole.ADMIN) or
+                                                        current_user.role_is(UserRole.SECRETARY)) else False
 
     header = ('#', 'Participant', 'Country', 'Status', 'Degree', 'Presentation type', 'Town', 'Affiliation', 'Email') \
-        if admin else ('#', 'Participant', 'Country', 'Status', 'Degree', 'Presentation type')
+        if _admin else ('#', 'Participant', 'Country', 'Status', 'Degree', 'Presentation type')
 
     #  cache users entities
     list(left_join(x for x in User for s in x.subscriptions if s.meeting == m))
@@ -184,7 +184,7 @@ def participants(event):
 
     data = [row_admin(n, cell(url_for('.user', _user=x.user.id), x.user.full_name), x.user.country_name,
                       x.user.sci_status.fancy, x.user.sci_degree.fancy, x.type.fancy, x.user.town, x.user.affiliation,
-                      x.user.email) if admin else
+                      x.user.email) if _admin else
             row(n, cell(url_for('.user', _user=x.user.id), x.user.full_name), x.user.country_name,
                 x.user.sci_status.fancy, x.user.sci_degree.fancy, x.type.fancy)
             for n, x in enumerate(subs, start=1)]

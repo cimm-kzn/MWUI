@@ -31,10 +31,10 @@ from werkzeug.datastructures import FileStorage
 from wtforms import (StringField, BooleanField, SubmitField, PasswordField, ValidationError, Form, FormField, FieldList,
                      TextAreaField, SelectField, HiddenField, IntegerField, DateTimeField, SelectMultipleField)
 from wtforms.validators import DataRequired, Optional, EqualTo, Email as ValidatorEmail, NumberRange
-from .constants import (BlogPostType, UserRole, ThesisPostType, ProfileDegree, ProfileStatus, MeetingPostType,
-                        EmailPostType, TeamPostType, MeetingPartType)
-from .models import User, Meeting
-from .redirect import get_redirect_target, is_safe_url
+from ._redirect import get_redirect_target, is_safe_url
+from ..constants import (BlogPostType, UserRole, ThesisPostType, ProfileDegree, ProfileStatus, MeetingPostType,
+                         EmailPostType, TeamPostType, MeetingPartType)
+from ..models import User, Meeting
 
 
 class CheckMeetingExist:
