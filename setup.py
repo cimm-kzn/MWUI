@@ -34,7 +34,7 @@ setup(
     description='MWUI',
     package_data={'MWUI': ['templates/*.html', 'static/css/*.css', 'static/js/*.js',
                            'static/marvinjs/js/webservices.js', 'static/favicon.ico', 'static/logo.png']},
-    scripts=['mwui.py'],
+    scripts=['mwui.py', 'redis_mail.py', 'redis_scopus.py'],
     install_requires=['redis', 'rq', 'bcrypt', 'pony', 'pycountry', 'werkzeug', 'flask', 'flask-login'],
     extras_require={'postgres_cffi':  ['cffi', 'psycopg2cffi'],
                     'postgres':  ['psycopg2'],

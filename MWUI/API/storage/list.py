@@ -21,18 +21,24 @@
 from CGRdb import Loader
 from CGRdb.config import DB_DATA_LIST
 from flask_login import current_user
-from flask_restful import marshal_with, reqparse
+from flask_restful import marshal_with, reqparse, marshal
 from flask_restful.inputs import positive
-from .marshal import RecordsList
+from pony.orm import flush
+from .marshal import RecordResponseFields, RecordStructureFields
 from ..common import DBAuthResource, swagger, request_arguments_parser, abort
+from ..jobs.common import fetch_task
 from ...config import RESULTS_PER_PAGE
-from ...constants import UserRole
+from ...constants import UserRole, TaskStatus, StructureStatus, StructureType, TaskType
 from ...models import User
 
 
-db_args = reqparse.RequestParser(bundle_errors=True)
-db_args.add_argument('user', type=positive, help='User number. by default current user return. {error_msg}')
-db_args.add_argument('page', type=positive, help='Page number. by default all pages return. {error_msg}')
+db_get = reqparse.RequestParser(bundle_errors=True)
+db_get.add_argument('user', type=positive, help='User number. by default current user return. {error_msg}')
+db_get.add_argument('page', type=positive, help='Page number. by default all pages return. {error_msg}')
+
+db_post = reqparse.RequestParser(bundle_errors=True)
+db_post.add_argument('task', type=str, location='form')
+
 Loader.load_schemas(user_entity=User)
 
 
@@ -48,25 +54,74 @@ class SavedRecordsList(DBAuthResource):
                          allowMultiple=False, dataType='int', paramType='query'),
                     dict(name='page', description='records pagination', required=False,
                          allowMultiple=False, dataType='int', paramType='query')],
-        responseClass=RecordsList.__name__,
+        responseClass=RecordResponseFields.__name__,
         responseMessages=[dict(code=200, message="saved data"),
                           dict(code=400, message="user and page must be a positive integer or None"),
                           dict(code=401, message="user not authenticated"),
                           dict(code=403, message="user access deny")])
-    @marshal_with(RecordsList.resource_fields)
-    @request_arguments_parser(db_args)
+    @marshal_with(RecordResponseFields.resource_fields)
+    @request_arguments_parser(db_get)
     def get(self, database, table, user=None, page=None):
         """
         Get user's records
         """
-        table = Loader.get_database(database)[table]
-        if user is not None:
-            if not current_user.role_is((UserRole.ADMIN, UserRole.DATA_MANAGER)):
-                abort(403, message='User access deny. You do not have permission')
-            q = table.select(lambda x: x.user_id == user).order_by(table.id)
-        else:
-            q = table.select(lambda x: x.user_id == current_user.id).order_by(table.id)
+        if user is None:
+            user = current_user.id
+        if user == current_user.id:
+            if not current_user.role_is((UserRole.ADMIN, UserRole.DATA_MANAGER, UserRole.DATA_FILLER)):
+                abort(403, message='User access deny. You do not have permission to database')
+        elif not current_user.role_is((UserRole.ADMIN, UserRole.DATA_MANAGER)):
+            abort(403, message="User access deny. You do not have permission to see another user's data")
+
+        entity = Loader.get_database(database)[0 if table == 'MOLECULE' else 1]
+        q = entity.select(lambda x: x.user_id == user).order_by(lambda x: x.id)
 
         if page is not None:
             q = q.page(page, pagesize=RESULTS_PER_PAGE)
         return list(q)
+
+    @swagger.operation(
+        notes='add new record',
+        nickname='add_record',
+        parameters=[dict(name='database', description='DataBase name: [%s]' % ', '.join(DB_DATA_LIST), required=True,
+                         allowMultiple=False, dataType='str', paramType='path'),
+                    dict(name='table', description='Table name: [molecule, reaction]', required=True,
+                         allowMultiple=False, dataType='str', paramType='path'),
+                    dict(name='task', description='Validated structure task id', required=True,
+                         allowMultiple=False, dataType='str', paramType='form')
+                    ],
+        responseClass=RecordResponseFields.__name__,
+        responseMessages=[dict(code=201, message="saved data"),
+                          dict(code=401, message="user not authenticated"),
+                          dict(code=403, message="user access deny"),
+                          dict(code=404, message='invalid task id. perhaps this task has already been removed'),
+                          dict(code=406, message='task status is invalid. only validated tasks acceptable'),
+                          dict(code=406, message='task type is invalid. only populating tasks acceptable'),
+                          dict(code=500, message="modeling server error"),
+                          dict(code=512, message='task not ready')])
+    @marshal_with(RecordResponseFields.resource_fields)
+    @request_arguments_parser(db_post)
+    @fetch_task(TaskStatus.PREPARED)
+    def post(self, task, database, table, job, ended_at):
+        """
+        add new record from task
+        """
+        if job['type'] != TaskType.POPULATING:
+            abort(406, message='Task type is invalid')
+
+        if not current_user.role_is((UserRole.ADMIN, UserRole.DATA_MANAGER, UserRole.DATA_FILLER)):
+            abort(403, message='User access deny. You do not have permission to database')
+
+        entity = Loader.get_database(database)[0 if table == 'MOLECULE' else 1]
+        res = []
+        for s in job['structures']:
+            if s['status'] != StructureStatus.CLEAR:
+                continue
+            if s['type'] != StructureType[table]:
+                continue
+            data = marshal(s, RecordStructureFields.resource_fields)
+            structure = data.pop('data')
+            res.append(entity(structure, current_user.get_user(), [data]))
+
+        flush()
+        return res, 201

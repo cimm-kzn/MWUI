@@ -82,7 +82,7 @@ class CreateTask(DBAuthResource):
 
         if not isinstance(data, list):
             data = [data]
-        if _type != TaskType.MODELING:
+        if _type == TaskType.SEARCHING:
             data = data[:1]
 
         additives = Additive.get_additives_dict()

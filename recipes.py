@@ -41,3 +41,29 @@ for _, x in data.iterrows():
         send_mail(m.body % full_name, x['e-mail'], to_name=full_name, title=m.title, subject=m.title, banner=m.banner,
                   from_name=m.from_name, reply_mail=m.reply_mail, reply_name=m.reply_name,
                   attach_files=attach_files, attach_names=attach_names)
+
+
+"""
+load abstracts
+"""
+from MWUI import init
+from MWUI.models import Thesis, Attachment, User, Meeting
+from MWUI.config import UPLOAD_ROOT
+from pathlib import Path
+from werkzeug.utils import secure_filename
+import shutil
+
+app = init()
+
+m = Meeting[312]
+path = Path('/tmp') / 'meeting_{0.id}'.format(m)
+path.mkdir()
+
+for t in Thesis.select(lambda x: x._parent == m).prefetch(Attachment, User):
+    cat = path / t.type.fancy
+    if not cat.exists():
+        cat.mkdir()
+    for a in t.attachments:
+        in_file = UPLOAD_ROOT / a.file
+        out_file = cat / '{}.{}_{}.{}'.format(secure_filename(t.author_name), t.id, a.id, a.file.split('.')[1])
+        shutil.copy(str(in_file), str(out_file))
