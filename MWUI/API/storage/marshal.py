@@ -18,18 +18,18 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-from CGRtools.files import MRVread
-from flask_restful.fields import DateTime, Integer, Nested, Raw, MarshallingException
-from io import BytesIO
+from CGRtools.files import MRVread, MRVwrite
+from flask_restful.fields import DateTime, Integer, Float, Nested, String, MarshallingException
+from io import BytesIO, StringIO
 from six import binary_type
 from ..common import swagger
 from ..jobs.marshal import DescriptionFields, TaskStructureCreateFields
-from ..marshal import TypeResponseField, UserResponseField, ListDefault, AdditiveResponseFields
+from ..marshal import UserResponseField, ListDefault, AdditiveResponseFields, AdditiveFields
 
 
-class Structure(Raw):
+class Structure(String):
     """
-    Marshal a value as a bytes. Uses ``six.binary_type``
+    Marshal a value as a MRV xml string.
     """
     def format(self, value):
         try:
@@ -42,17 +42,52 @@ class Structure(Raw):
         return structure
 
 
-@swagger.model
-class RecordResponseFields:
-    resource_fields = dict(id=Integer, date=DateTime(dt_format='iso8601'), type=TypeResponseField,
-                           user=UserResponseField)
+class MRV(String):
+    def format(self, value):
+        with StringIO() as s, MRVwrite(s) as m:
+            m.write(value)
+            m.finalize()
+            structure = s.getvalue()
+
+        return structure
 
 
 @swagger.model
 @swagger.nested(additives=AdditiveResponseFields.__name__, description=DescriptionFields.__name__)
 class RecordStructureFields:
     """
-    data structure which returned as response
+    data structure which got from jobs task. used for converting data from tasks format to CGRdb records.
     """
-    resource_fields = dict(additives=ListDefault(Nested(AdditiveResponseFields.resource_fields), default=[]),
-                           data=Structure, **TaskStructureCreateFields.common_fields)
+    common_fields = dict(additives=ListDefault(Nested(AdditiveResponseFields.resource_fields), default=[]),
+                         **TaskStructureCreateFields.common_fields)
+    resource_fields = dict(data=Structure, **common_fields)
+
+
+@swagger.model
+class RecordResponseFields:
+    """
+    structure-metadata record meta (ids, date, user).
+    """
+    resource_fields = dict(structure=Integer(attribute='structure.id'), metadata=Integer(attribute='id'),
+                           date=DateTime(dt_format='iso8601'), user=UserResponseField)
+
+
+@swagger.model
+class AdditiveRecordFields:
+    resource_fields = dict(structure=String, type=Integer, **AdditiveFields.resource_fields)
+
+
+@swagger.model
+@swagger.nested(additives=AdditiveRecordFields.__name__, description=DescriptionFields.__name__)
+class RecordStructureResponseFields:
+    """
+    full structure-metadata record
+    """
+    resource_fields = dict(data=MRV(attribute='structure.structure'),
+                           temperature=Float(298, attribute='data.temperature'),
+                           pressure=Float(1, attribute='data.pressure'),
+                           description=ListDefault(Nested(DescriptionFields.resource_fields), default=[],
+                                                   attribute='data.description'),
+                           additives=ListDefault(Nested(AdditiveRecordFields.resource_fields), default=[],
+                                                 attribute='data.additives'),
+                           **RecordResponseFields.resource_fields)

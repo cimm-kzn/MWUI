@@ -23,7 +23,9 @@ from flask import Blueprint
 from flask_restful import Api
 from werkzeug.routing import BaseConverter, ValidationError
 from .list import SavedRecordsList
+from .record import SavedRecord
 from ..common import swagger
+from ..jobs.create import CreateTask
 
 
 class DBNameConverter(BaseConverter):
@@ -50,3 +52,6 @@ api_bp.add_app_url_map_converter(DBTableConverter, 'dbtable')
 
 
 api.add_resource(SavedRecordsList, '/<dbname:database>/<dbtable:table>/records')
+api.add_resource(SavedRecord, '/<dbname:database>/<dbtable:table>/records/<int:metadata>')
+
+api.add_resource(CreateTask, '/validate/<int:_type>')

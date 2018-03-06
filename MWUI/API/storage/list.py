@@ -24,7 +24,8 @@ from flask_login import current_user
 from flask_restful import marshal_with, reqparse, marshal
 from flask_restful.inputs import positive
 from pony.orm import flush
-from .marshal import RecordResponseFields, RecordStructureFields
+from .common import db_post
+from .marshal import RecordStructureFields, RecordResponseFields, RecordStructureResponseFields
 from ..common import DBAuthResource, swagger, request_arguments_parser, abort
 from ..jobs.common import fetch_task
 from ...config import RESULTS_PER_PAGE
@@ -35,9 +36,6 @@ from ...models import User
 db_get = reqparse.RequestParser(bundle_errors=True)
 db_get.add_argument('user', type=positive, help='User number. by default current user return. {error_msg}')
 db_get.add_argument('page', type=positive, help='Page number. by default all pages return. {error_msg}')
-
-db_post = reqparse.RequestParser(bundle_errors=True)
-db_post.add_argument('task', type=str, location='form')
 
 Loader.load_schemas(user_entity=User)
 
@@ -69,16 +67,19 @@ class SavedRecordsList(DBAuthResource):
             user = current_user.id
         if user == current_user.id:
             if not current_user.role_is((UserRole.ADMIN, UserRole.DATA_MANAGER, UserRole.DATA_FILLER)):
-                abort(403, message='User access deny. You do not have permission to database')
+                abort(403, message='user access deny. You do not have permission to database')
         elif not current_user.role_is((UserRole.ADMIN, UserRole.DATA_MANAGER)):
-            abort(403, message="User access deny. You do not have permission to see another user's data")
+            abort(403, message="user access deny. You do not have permission to see another user's data")
 
-        entity = Loader.get_database(database)[0 if table == 'MOLECULE' else 1]
-        q = entity.select(lambda x: x.user_id == user).order_by(lambda x: x.id)
+        entity = Loader.get_database(database)[table == 'REACTION']
+        q = entity.select(lambda x: x.user_id == user).order_by(lambda x: x.id).prefetch(entity.metadata)
 
         if page is not None:
             q = q.page(page, pagesize=RESULTS_PER_PAGE)
-        return list(q)
+        else:
+            q = q.limit(RESULTS_PER_PAGE * 5)
+
+        return [x for x in q for x in x.metadata]
 
     @swagger.operation(
         notes='add new record',
@@ -88,9 +89,8 @@ class SavedRecordsList(DBAuthResource):
                     dict(name='table', description='Table name: [molecule, reaction]', required=True,
                          allowMultiple=False, dataType='str', paramType='path'),
                     dict(name='task', description='Validated structure task id', required=True,
-                         allowMultiple=False, dataType='str', paramType='form')
-                    ],
-        responseClass=RecordResponseFields.__name__,
+                         allowMultiple=False, dataType='str', paramType='form')],
+        responseClass=RecordStructureResponseFields.__name__,
         responseMessages=[dict(code=201, message="saved data"),
                           dict(code=401, message="user not authenticated"),
                           dict(code=403, message="user access deny"),
@@ -99,12 +99,12 @@ class SavedRecordsList(DBAuthResource):
                           dict(code=406, message='task type is invalid. only populating tasks acceptable'),
                           dict(code=500, message="modeling server error"),
                           dict(code=512, message='task not ready')])
-    @marshal_with(RecordResponseFields.resource_fields)
+    @marshal_with(RecordStructureResponseFields.resource_fields)
     @request_arguments_parser(db_post)
     @fetch_task(TaskStatus.PREPARED)
     def post(self, task, database, table, job, ended_at):
         """
-        add new record from task
+        add new records from task
         """
         if job['type'] != TaskType.POPULATING:
             abort(406, message='Task type is invalid')
@@ -112,16 +112,18 @@ class SavedRecordsList(DBAuthResource):
         if not current_user.role_is((UserRole.ADMIN, UserRole.DATA_MANAGER, UserRole.DATA_FILLER)):
             abort(403, message='User access deny. You do not have permission to database')
 
-        entity = Loader.get_database(database)[0 if table == 'MOLECULE' else 1]
+        entity = Loader.get_database(database)[table == 'REACTION']
         res = []
         for s in job['structures']:
-            if s['status'] != StructureStatus.CLEAR:
-                continue
-            if s['type'] != StructureType[table]:
+            if s['status'] != StructureStatus.CLEAR or s['type'] != StructureType[table]:
                 continue
             data = marshal(s, RecordStructureFields.resource_fields)
             structure = data.pop('data')
-            res.append(entity(structure, current_user.get_user(), [data]))
+            in_db = entity.find_structure(structure)
+            if not in_db:
+                in_db = entity(structure, current_user.get_user())
+
+            res.append(in_db.add_metadata(data, current_user.get_user()))
 
         flush()
         return res, 201
