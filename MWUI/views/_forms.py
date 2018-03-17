@@ -211,49 +211,22 @@ class CommonPost(CustomForm):
         super(CommonPost, self).__init__(*args, **kwargs)
 
 
-class Authors(Form):
-    first_name = StringField('First Name', [DataRequired()])
-    second_name = StringField('Second Name', [DataRequired()])
-    affiliation = IntegerField('Affiliation Number', [DataRequired(), NumberRange(min=1)])
-
-
-class Affiliations(Form):
-    affiliation = StringField('Organization', [DataRequired()])
-    town = StringField('Town', [DataRequired()])
-    country = SelectField('Country', [DataRequired()], choices=[(x.alpha_3, x.name) for x in countries])
-
-
 class ThesisForm(CommonPost):
     post_type = SelectField('Presentation Type', [DataRequired()],
                             choices=[(x.value, x.fancy) for x in ThesisPostType], coerce=int)
-    authors = FieldList(FormField(Authors), min_entries=1)
-    affiliations = FieldList(FormField(Affiliations), min_entries=1)
     submit_btn = SubmitField('Confirm')
 
-    __order = ('csrf_token', 'next', 'title', 'body', 'banner_field', 'attachment', 'post_type', 'authors',
-               'affiliations', 'submit_btn')
+    __order = ('csrf_token', 'next', 'title', 'body', 'banner_field', 'attachment', 'post_type', 'submit_btn')
 
     def __init__(self, *args, body_name=None, types=None, **kwargs):
         super(ThesisForm, self).__init__(self.__order, *args, **kwargs)
         if types is not None:
             self.post_type.choices = [(x.value, x.fancy) for x in types]
         self.body.label.text = body_name or 'Short Abstract'
-        for n, x in enumerate(self.affiliations.entries, start=1):
-            x.label.text = 'Affiliation: %d' % n
-        for n, x in enumerate(self.authors.entries, start=1):
-            x.label.text = 'Author: %d' % n
 
     @property
     def type(self):
         return ThesisPostType(self.post_type.data)
-
-    def affiliations_validate(self):
-        flag = True
-        for x in self.authors:
-            if x.affiliation.data > len(self.affiliations):
-                x.affiliation.errors = ['Affiliation number out of list']
-                flag = False
-        return flag
 
 
 class Post(CommonPost):

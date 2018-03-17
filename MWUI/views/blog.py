@@ -37,7 +37,7 @@ def blog_viewer(page, query, redirect_url, title, subtitle, crumb=None):
         return redirect(url_for(redirect_url))
 
     posts = list(query.page(page, pagesize=BLOG_POSTS_PER_PAGE))
-    return render_template("blog.html", paginator=pag, posts=posts, title=title, subtitle=subtitle, crumb=crumb)
+    return render_template('blog.html', paginator=pag, posts=posts, title=title, subtitle=subtitle, crumb=crumb)
 
 
 class BlogView(View):

@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% from "macroses.html" import render_form %}
+{% from "bootstrap/wtf.html" import quick_form %}
 
 {% block styles %}
     {{super()}}
@@ -49,7 +49,7 @@
 
             {% if special_form is defined and special_form %}
                 <hr>
-                {{ render_form(special_form, button_map={'submit_button': 'primary'})}}
+                {{ quick_form(special_form, form_type='horizontal', button_map={'submit_button': 'primary'})}}
             {% endif %}
 
             <hr>

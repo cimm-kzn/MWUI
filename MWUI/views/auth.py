@@ -110,7 +110,7 @@ class LoginView(View):
         else:
             return redirect(url_for('.login'))
 
-        return render_template('forms.html', form=active_form, title='Authorization', tabs=tabs, message=message)
+        return render_template('edit.html', form=active_form, title='Authorization', tabs=tabs, message=message)
 
 
 class LogoutView(View):

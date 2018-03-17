@@ -24,7 +24,7 @@ from hashlib import md5
 from pony.orm import PrimaryKey, Required, Optional, Set, Json
 from pycountry import countries
 from .utils import filter_kwargs
-from ..config import DEBUG
+from ..config import DEBUG, JOBS_ENABLE
 from ..constants import (UserRole, ProfileDegree, ProfileStatus, Glyph, BlogPostType,
                          MeetingPostType, ThesisPostType, EmailPostType, TeamPostType, MeetingPartType)
 
@@ -49,7 +49,6 @@ def load_tables(db, schema):
         email = Required(str, unique=True)
         password = Required(str)
         _role = Required(int, column='role')
-        tasks = Set('Task')
         token = Required(str)
         restore = Optional(str)
 
@@ -66,6 +65,9 @@ def load_tables(db, schema):
 
         posts = Set('Post')
         subscriptions = Set('Subscription')
+
+        if JOBS_ENABLE:
+            tasks = Set('Task')
 
         def __init__(self, email, password, role=UserRole.COMMON, **kwargs):
             password = self.__hash_password(password)
@@ -131,8 +133,13 @@ def load_tables(db, schema):
         def type(self):
             return MeetingPartType(self._type)
 
-        def update_type(self, _type):
+        @type.setter
+        def type(self, _type):
+            assert isinstance(_type, MeetingPartType)
             self._type = _type.value
+
+        def update_type(self, _type):
+            self.type = _type
 
         @property
         def part_type(self):
@@ -184,6 +191,7 @@ def load_tables(db, schema):
 
         @property
         def post_type(self):
+            """need for forms populating"""
             return self._type
 
     class BlogPost(Post):
@@ -195,8 +203,13 @@ def load_tables(db, schema):
         def type(self):
             return BlogPostType(self._type)
 
-        def update_type(self, _type):
+        @type.setter
+        def type(self, _type):
+            assert isinstance(_type, BlogPostType)
             self._type = _type.value
+
+        def update_type(self, _type):
+            self.type = _type
 
     class TeamPost(Post):
         def __init__(self, role='Researcher', scopus=None, order=0, **kwargs):
@@ -208,29 +221,46 @@ def load_tables(db, schema):
         def scopus(self):
             return self.special['scopus']
 
-        def update_scopus(self, scopus):
+        @scopus.setter
+        def scopus(self, scopus):
             self.special['scopus'] = scopus
+
+        def update_scopus(self, scopus):
+            self.scopus = scopus
 
         @property
         def order(self):
             return self.special['order']
 
-        def update_order(self, order):
+        @order.setter
+        def order(self, order):
             self.special['order'] = order
+
+        def update_order(self, order):
+            self.order = order
 
         @property
         def role(self):
             return self.special['role']
 
-        def update_role(self, role):
+        @role.setter
+        def role(self, role):
             self.special['role'] = role
+
+        def update_role(self, role):
+            self.role = role
 
         @property
         def type(self):
             return TeamPostType(self._type)
 
-        def update_type(self, _type):
+        @type.setter
+        def type(self, _type):
+            assert isinstance(_type, TeamPostType)
             self._type = _type.value
+
+        def update_type(self, _type):
+            self.type = _type
 
     class Meeting(Post, MeetingMixin):
         subscribers = Set('Subscription')
@@ -272,8 +302,13 @@ def load_tables(db, schema):
         def participation_types_id(self):
             return self.meeting.special.get('participation_types', [])
 
-        def update_participation_types(self, types):
+        @participation_types.setter
+        def participation_types(self, types):
+            assert all(isinstance(x, MeetingPartType) for x in types)
             self.meeting.special['participation_types'] = [x.value for x in types]
+
+        def update_participation_types(self, types):
+            self.participation_types = types
 
         @property
         def thesis_types(self):
@@ -283,15 +318,24 @@ def load_tables(db, schema):
         def thesis_types_id(self):
             return self.meeting.special.get('thesis_types', [])
 
-        def update_thesis_types(self, types):
+        @thesis_types.setter
+        def thesis_types(self, types):
+            assert all(isinstance(x, ThesisPostType) for x in types)
             self.meeting.special['thesis_types'] = [x.value for x in types]
+
+        def update_thesis_types(self, types):
+            self.thesis_types = types
 
         @property
         def body_name(self):
             return self.meeting.special['body_name']
 
-        def update_body_name(self, name):
+        @body_name.setter
+        def body_name(self, name):
             self.meeting.special['body_name'] = name or None
+
+        def update_body_name(self, name):
+            self.body_name = name
 
         @property
         def type(self):
@@ -350,16 +394,12 @@ def load_tables(db, schema):
     class Thesis(Post, MeetingMixin):
         def __init__(self, meeting, **kwargs):
             _type = kwargs.pop('type', ThesisPostType.POSTER).value
-            affiliations = kwargs.pop('affiliations')
-            authors = kwargs.pop('authors')
             parent = Meeting[meeting]
 
             assert parent.type == MeetingPostType.MEETING, 'Invalid Meeting id'
             assert parent.deadline > datetime.utcnow(), 'Deadline left'
 
             super().__init__(_type=_type, _parent=parent, **filter_kwargs(kwargs))
-            self.affiliations = affiliations
-            self.authors = authors
 
         @property
         def body_name(self):
@@ -375,44 +415,6 @@ def load_tables(db, schema):
         @property
         def meeting(self):
             return self._parent
-
-        @property
-        def authors(self):
-            return self.special and self.special.get('authors') or []
-
-        @authors.setter
-        def authors(self, authors):
-            assert isinstance(authors, list)
-            assert isinstance(authors[0], dict)
-            fields = {'first_name', 'second_name', 'affiliation'}
-            assert all(fields == set(x) for x in authors)
-            aff_len = len(self.affiliations)
-            assert all(x['affiliation'] <= aff_len for x in authors)
-            if not self.special:
-                self.special = dict(authors=authors)
-            else:
-                self.special['authors'] = authors
-
-        def update_authors(self, authors):
-            self.authors = authors
-
-        @property
-        def affiliations(self):
-            return self.special and self.special.get('affiliations') or []
-
-        @affiliations.setter
-        def affiliations(self, affiliations):
-            assert isinstance(affiliations, list)
-            assert isinstance(affiliations[0], dict)
-            fields = {'affiliation', 'town', 'country'}
-            assert all(fields == set(x) for x in affiliations)
-            if not self.special:
-                self.special = dict(affiliations=affiliations)
-            else:
-                self.special['affiliations'] = affiliations
-
-        def update_affiliations(self, affiliations):
-            self.affiliations = affiliations
 
     class Email(Post, MeetingMixin):
         def __init__(self, from_name=None, reply_name=None, reply_mail=None, meeting=None, **kwargs):
