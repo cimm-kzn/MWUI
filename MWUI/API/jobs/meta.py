@@ -18,7 +18,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-from flask import redirect, url_for, send_from_directory
+from flask import redirect, url_for, send_from_directory, make_response
 from flask.views import View
 from flask_login import current_user
 from flask_restful import marshal_with
@@ -43,7 +43,7 @@ class ExampleView(View):
         Get example task
         """
         m = Model.get(id=_id)
-        if not m or m.type == ModelType.PREPARER:
+        if not m or m.type not in (ModelType.MOLECULE_MODELING, ModelType.REACTION_MODELING):
             abort(404)
 
         new_job = redis.new_job([m.example], current_user.id, m.type.get_task_type())
@@ -80,3 +80,30 @@ class BatchDownload(View):
 
     def dispatch_request(self, file):
         return send_from_directory(directory=UPLOAD_PATH, filename=file)
+
+
+class SubscribeAuth(View):
+    methods = ['GET']
+    decorators = [authenticate]
+
+    def dispatch_request(self):
+        resp = make_response()
+        resp.headers = {'X-Accel-Redirect': url_for('.subscribe', channel=redis.user_channel(current_user.id)),
+                        'X-Accel-Buffering': 'no'}
+        return resp
+
+
+class SubscribeURL(View):
+    methods = ['GET']
+    decorators = [authenticate]
+
+    def dispatch_request(self, channel):
+        return 'USE NGINX NCHAN'
+
+
+class PublishURL(View):
+    methods = ['POST']
+    decorators = [authenticate]
+
+    def dispatch_request(self, channel):
+        return 'USE NGINX NCHAN'

@@ -20,29 +20,16 @@
 #  MA 02110-1301, USA.
 #
 from datetime import datetime
-from flask import Flask, Blueprint
+from flask import Flask
 from flask_login import LoginManager
 from pathlib import PurePosixPath
 from pony.orm import sql_debug
 
 
-def init():
-    # monkey-patch the Blueprint object to allow addition of URL map converters
-    Blueprint.add_app_url_map_converter = add_app_url_map_converter
-
+def init_app():
     from .config import (PORTAL_NON_ROOT, SECRET_KEY, DEBUG, LAB_NAME, RESIZE_URL, IMAGES_PATH, MAX_UPLOAD_SIZE,
                          YANDEX_METRIKA, VK_ENABLE, JOBS_ENABLE, CGRDB_ENABLE, VIEW_ENABLE)
     from .logins import load_user
-    from .models import db
-
-    if DEBUG:
-        sql_debug(True)
-        db.bind('sqlite', 'database.sqlite')
-        db.generate_mapping(create_tables=True)
-    else:
-        from .config import DB_PASS, DB_HOST, DB_USER, DB_NAME, DB_PORT
-        db.bind('postgres', user=DB_USER, password=DB_PASS, host=DB_HOST, database=DB_NAME, port=DB_PORT)
-        db.generate_mapping(create_tables=False)
 
     app = Flask(__name__)
 
@@ -96,16 +83,25 @@ def init():
     return app
 
 
-def add_app_url_map_converter(self, func, name=None):
-    """
-    Register a custom URL map converters, available application wide.
-    :param name: the optional name of the filter, otherwise the function name will be used.
-    """
+def init_db():
+    from .config import DEBUG
+    from .models import db
 
-    def register_converter(state):
-        state.app.url_map.converters[name or func.__name__] = func
+    if DEBUG:
+        sql_debug(True)
+        db.bind('sqlite', 'database.sqlite')
+        db.generate_mapping(create_tables=True)
+    else:
+        from .config import DB_PASS, DB_HOST, DB_USER, DB_NAME, DB_PORT
+        db.bind('postgres', user=DB_USER, password=DB_PASS, host=DB_HOST, database=DB_NAME, port=DB_PORT)
+        db.generate_mapping(create_tables=False)
 
-    self.record_once(register_converter)
+    return db
+
+
+def init():
+    init_db()
+    return init_app()
 
 
 __all__ = [init.__name__]

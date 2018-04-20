@@ -22,7 +22,7 @@ from flask import Blueprint
 from flask_restful import Api
 from .create import UploadTask, CreateTask
 from .deploy import RegisterModels
-from .meta import AvailableModels, BatchDownload
+from .meta import AvailableModels, BatchDownload, SubscribeAuth, SubscribeURL, PublishURL
 from .model import ModelTask
 from .prepare import PrepareTask
 from .save import SavedTask, SavedTasksList
@@ -30,7 +30,7 @@ from ..common import swagger
 from ...config import VIEW_ENABLE
 
 
-api_bp = Blueprint('api', __name__)
+api_bp = Blueprint('jobs', __name__)
 api = swagger.docs(Api(api_bp), apiVersion='2.0', description='MWUI API', api_spec_url='/doc/spec')
 
 
@@ -45,6 +45,10 @@ api.add_resource(AvailableModels, '/resources/models')
 api.add_resource(RegisterModels, '/admin/models')
 
 api_bp.add_url_rule('/task/batch_file/<string:file>', view_func=BatchDownload.as_view('batch_file'))
+
+api_bp.add_url_rule('/subscribe/connect', view_func=SubscribeAuth.as_view('subscribe_auth'))
+api_bp.add_url_rule('/subscribe/internal/<string:channel>', view_func=SubscribeURL.as_view('subscribe'))
+api_bp.add_url_rule('/publish/<string:channel>', view_func=PublishURL.as_view('publish'))
 
 if VIEW_ENABLE:
     from .meta import ExampleView

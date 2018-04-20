@@ -44,12 +44,23 @@ class DBTableConverter(BaseConverter):
         raise ValidationError()
 
 
-api_bp = Blueprint('db_api', __name__)
+def register_converter(converter, name=None):
+    """
+    Register a custom URL map converters, available application wide.
+    :param converter: converter class
+    :param name: the optional name of the filter, otherwise the function name will be used.
+    """
+    def f(state):
+        state.app.url_map.converters[name or converter.__name__] = converter
+
+    return f
+
+
+api_bp = Blueprint('storage', __name__)
 api = swagger.docs(Api(api_bp), apiVersion='1.0', description='CGRdb API', api_spec_url='/doc/spec')
 
-api_bp.add_app_url_map_converter(DBNameConverter, 'dbname')
-api_bp.add_app_url_map_converter(DBTableConverter, 'dbtable')
-
+api_bp.record_once(register_converter(DBNameConverter, 'dbname'))
+api_bp.record_once(register_converter(DBTableConverter, 'dbtable'))
 
 api.add_resource(SavedRecordsList, '/<dbname:database>/<dbtable:table>/records')
 api.add_resource(SavedRecord, '/<dbname:database>/<dbtable:table>/records/<int:metadata>')

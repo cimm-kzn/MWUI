@@ -27,12 +27,16 @@ from uuid import uuid4
 from ...constants import TaskStatus, StructureStatus, ModelType, TaskType, ResultType
 
 
-class RedisCombiner(object):
+class RedisCombiner:
     def __init__(self, host='localhost', port=6379, password=None, result_ttl=86400, job_timeout=3600, chunks=50):
         self.__result_ttl = result_ttl
         self.__job_timeout = job_timeout
         self.__chunks = chunks
         self.__tasks = Redis(host=host, port=port, password=password)
+
+    @property
+    def connection(self):
+        return self.__tasks
 
     def __new_worker(self, destinations):
         for x in destinations:
@@ -47,7 +51,7 @@ class RedisCombiner(object):
             r.ping()
             return Queue(connection=r, name=destination['name'], default_timeout=self.__job_timeout)
         except ConnectionError:
-            return None
+            pass
 
     def new_file_job(self, file_url, model, user, _type=TaskType.MODELING):
         try:
@@ -61,25 +65,25 @@ class RedisCombiner(object):
         dest, worker = tmp
 
         try:
+            _id = str(uuid4())
             job = dict(jobs=[(dest, worker.enqueue_call('redis_worker.convert',
                                                         kwargs={'structures': file_url, 'model': model['name']},
-                                                        result_ttl=self.__result_ttl).id,
+                                                        result_ttl=self.__result_ttl, meta={'task': _id}).id,
                               dict(type=model['type'], model=model['model'], name=model['name']))],
                        user=user, type=_type, status=TaskStatus.PREPARED, structures={})
-            _id = str(uuid4())
+
             now = datetime.utcnow()
             self.__tasks.set(_id, dumps((job, now)), ex=self.__result_ttl)
 
             return dict(id=_id, created_at=now)
         except Exception as err:
             print("upload task ERROR:", err)
-            return None
 
     def new_job(self, structures, user, _type=TaskType.MODELING, status=TaskStatus.PREPARING):
         try:
             self.__tasks.ping()
         except ConnectionError:
-            return None
+            return
 
         model_worker = {}
         model_struct = defaultdict(list)
@@ -120,8 +124,9 @@ class RedisCombiner(object):
                 unused_structures.append(s)
 
         try:
+            task_id = str(uuid4())
             jobs = [(dest, w.enqueue_call('redis_worker.run', kwargs={'structures': s, 'model': m['name']},
-                                          result_ttl=self.__result_ttl).id,
+                                          result_ttl=self.__result_ttl, meta={'task': task_id}).id,
                      dict(type=m['type'], model=m['model'], name=m['name']))
                     for ((dest, w), m), s in ((model_worker[m], s) for m, s in model_struct.items())]
 
@@ -136,13 +141,11 @@ class RedisCombiner(object):
             job = dict(structures=tmp, jobs=jobs, user=user, type=_type,
                        status=TaskStatus.PROCESSED if status == TaskStatus.PROCESSING else TaskStatus.PREPARED)
 
-            _id = str(uuid4())
             now = datetime.utcnow()
-            self.__tasks.set(_id, dumps((job, now)), ex=self.__result_ttl)
-            return dict(id=_id, created_at=now)
+            self.__tasks.set(task_id, dumps((job, now)), ex=self.__result_ttl)
+            return dict(id=task_id, created_at=now)
         except Exception as err:
             print("new_job ERROR:", err)
-            return None
 
     def fetch_job(self, task, page=None):
         try:
@@ -152,66 +155,14 @@ class RedisCombiner(object):
 
         job = self.__tasks.get(task)
         if job is None:
-            return None
+            return
 
         result, ended_at = loads(job)
 
-        loaded_chunks = {}
-        sub_jobs_fin = []
-        sub_jobs_unf = []
-        for dest, sub_task, model in result['jobs']:
-            worker = self.__get_queue(dest)
-            if worker is not None:  # skip lost workers
-                tmp = worker.fetch_job(sub_task)
-                if tmp is not None:
-                    if tmp.is_finished:
-                        sub_jobs_fin.append((tmp, model))
-                    elif not tmp.is_failed:  # skip failed jobs
-                        sub_jobs_unf.append((dest, sub_task, model))
-
-        if sub_jobs_fin:
-            chunks = defaultdict(list)
-            for s_id, _id in result['structures'].items():
-                chunks[_id].append(s_id)
-
-            partial_chunk = next((k for k, v in chunks.items() if len(v) < self.__chunks), None)
-
-            for j, model in sub_jobs_fin:
-                for s in j.result:
-                    results = [dict(results=s.pop('results', []), **model)]
-                    s_id = s['structure']
-                    if s_id in result['structures']:
-                        ch_id = result['structures'][s_id]
-                        ch = loaded_chunks.get(ch_id) or loaded_chunks.setdefault(ch_id, loads(self.__tasks.get(ch_id)))
-                        ch[s_id]['models'].extend(results)
-                    else:
-                        if partial_chunk:
-                            ch = loaded_chunks.get(partial_chunk) or \
-                                 loaded_chunks.setdefault(partial_chunk, loads(self.__tasks.get(partial_chunk)))
-                        else:
-                            partial_chunk = str(uuid4())
-                            ch = loaded_chunks.setdefault(partial_chunk, {})
-
-                        s['models'] = results
-                        ch[s_id] = s
-                        result['structures'][s_id] = partial_chunk
-
-                        if len(ch) == self.__chunks:
-                            partial_chunk = None
-
-                j.delete()
-
-            for _id, chunk in loaded_chunks.items():
-                self.__tasks.set(_id, dumps(chunk), ex=self.__result_ttl)
-
-            result['jobs'] = sub_jobs_unf
-            ended_at = max(x.ended_at for x, _ in sub_jobs_fin)
-
-            self.__tasks.set(task, dumps((result, ended_at)), ex=self.__result_ttl)
-
-        if sub_jobs_unf:
+        if result['jobs']:
             return dict(is_finished=False)
 
+        loaded_chunks = {}
         tmp = []
         if page is None:
             for s_id in sorted(result['structures']):
@@ -226,5 +177,59 @@ class RedisCombiner(object):
                     tmp.append(ch[s_id])
 
         result['structures'] = tmp
-
         return dict(is_finished=True, ended_at=ended_at, result=result)
+
+    def update_job(self, dest, subjob_id):
+        self.__tasks.ping()
+
+        job = self.__get_queue(dest).fetch_job(subjob_id)
+        assert job.is_finished, 'not ready'
+
+        task_id = job.meta['task']
+        task, ended_at = loads(self.__tasks.get(task_id))
+
+        model = next(model for _, x, model in task['jobs'] if x == subjob_id)
+
+        loaded_chunks = {}
+        chunks = defaultdict(list)
+        for s_id, c_id in task['structures'].items():
+            chunks[c_id].append(s_id)
+
+        partial_chunk = next((k for k, v in chunks.items() if len(v) < self.__chunks), None)
+
+        for s in job.result:
+            results = [dict(results=s.pop('results', []), **model)]
+            s_id = s['structure']
+            if s_id in task['structures']:
+                c_id = task['structures'][s_id]
+                ch = loaded_chunks.get(c_id) or loaded_chunks.setdefault(c_id, loads(self.__tasks.get(c_id)))
+                ch[s_id]['models'].extend(results)
+            else:
+                if partial_chunk:
+                    ch = loaded_chunks.get(partial_chunk) or \
+                         loaded_chunks.setdefault(partial_chunk, loads(self.__tasks.get(partial_chunk)))
+                else:
+                    partial_chunk = str(uuid4())
+                    ch = loaded_chunks[partial_chunk] = {}
+
+                s['models'] = results
+                ch[s_id] = s
+                task['structures'][s_id] = partial_chunk
+
+                if len(ch) == self.__chunks:
+                    partial_chunk = None
+
+        ended_at = job.ended_at
+        job.delete()
+
+        for c_id, chunk in loaded_chunks.items():
+            self.__tasks.set(c_id, dumps(chunk), ex=self.__result_ttl)
+
+        task['jobs'] = tmp = [x for x in task['jobs'] if x[1] != subjob_id]
+        self.__tasks.set(task_id, dumps((task, ended_at)), ex=self.__result_ttl)
+
+        return not tmp and (task['user'], task_id)
+
+    @staticmethod
+    def user_channel(user):
+        return 'jobs_%d' % user
