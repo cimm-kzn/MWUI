@@ -53,7 +53,7 @@ class SavedRecord(DBAuthResource):
         return self.__get_record(database, table, metadata), 200
 
     @swagger.operation(
-        notes='Save modeled task',
+        notes='Update record',
         nickname='update_record',
         responseClass=RecordStructureResponseFields.__name__,
         parameters=[dict(name='database', description='DataBase name: [%s]' % ', '.join(DB_DATA_LIST), required=True,

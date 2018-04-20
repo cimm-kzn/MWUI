@@ -34,17 +34,17 @@ api_bp = Blueprint('jobs', __name__)
 api = swagger.docs(Api(api_bp), apiVersion='2.0', description='MWUI API', api_spec_url='/doc/spec')
 
 
-api.add_resource(CreateTask, '/task/create/<int:_type>')
-api.add_resource(UploadTask, '/task/upload')
-api.add_resource(PrepareTask, '/task/prepare/<string:task>')
-api.add_resource(ModelTask, '/task/process/<string:task>', '/task/model/<string:task>')  # model deprecated
-api.add_resource(SavedTask, '/task/saves/<string:task>', '/task/results/<string:task>')  # results deprecated
-api.add_resource(SavedTasksList, '/task/saves')
+api.add_resource(CreateTask, '/create/<int:_type>', '/task/create/<int:_type>')
+api.add_resource(UploadTask, '/upload', '/task/upload')
+api.add_resource(PrepareTask, '/prepare/<string:task>', '/task/prepare/<string:task>')
+api.add_resource(ModelTask, '/process/<string:task>', '/task/model/<string:task>')  # model deprecated
+api.add_resource(SavedTask, '/saves/<string:task>', '/task/results/<string:task>')  # results deprecated
+api.add_resource(SavedTasksList, '/saves')
 
-api.add_resource(AvailableModels, '/resources/models')
+api.add_resource(AvailableModels, '/models', '/resources/models')
 api.add_resource(RegisterModels, '/admin/models')
 
-api_bp.add_url_rule('/task/batch_file/<string:file>', view_func=BatchDownload.as_view('batch_file'))
+api_bp.add_url_rule('/batch_file/<string:file>', view_func=BatchDownload.as_view('batch_file'))
 
 api_bp.add_url_rule('/subscribe/connect', view_func=SubscribeAuth.as_view('subscribe_auth'))
 api_bp.add_url_rule('/subscribe/internal/<string:channel>', view_func=SubscribeURL.as_view('subscribe'))

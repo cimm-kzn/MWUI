@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2017, 2018 Ramil Nugmanov <stsouko@live.ru>
-#  This file is part of MWUI.
+#  Copyright 2018 Ramil Nugmanov <stsouko@live.ru>
+#  This file is part of predictor.
 #
-#  MWUI is free software; you can redistribute it and/or modify
+#  predictor is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as published by
 #  the Free Software Foundation; either version 3 of the License, or
 #  (at your option) any later version.
@@ -18,25 +18,17 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
+from CGRdb.config import DB_DATA_LIST
+from ..common import DBAuthResource, swagger
 
 
-def load_jobs():
-    from .jobs import api, api_bp
-    __add_magic(api)
-    return api_bp
-
-
-def load_cgrdb():
-    from .storage import api, api_bp
-    __add_magic(api)
-    return api_bp
-
-
-def __add_magic(api):
-    from .meta import AvailableAdditives, MagicNumbers, LogIn
-    api.add_resource(AvailableAdditives, '/additives')
-    api.add_resource(MagicNumbers, '/magic')
-    api.add_resource(LogIn, '/auth')
-
-
-__all__ = [load_cgrdb.__name__, load_jobs.__name__]
+class AvailableDataBases(DBAuthResource):
+    @swagger.operation(
+        notes='Get available databases',
+        nickname='dblist',
+        responseMessages=[dict(code=200, message="db list"), dict(code=401, message="user not authenticated")])
+    def get(self):
+        """
+        Get available models list
+        """
+        return DB_DATA_LIST, 200

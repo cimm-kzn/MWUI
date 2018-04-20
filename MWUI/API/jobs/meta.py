@@ -88,8 +88,8 @@ class SubscribeAuth(View):
 
     def dispatch_request(self):
         resp = make_response()
-        resp.headers = {'X-Accel-Redirect': url_for('.subscribe', channel=redis.user_channel(current_user.id)),
-                        'X-Accel-Buffering': 'no'}
+        resp.headers['X-Accel-Redirect'] = url_for('.subscribe', channel=redis.user_channel(current_user.id))
+        resp.headers['X-Accel-Buffering'] = 'no'
         return resp
 
 

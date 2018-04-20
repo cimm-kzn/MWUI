@@ -60,8 +60,8 @@ class CreateTask(DBAuthResource):
         """
         Create new task
 
-        possible to send list of TaskStructureFields if task type is {2.value} [{2.name}].
-        e.g. [TaskStructureFields1, TaskStructureFields2,...]
+        possible to send list of TaskStructureCreateFields if task type is not {3.value} [{3.name}].
+        e.g. [TaskStructureCreateFields, TaskStructureCreateFields,...]
 
         data field is required. field should be a string containing marvin document or cml or smiles/smirks
         additive should be in list of available additives.

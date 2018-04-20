@@ -90,7 +90,7 @@ class LogIn(Resource):
         Get auth token
 
         Token returned in headers as remember_token.
-        for use task api send in requests headers Cookie: 'remember_token=_token_'
+        for use task api send in requests headers Cookie: 'remember_token=_token_' or 'session=_session_'
         """
         data = request.get_json(force=True)
         if data:

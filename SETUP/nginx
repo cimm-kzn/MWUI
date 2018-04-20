@@ -1,23 +1,74 @@
 server {
 	listen 80;
 
-	server_name arsole.u-strasbg.fr;
+	server_name _;
 
-	location / { try_files $uri @predictor; }
+	nchan_redis_url redis://127.0.0.1:6379;
+    #nchan_redis_namespace nchan;
+    #nchan_redis_storage_mode backup;
 
-        location /download/ {
-                root /home/server/;
-        }
+    location / {
+        try_files $uri @predictor;
+        error_log /var/log/nginx/predictor.error.log;
+    }
 
-	location /static/ {
-		root /home/server/predictor/app/;
-	}
+    location /static/ {
+        alias /home/www/predictor/MWUI/static/;
+        expires 1w;
+        try_files $uri $uri/ =404;
+    }
 
-	location /webservices/ {
-		proxy_pass http://127.0.0.1:8080;
-	}
+    location /static/marvinjs/ {
+        alias /home/www/predictor/MWUI/static/marvinjs/;
+        expires 1w;
+        try_files $uri $uri/ =404;
+    }
 
-	location /upload {
+    location /marvin4js-license.cxl {
+        alias /home/www/predictor/marvin4js-license.cxl;
+        expires 1w;
+    }
+
+    location /api/ {
+        try_files $uri @predictor;
+        error_log /var/log/nginx/predictor.error.log;
+    }
+
+    location @predictor {
+        uwsgi_pass 127.0.0.1:5002;
+        include uwsgi_params;
+    }
+
+    location /webservices/ {
+        proxy_pass http://127.0.0.1:8008;
+    }
+
+    location /file/ {
+        internal;
+        alias /home/www/predictor/upload/docs/;
+    }
+
+    location = /api/subscribe/connect {
+        try_files $uri @predictor;
+        error_log /var/log/nginx/predictor.error.log;
+      }
+
+    location ~ /api/subscribe/internal/(\w+)$ {
+        internal;
+        nchan_subscriber eventsource;
+        nchan_use_redis on;
+        nchan_channel_id $1;
+        nchan_channel_group mwui;
+    }
+
+    location ~ /api/subscribe/open/(\w+)$ {
+        nchan_subscriber eventsource;
+        nchan_use_redis on;
+        nchan_channel_id $1;
+        nchan_channel_group mwui;
+    }
+
+	location /api/task/upload {
 		upload_pass @predictor;
 		upload_store /home/server/upload;
 		upload_max_file_size 50m; 
@@ -30,4 +81,20 @@ server {
                 uwsgi_pass 127.0.0.1:5001;
                 include uwsgi_params;
         }
+}
+
+
+server {
+    #available only on localhost
+    listen  127.0.0.1:8111;
+    nchan_redis_url redis://127.0.0.1:6379;
+    #nchan_redis_namespace nchan;
+    #nchan_redis_storage_mode backup;
+
+    location ~ /api/publish/(\w+)$ {
+        nchan_publisher;
+        nchan_use_redis on;
+        nchan_channel_id $1;
+        nchan_channel_group mwui;
+    }
 }
