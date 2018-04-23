@@ -91,3 +91,9 @@ class RecordStructureResponseFields:
                            additives=ListDefault(Nested(AdditiveRecordFields.resource_fields), default=[],
                                                  attribute='data.additives'),
                            **RecordResponseFields.resource_fields)
+
+
+@swagger.model
+class DBUsersResponseFields:
+    resource_fields = dict(user=Integer(attribute='id'), name=String(attribute='full_name'),
+                           role=Integer(attribute='_role'))

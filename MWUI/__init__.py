@@ -72,13 +72,13 @@ def init_app():
 
     if JOBS_ENABLE:
         from .API import load_jobs
-        app.register_blueprint(load_jobs(), url_prefix=(app_url / 'api').as_posix())
+        app.register_blueprint(load_jobs(), url_prefix=(app_url / 'api' / 'jobs').as_posix())
     if CGRDB_ENABLE:
         from .API import load_cgrdb
-        app.register_blueprint(load_cgrdb(), url_prefix=(app_url / 'db_api').as_posix())
+        app.register_blueprint(load_cgrdb(), url_prefix=(app_url / 'api' / 'db').as_posix())
     if VK_ENABLE:
         from .vk import vk_bp
-        app.register_blueprint(vk_bp, url_prefix=(app_url / 'vk_api').as_posix())
+        app.register_blueprint(vk_bp, url_prefix=(app_url / 'api' / 'vk').as_posix())
 
     return app
 

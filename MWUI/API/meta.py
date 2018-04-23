@@ -23,7 +23,8 @@ from flask_login import login_user
 from flask_restful import Resource, marshal_with
 from .common import AuthResource, DBAuthResource, swagger, dynamic_docstring
 from .marshal import AdditiveMagicResponseFields, LogInFields
-from ..constants import AdditiveType, ModelType, TaskType, TaskStatus, StructureType, StructureStatus, ResultType
+from ..constants import (AdditiveType, ModelType, TaskType, TaskStatus, StructureType, StructureStatus,
+                         ResultType, UserRole)
 from ..logins import UserLogin
 from ..models import Additive
 
@@ -67,7 +68,7 @@ class MagicNumbers(AuthResource):
         Dict of all magic numbers with values.
         """
         data = {x.__name__: self.__to_dict(x) for x in [TaskType, TaskStatus, StructureType, StructureStatus,
-                                                        AdditiveType, ResultType, ModelType]}
+                                                        AdditiveType, ResultType, ModelType, UserRole]}
 
         return data, 200
 

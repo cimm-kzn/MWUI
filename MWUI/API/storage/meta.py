@@ -19,7 +19,12 @@
 #  MA 02110-1301, USA.
 #
 from CGRdb.config import DB_DATA_LIST
+from flask_login import current_user
+from flask_restful import marshal_with
 from ..common import DBAuthResource, swagger
+from .marshal import DBUsersResponseFields
+from ...constants import UserRole
+from ...models import User
 
 
 class AvailableDataBases(DBAuthResource):
@@ -32,3 +37,23 @@ class AvailableDataBases(DBAuthResource):
         Get available models list
         """
         return DB_DATA_LIST, 200
+
+
+class DataBaseUsers(DBAuthResource):
+    @swagger.operation(
+        notes='Get available users',
+        nickname='dbusers',
+        responseClass=DBUsersResponseFields.__name__,
+        responseMessages=[dict(code=200, message="db users list"), dict(code=401, message="user not authenticated")])
+    @marshal_with(DBUsersResponseFields.resource_fields)
+    def get(self):
+        """
+        Get available users list
+        """
+        if current_user.role_is(UserRole.ADMIN):
+            return User.select(lambda x: x._role in (UserRole.ADMIN.value, UserRole.DATA_MANAGER.value,
+                                                     UserRole.DATA_FILLER.value))[:], 200
+        elif current_user.role_is(UserRole.DATA_MANAGER):
+            return User.select(lambda x: x._role in (UserRole.DATA_MANAGER.value, UserRole.DATA_FILLER.value))[:], 200
+        else:
+            return User.select(lambda x: x.id == current_user.id)[:], 200
