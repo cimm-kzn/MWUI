@@ -22,7 +22,7 @@ from CGRdb import Loader
 from CGRdb.config import DB_DATA_LIST
 from flask_login import current_user
 from flask_restful import marshal_with, reqparse, marshal
-from flask_restful.inputs import positive
+from flask_restful.inputs import positive, boolean
 from pony.orm import flush
 from .common import db_post
 from .marshal import RecordStructureFields, RecordResponseFields, RecordStructureResponseFields
@@ -36,6 +36,8 @@ from ...models import User
 db_get = reqparse.RequestParser(bundle_errors=True)
 db_get.add_argument('user', type=positive, help='User number. by default current user return. {error_msg}')
 db_get.add_argument('page', type=positive, help='Page number. by default all pages return. {error_msg}')
+db_get.add_argument('full', type=boolean, help='Full records. by default only record metadata return. {error_msg}',
+                    default=False)
 
 Loader.load_schemas(user_entity=User)
 
@@ -51,15 +53,16 @@ class SavedRecordsList(DBAuthResource):
                     dict(name='user', description='user ID', required=False,
                          allowMultiple=False, dataType='int', paramType='query'),
                     dict(name='page', description='records pagination', required=False,
-                         allowMultiple=False, dataType='int', paramType='query')],
+                         allowMultiple=False, dataType='int', paramType='query'),
+                    dict(name='full', description='records full data', required=False,
+                         allowMultiple=False, dataType='bool', paramType='query')],
         responseClass=RecordResponseFields.__name__,
         responseMessages=[dict(code=200, message="saved data"),
                           dict(code=400, message="user and page must be a positive integer or None"),
                           dict(code=401, message="user not authenticated"),
                           dict(code=403, message="user access deny")])
-    @marshal_with(RecordResponseFields.resource_fields)
     @request_arguments_parser(db_get)
-    def get(self, database, table, user=None, page=None):
+    def get(self, database, table, user=None, page=None, full=False):
         """
         Get user's records
         """
@@ -79,7 +82,8 @@ class SavedRecordsList(DBAuthResource):
         else:
             q = q.limit(RESULTS_PER_PAGE * 5)
 
-        return [x for x in q for x in x.metadata]
+        return marshal([x for x in q for x in x.metadata],
+                       (RecordStructureResponseFields if full else RecordResponseFields).resource_fields)
 
     @swagger.operation(
         notes='add new record',
