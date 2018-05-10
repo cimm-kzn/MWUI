@@ -104,4 +104,4 @@ class LogInFields:
 @swagger.model
 class LogInResponseFields:
     resource_fields = dict(user=Integer(attribute='id'), name=String(attribute='full_name'),
-                           role=Integer(attribute='_role'))
+                           role=TypeResponseField(attribute='role'))
