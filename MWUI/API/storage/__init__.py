@@ -23,7 +23,7 @@ from flask import Blueprint
 from flask_restful import Api
 from werkzeug.routing import BaseConverter, ValidationError
 from .create import ValidateRecord
-from .list import SavedRecordsList
+from .list import SavedRecordsList, SavedRecordsCount
 from .meta import AvailableDataBases, DataBaseUsers
 from .record import SavedRecord
 from ..common import swagger
@@ -65,6 +65,7 @@ api_bp.record_once(register_converter(DBTableConverter, 'dbtable'))
 
 api.add_resource(DataBaseUsers, '/users')
 api.add_resource(AvailableDataBases, '/db')
+api.add_resource(SavedRecordsCount, '/db/<dbname:database>/<dbtable:table>/size')
 api.add_resource(SavedRecordsList, '/db/<dbname:database>/<dbtable:table>/records')
 api.add_resource(SavedRecord, '/db/<dbname:database>/<dbtable:table>/records/<int:metadata>')
 

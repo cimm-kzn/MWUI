@@ -97,3 +97,8 @@ class RecordStructureResponseFields:
 class DBUsersResponseFields:
     resource_fields = dict(user=Integer(attribute='id'), name=String(attribute='full_name'),
                            role=Integer(attribute='_role'))
+
+
+@swagger.model
+class RecordCountFields:
+    resource_fields = dict(data=Integer, pages=Integer)

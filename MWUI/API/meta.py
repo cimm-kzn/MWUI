@@ -19,10 +19,10 @@
 #  MA 02110-1301, USA.
 #
 from flask import request
-from flask_login import login_user
-from flask_restful import Resource, marshal_with
-from .common import AuthResource, DBAuthResource, swagger, dynamic_docstring
-from .marshal import AdditiveMagicResponseFields, LogInFields
+from flask_login import login_user, current_user
+from flask_restful import Resource, marshal_with, marshal
+from .common import AuthResource, DBAuthResource, swagger, dynamic_docstring, authenticate
+from .marshal import AdditiveMagicResponseFields, LogInFields, LogInResponseFields
 from ..constants import (AdditiveType, ModelType, TaskType, TaskStatus, StructureType, StructureStatus,
                          ResultType, UserRole)
 from ..logins import UserLogin
@@ -58,7 +58,6 @@ class MagicNumbers(AuthResource):
     @swagger.operation(
         notes='Magic Numbers',
         nickname='magic',
-        parameters=[],
         responseMessages=[dict(code=200, message="magic numbers"),
                           dict(code=401, message="user not authenticated")])
     def get(self):
@@ -79,10 +78,25 @@ class MagicNumbers(AuthResource):
 
 class LogIn(Resource):
     @swagger.operation(
+        notes='user login',
+        nickname='whoami',
+        responseClass=LogInResponseFields.__name__,
+        responseMessages=[dict(code=200, message="user data"),
+                          dict(code=401, message="user not authenticated")])
+    @authenticate
+    @marshal_with(LogInResponseFields.resource_fields)
+    def get(self):
+        """
+        Get user data
+        """
+        return current_user
+
+    @swagger.operation(
         notes='App login',
         nickname='login',
         parameters=[dict(name='credentials', description='User credentials', required=True,
                          allowMultiple=False, dataType=LogInFields.__name__, paramType='body')],
+        responseClass=LogInResponseFields.__name__,
         responseMessages=[dict(code=200, message="logged in"),
                           dict(code=400, message="invalid data"),
                           dict(code=403, message="bad credentials")])
@@ -101,5 +115,5 @@ class LogIn(Resource):
                 user = UserLogin.get(username.lower(), password)
                 if user:
                     login_user(user, remember=True)
-                    return dict(message='logged in'), 200
+                    return marshal(user, LogInResponseFields.resource_fields)
         return dict(message='bad credentials'), 403

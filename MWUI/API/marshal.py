@@ -99,3 +99,9 @@ class AdditiveMagicResponseFields:
 @swagger.model
 class LogInFields:
     resource_fields = dict(user=String, password=String)
+
+
+@swagger.model
+class LogInResponseFields:
+    resource_fields = dict(user=Integer(attribute='id'), name=String(attribute='full_name'),
+                           role=Integer(attribute='_role'))

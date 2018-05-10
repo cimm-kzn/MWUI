@@ -21,11 +21,13 @@
 from CGRdb import Loader
 from CGRdb.config import DB_DATA_LIST
 from flask_login import current_user
-from flask_restful import marshal_with, reqparse, marshal
+from flask_restful import marshal_with, marshal
+from flask_restful.reqparse import RequestParser
 from flask_restful.inputs import positive, boolean
+from math import ceil
 from pony.orm import flush
 from .common import db_post
-from .marshal import RecordStructureFields, RecordResponseFields, RecordStructureResponseFields
+from .marshal import RecordStructureFields, RecordResponseFields, RecordStructureResponseFields, RecordCountFields
 from ..common import DBAuthResource, swagger, request_arguments_parser, abort
 from ..jobs.common import fetch_task
 from ...config import RESULTS_PER_PAGE
@@ -33,11 +35,14 @@ from ...constants import UserRole, TaskStatus, StructureStatus, StructureType, T
 from ...models import User
 
 
-db_get = reqparse.RequestParser(bundle_errors=True)
+db_get = RequestParser(bundle_errors=True)
 db_get.add_argument('user', type=positive, help='User number. by default current user return. {error_msg}')
-db_get.add_argument('page', type=positive, help='Page number. by default all pages return. {error_msg}')
+db_get.add_argument('page', type=positive, help='Page number. by default first page return. {error_msg}', default=1)
 db_get.add_argument('full', type=boolean, help='Full records. by default only record metadata return. {error_msg}',
                     default=False)
+
+db_count = RequestParser(bundle_errors=True)
+db_count.add_argument('user', type=positive, help='User number. by default current user return. {error_msg}')
 
 Loader.load_schemas(user_entity=User)
 
@@ -62,12 +67,13 @@ class SavedRecordsList(DBAuthResource):
                           dict(code=401, message="user not authenticated"),
                           dict(code=403, message="user access deny")])
     @request_arguments_parser(db_get)
-    def get(self, database, table, user=None, page=None, full=False):
+    def get(self, database, table, page, full, user=None):
         """
         Get user's records
         """
         if user is None:
             user = current_user.id
+
         if user == current_user.id:
             if not current_user.role_is((UserRole.ADMIN, UserRole.DATA_MANAGER, UserRole.DATA_FILLER)):
                 abort(403, message='user access deny. You do not have permission to database')
@@ -75,12 +81,8 @@ class SavedRecordsList(DBAuthResource):
             abort(403, message="user access deny. You do not have permission to see another user's data")
 
         entity = Loader.get_database(database)[table == 'REACTION']
-        q = entity.select(lambda x: x.user_id == user).order_by(lambda x: x.id).prefetch(entity.metadata)
-
-        if page is not None:
-            q = q.page(page, pagesize=RESULTS_PER_PAGE)
-        else:
-            q = q.limit(RESULTS_PER_PAGE * 5)
+        q = entity.select(lambda x: x.user_id == user).order_by(lambda x: x.id).prefetch(entity.metadata)\
+            .page(page, pagesize=RESULTS_PER_PAGE)
 
         return marshal([x for x in q for x in x.metadata],
                        (RecordStructureResponseFields if full else RecordResponseFields).resource_fields)
@@ -131,3 +133,37 @@ class SavedRecordsList(DBAuthResource):
 
         flush()
         return res, 201
+
+
+class SavedRecordsCount(DBAuthResource):
+    @swagger.operation(
+        notes='Get count of records',
+        nickname='records_count',
+        parameters=[dict(name='database', description='DataBase name: [%s]' % ', '.join(DB_DATA_LIST), required=True,
+                         allowMultiple=False, dataType='str', paramType='path'),
+                    dict(name='table', description='Table name: [molecule, reaction]', required=True,
+                         allowMultiple=False, dataType='str', paramType='path'),
+                    dict(name='user', description='user ID', required=False,
+                         allowMultiple=False, dataType='int', paramType='query')],
+        responseClass=RecordCountFields.__name__,
+        responseMessages=[dict(code=200, message="saved data"),
+                          dict(code=400, message="user must be a positive integer or None"),
+                          dict(code=401, message="user not authenticated"),
+                          dict(code=403, message="user access deny")])
+    @request_arguments_parser(db_count)
+    def get(self, database, table, user=None):
+        """
+        Get user's records
+        """
+        if user is None:
+            user = current_user.id
+        if user == current_user.id:
+            if not current_user.role_is((UserRole.ADMIN, UserRole.DATA_MANAGER, UserRole.DATA_FILLER)):
+                abort(403, message='user access deny. You do not have permission to database')
+        elif not current_user.role_is((UserRole.ADMIN, UserRole.DATA_MANAGER)):
+            abort(403, message="user access deny. You do not have permission to see another user's data")
+
+        entity = Loader.get_database(database)[table == 'REACTION']
+        q = entity.select(lambda x: x.user_id == user).count()
+
+        return dict(data=q, pages=ceil(q / RESULTS_PER_PAGE))
