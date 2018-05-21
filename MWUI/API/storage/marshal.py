@@ -102,3 +102,8 @@ class DBUsersResponseFields:
 @swagger.model
 class RecordCountFields:
     resource_fields = dict(data=Integer, pages=Integer)
+
+
+@swagger.model
+class CreateRecordFields:
+    resource_fields = dict(task=String)

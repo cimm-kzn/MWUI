@@ -22,4 +22,4 @@ from flask_restful import reqparse
 
 
 db_post = reqparse.RequestParser(bundle_errors=True)
-db_post.add_argument('task', type=str, location='form', required=True)
+db_post.add_argument('task', type=str, location='json', required=True)

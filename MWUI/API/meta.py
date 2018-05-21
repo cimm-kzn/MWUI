@@ -18,16 +18,19 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-from flask import request
 from flask_login import login_user, current_user
-from flask_restful import Resource, marshal_with, marshal
-from .common import AuthResource, DBAuthResource, swagger, dynamic_docstring, authenticate
+from flask_restful import Resource, marshal_with, marshal, reqparse
+from .common import AuthResource, DBAuthResource, swagger, dynamic_docstring, authenticate, request_arguments_parser
 from .marshal import AdditiveMagicResponseFields, LogInFields, LogInResponseFields
 from ..constants import (AdditiveType, ModelType, TaskType, TaskStatus, StructureType, StructureStatus,
                          ResultType, UserRole)
 from ..logins import UserLogin
 from ..models import Additive
 
+
+auth_post = reqparse.RequestParser(bundle_errors=True)
+auth_post.add_argument('user', type=str, location='json', required=True, dest='username')
+auth_post.add_argument('password', type=str, location='json', required=True)
 
 additives_types_desc = ', '.join('{0.value} - {0.name}'.format(x) for x in AdditiveType)
 models_types_desc = ', '.join('{0.value} - {0.name}'.format(x) for x in ModelType)
@@ -100,20 +103,16 @@ class LogIn(Resource):
         responseMessages=[dict(code=200, message="logged in"),
                           dict(code=400, message="invalid data"),
                           dict(code=403, message="bad credentials")])
-    def post(self):
+    @request_arguments_parser(auth_post)
+    def post(self, username, password):
         """
         Get auth token
 
         Token returned in headers as remember_token.
         for use task api send in requests headers Cookie: 'remember_token=_token_' or 'session=_session_'
         """
-        data = request.get_json(force=True)
-        if data:
-            username = data.get('user')
-            password = data.get('password')
-            if username and password:
-                user = UserLogin.get(username.lower(), password)
-                if user:
-                    login_user(user, remember=True)
-                    return marshal(user, LogInResponseFields.resource_fields)
+        user = UserLogin.get(username.lower(), password)
+        if user:
+            login_user(user, remember=True)
+            return marshal(user, LogInResponseFields.resource_fields)
         return dict(message='bad credentials'), 403

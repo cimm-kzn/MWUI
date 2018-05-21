@@ -24,7 +24,7 @@ from flask_login import current_user
 from flask_restful import marshal_with, marshal
 from pony.orm import flush, ObjectNotFound
 from .common import db_post
-from .marshal import RecordResponseFields, RecordStructureFields, RecordStructureResponseFields
+from .marshal import RecordResponseFields, RecordStructureFields, RecordStructureResponseFields, CreateRecordFields
 from ..common import DBAuthResource, swagger, request_arguments_parser, abort
 from ..jobs.common import fetch_task
 from ...constants import UserRole, TaskStatus, StructureStatus, StructureType, TaskType
@@ -63,7 +63,7 @@ class SavedRecord(DBAuthResource):
                     dict(name='metadata', description='Record ID', required=True,
                          allowMultiple=False, dataType='int', paramType='path'),
                     dict(name='task', description='Validated structure task id', required=True,
-                         allowMultiple=False, dataType='str', paramType='form')],
+                         allowMultiple=False, dataType=CreateRecordFields.__name__, paramType='body')],
         responseMessages=[dict(code=201, message='record updated'),
                           dict(code=400, message='task structure has errors or invalid type'),
                           dict(code=400, message='record structure conflict'),

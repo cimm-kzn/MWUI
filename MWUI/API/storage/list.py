@@ -27,7 +27,8 @@ from flask_restful.inputs import positive, boolean
 from math import ceil
 from pony.orm import flush
 from .common import db_post
-from .marshal import RecordStructureFields, RecordResponseFields, RecordStructureResponseFields, RecordCountFields
+from .marshal import (RecordStructureFields, RecordResponseFields, RecordStructureResponseFields, RecordCountFields,
+                      CreateRecordFields)
 from ..common import DBAuthResource, swagger, request_arguments_parser, abort
 from ..jobs.common import fetch_task
 from ...config import RESULTS_PER_PAGE
@@ -95,7 +96,7 @@ class SavedRecordsList(DBAuthResource):
                     dict(name='table', description='Table name: [molecule, reaction]', required=True,
                          allowMultiple=False, dataType='str', paramType='path'),
                     dict(name='task', description='Validated structure task id', required=True,
-                         allowMultiple=False, dataType='str', paramType='form')],
+                         allowMultiple=False, dataType=CreateRecordFields.__name__, paramType='body')],
         responseClass=RecordStructureResponseFields.__name__,
         responseMessages=[dict(code=201, message="saved data"),
                           dict(code=401, message="user not authenticated"),
@@ -153,7 +154,7 @@ class SavedRecordsCount(DBAuthResource):
     @request_arguments_parser(db_count)
     def get(self, database, table, user=None):
         """
-        Get user's records
+        Get user's records count
         """
         if user is None:
             user = current_user.id
