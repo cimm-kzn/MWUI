@@ -33,7 +33,7 @@ app = init()
 app.config['SERVER_NAME'] = JOBMONITOR_URL
 
 with db_session:
-    dests = {(x.host, x.port): x.to_dict(['host', 'name', 'password', 'port']) for x in Destination.select()}
+    dests = {(x.host, x.port, x.name): x.to_dict(['host', 'name', 'password', 'port']) for x in Destination.select()}
 
 channels = []
 for x in dests.values():
@@ -44,8 +44,6 @@ for x in dests.values():
 
 rq = RedisCombiner(host=REDIS_HOST, port=REDIS_PORT, password=REDIS_PASSWORD, result_ttl=REDIS_TTL,
                    job_timeout=REDIS_JOB_TIMEOUT, chunks=RESULTS_PER_PAGE)
-
-print('JobMonitor Loaded')
 
 while True:
     for x, p in channels:
