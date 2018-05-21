@@ -29,7 +29,8 @@ from ..models import Additive
 
 
 auth_post = reqparse.RequestParser(bundle_errors=True)
-auth_post.add_argument('user', type=str, location='json', required=True, dest='username')
+auth_post.add_argument('user', type=str, location='json', required=True, dest='username', case_sensitive=False,
+                       store_missing=False, nullable=False, trim=True)
 auth_post.add_argument('password', type=str, location='json', required=True)
 
 additives_types_desc = ', '.join('{0.value} - {0.name}'.format(x) for x in AdditiveType)
@@ -111,8 +112,9 @@ class LogIn(Resource):
         Token returned in headers as remember_token.
         for use task api send in requests headers Cookie: 'remember_token=_token_' or 'session=_session_'
         """
-        user = UserLogin.get(username.lower(), password)
-        if user:
-            login_user(user, remember=True)
-            return marshal(user, LogInResponseFields.resource_fields)
+        if username:
+            user = UserLogin.get(username, password)
+            if user:
+                login_user(user, remember=True)
+                return marshal(user, LogInResponseFields.resource_fields)
         return dict(message='bad credentials'), 403
