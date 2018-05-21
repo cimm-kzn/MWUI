@@ -31,14 +31,14 @@ from ...config import VIEW_ENABLE
 
 
 api_bp = Blueprint('jobs', __name__)
-api = swagger.docs(Api(api_bp), apiVersion='2.0', description='MWUI API', api_spec_url='/doc/spec')
+api = swagger.docs(Api(api_bp), apiVersion='2.1', description='MWUI API', api_spec_url='/doc/spec')
 
 
-api.add_resource(CreateTask, '/create/<int:_type>', '/task/create/<int:_type>')
-api.add_resource(UploadTask, '/upload', '/task/upload')
-api.add_resource(PrepareTask, '/prepare/<string:task>', '/task/prepare/<string:task>')
-api.add_resource(ModelTask, '/process/<string:task>', '/task/model/<string:task>')  # model deprecated
-api.add_resource(SavedTask, '/saves/<string:task>', '/task/results/<string:task>')  # results deprecated
+api.add_resource(CreateTask, '/create/<int:_type>')
+api.add_resource(UploadTask, '/upload')
+api.add_resource(PrepareTask, '/prepare/<string:task>')
+api.add_resource(ModelTask, '/process/<string:task>')
+api.add_resource(SavedTask, '/saves/<string:task>')
 api.add_resource(SavedTasksList, '/saves')
 
 api.add_resource(AvailableModels, '/models', '/resources/models')
