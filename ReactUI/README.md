@@ -17,39 +17,14 @@ npm install
 To start the application, run the command
 
 ```
-npm start-predictor
+npm run start
 ```
 To build the application, run the command
 
 ```
-npm build-predictor
+npm run build
 ```
 
-## Search module
-
-To start the application, run the command
-
-```
-npm start-search
-```
-To build the application, run the command
-
-```
-npm build-search
-```
-
-## Database form module
-
-To start the application, run the command
-
-```
-npm start-dbform
-```
-To build the application, run the command
-
-```
-npm build-dbform
-```
 ## License
 
 MIT

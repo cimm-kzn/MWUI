@@ -17,10 +17,6 @@ module.exports = {
     dbform: [
       'babel-polyfill',
       './src/dbform/index.js'
-    ],
-    auth: [
-      'babel-polyfill',
-      './src/auth/index.js'
     ]
   },
   output: {
