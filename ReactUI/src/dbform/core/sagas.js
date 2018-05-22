@@ -17,21 +17,21 @@ import {
 import { MARVIN_EDITOR_IS_EMPTY } from '../../config';
 
 function* initStructureListPage({ full }) {
-  const fields = yield call(Settings.getDBFields);
-  let users = yield call(Users.getUsers);
-  const me = yield call(Users.whoAmI);
-  const additives = yield call(getAdditives);
-  const magic = yield call(getMagic);
-  users = users.data.map((user) => {
-    if (user.user === me.data.user) {
-      return { ...user, user: 0 };
-    }
-    return user;
-  });
-  yield put(addUsers(users));
-  yield put(addDBFields(fields.data));
-  yield put(addAdditives(additives.data));
-  yield put(addMagic(magic.data));
+  // const fields = yield call(Settings.getDBFields);
+  // let users = yield call(Users.getUsers);
+  // const me = yield call(Users.whoAmI);
+  // const additives = yield call(getAdditives);
+  // const magic = yield call(getMagic);
+  // users = users.data.map((user) => {
+  //   if (user.user === me.data.user) {
+  //     return { ...user, user: 0 };
+  //   }
+  //   return user;
+  // });
+  // yield put(addUsers(users));
+  // yield put(addDBFields(fields.data));
+  // yield put(addAdditives(additives.data));
+  // yield put(addMagic(magic.data));
   yield call(requestSaga, getRecordsByUser, {
     full,
     user: 0,
@@ -42,8 +42,8 @@ function* initStructureListPage({ full }) {
 }
 
 function* getRecordsByUser({ full, user, database, table, page }) {
-  const structures = yield call(Records.getRecords, database, table, full, user, page);
-  yield put(addStructures(structures.data));
+  //const structures = yield call(Records.getRecords, database, table, full, user, page);
+  //yield put(addStructures(structures.data));
 }
 
 function* getRecords(action) {
@@ -60,7 +60,7 @@ function* requestAddNewStructure({ task,  database, table }) {
 function* addNewStructure({  database, table, ...conditions }) {
   const data = yield call(exportCml, 'marvinjs_create_page');
   if (data === MARVIN_EDITOR_IS_EMPTY) {
-    new Error('Structure is empty!');
+    throw new Error('Structure is empty!');
   }
   const response = yield call(Structures.validate, { data, conditions });
   const task = response.data.task;
