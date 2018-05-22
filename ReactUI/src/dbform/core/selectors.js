@@ -13,6 +13,8 @@ export const getMagic = state => state.magic;
 
 export const getStructures = state => state.structures;
 
+export const getPages = state => state.pages;
+
 export const getAdditivesForSelect = createSelector(
   [
     getAdditives,

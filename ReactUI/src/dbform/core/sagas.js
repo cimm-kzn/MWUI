@@ -2,8 +2,8 @@ import { takeEvery, call, put } from 'redux-saga/effects';
 import { message } from 'antd';
 import { Structures, Records, Settings, Users } from './requests';
 import { getAdditives, getMagic } from '../../base/requests';
-import { addAdditives, addMagic } from '../../base/actions';
-import { addStructures, deleteStructure, addStructure, editStructure, showModal, addDBFields, addUsers } from './actions';
+import { addAdditives, addMagic, succsessRequest } from '../../base/actions';
+import { addStructures, deleteStructure, addStructure, editStructure, showModal, addDBFields, addUsers, addPages } from './actions';
 import { catchErrSaga, requestSaga, requestSagaContinius, repeatedRequests } from '../../base/sagas';
 import { convertCmlToBase64, convertCmlToBase64Arr, exportCml } from '../../base/marvinAPI';
 import {
@@ -43,8 +43,10 @@ function* initStructureListPage({ full }) {
 
 function* getRecordsByUser({ full, user, database, table, page }) {
   const data = yield call(Records.getRecords, database, table, full, user, page);
+  const pages = yield call(Structures.getPages, { database, table });
   const structures = yield call(convertCmlToBase64Arr, data.data);
   yield put(addStructures(structures));
+  yield put(addPages(pages.data));
 }
 
 function* getRecords(action) {
@@ -54,17 +56,19 @@ function* getRecords(action) {
 }
 
 function* requestAddNewStructure({ task,  database, table }) {
-  yield call(repeatedRequests, Structures.add, task, database, table);
+  yield call(repeatedRequests, Structures.add, { task, database, table });
+  yield put(succsessRequest());
   yield message.success('Add structure');
 }
 
-function* addNewStructure({  database, table, ...conditions }) {
+function* addNewStructure({ conditions }) {
   const data = yield call(exportCml, 'marvinjs_create_page');
   if (data === MARVIN_EDITOR_IS_EMPTY) {
     throw new Error('Structure is empty!');
   }
   const response = yield call(Structures.validate, { data, conditions });
   const task = response.data.task;
+  const { database, table } = conditions;
   yield put({ type: SAGA_ADD_STRUCTURE_AFTER_VALIDATE, database, table, task });
 }
 

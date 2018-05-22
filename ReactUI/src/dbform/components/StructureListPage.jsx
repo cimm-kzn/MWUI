@@ -3,9 +3,9 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Form, Row, Col, Button, Icon, Pagination, Select } from 'antd';
 import { showModal } from '../core/actions';
-import { getSettings, getUsers, getDatabase, getStructures } from '../core/selectors';
+import { getSettings, getUsers, getDatabase, getStructures, getPages } from '../core/selectors';
 import { SAGA_DELETE_STRUCTURE, SAGA_GET_RECORDS, SAGA_INIT_STRUCTURE_LIST_PAGE } from '../core/constants';
-import { DatabaseTableSelect, DatabaseSelect, UsersSelect } from '../hoc';
+import { DatabaseTableSelect, DatabaseSelect, UsersSelect, PaginationComp } from '../hoc';
 import TableListDisplay from './TableListDisplay';
 import BlockListDisplay from './BlockListDisplay';
 
@@ -21,7 +21,7 @@ class StructureListPage extends Component {
 
     this.toggle = this.toggle.bind(this);
     this.handleSearch = this.handleSearch.bind(this);
-    this.onShowSizeChange = this.onShowSizeChange.bind(this);
+    this.changePage = this.changePage.bind(this);
   }
 
   componentDidUpdate(prevProps) {
@@ -40,17 +40,12 @@ class StructureListPage extends Component {
     this.props.initPage(full);
   }
 
-
-  onShowSizeChange(current, pageSize) {
-    this.setState({ current, pageSize });
-  }
-
-  changePage(pageNumber) {
-    this.setState({ current: pageNumber });
-  }
-
-  changeInput(sorted) {
-    this.setState({ sorted });
+  changePage(page) {
+    const { form, getStructure, settings: { full } } = this.props;
+    form.validateFields((err, values) => {
+      const { database, table, user } = values;
+      getStructure({ database, table, user, full, page });
+    });
   }
 
   handleSearch(e) {
@@ -58,12 +53,9 @@ class StructureListPage extends Component {
     const { form, getStructure, settings: { full } } = this.props;
     form.validateFields((err, values) => {
       const { database, table, user } = values;
+
       getStructure({ database, table, user, full, page: 1 });
     });
-  }
-
-  handleReset() {
-    this.props.form.resetFields();
   }
 
   toggle() {
@@ -72,16 +64,9 @@ class StructureListPage extends Component {
   }
 
   render() {
-    const { structures, editStructure, deleteStructure, settings, form, users, database } = this.props;
+    const { structures, editStructure, deleteStructure, settings, form, users, database, pages } = this.props;
     const { expand } = this.state;
     const gridSettings = settings && settings.grid;
-
-    const lists = {
-      gridSettings,
-      structures,
-      editStructure,
-      deleteStructure,
-    };
 
     return structures && settings && (
       <div>
@@ -116,26 +101,26 @@ class StructureListPage extends Component {
           </Row>
           <Row />
         </Form>
-        <Row style={{ marginBottom: '20px', fontSize: '14px' }}>
-          <Col span={8}>
-            <a style={{ marginLeft: 8 }} onClick={this.toggle}>
-              {this.state.expand ? <span> Hide filters <Icon type="up" /></span> :
+          <Row style={{ marginBottom: '20px', fontSize: '14px' }}>
+            <Col span={8}>
+              <a style={{ marginLeft: 8 }} onClick={this.toggle}>
+                {this.state.expand ? <span> Hide filters <Icon type="up" /></span> :
                 <span> Show filters <Icon type="down" /></span>}
-            </a>
-          </Col>
-          <Col span={16} style={{ textAlign: 'right' }}>
-            <Pagination
-              showSizeChanger
-              onChange={this.changePage}
-              onShowSizeChange={this.onShowSizeChange}
-              // defaultCurrent={}
-              total={structures.length}
-            />
-          </Col>
-        </Row>
+              </a>
+            </Col>
+            <Col span={16} style={{ textAlign: 'right' }}>
+              <PaginationComp
+                showQuickJumper
+                onChange={this.changePage}
+              />
+            </Col>
+          </Row>
+
         { settings.full ?
           <BlockListDisplay
             structures={structures}
+            gridSettings={gridSettings}
+
           />
           :
           <TableListDisplay
@@ -161,6 +146,7 @@ const mapStateToProps = state => ({
   users: getUsers(state),
   database: getDatabase(state),
   structures: getStructures(state),
+  pages: getStructures(state),
 });
 
 const mapDispatchToProps = dispatch => ({

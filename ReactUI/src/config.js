@@ -18,6 +18,7 @@ const API = {
   MAGIC: '/api/jobs/magic',
 
   RECORDS: '/api/db/db/:database/:table/records',
+  PAGES: '/api/db/db/:database/:table/size',
   RECORDS_METADATA: '/api/jobs/:database/:table/records/:metadata',
   CREATE_TASK_DBFORM: '/api/db/validate',
   SERVER_SIDE_SUBSCRIBE: '/api/jobs/subscribe/connect',

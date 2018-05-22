@@ -34,6 +34,7 @@ function urlConverter(template, base, get = null) {
   for (const key in base) {
     template = template.replace(`:${key}`, base[key]);
   }
+  console.log(base);
   if (get) {
     const getKey = Object.keys(get).reduce((acc, key) => {
       if (get[key]) {

@@ -1,5 +1,5 @@
 import { combineReducers } from 'redux';
-import { ADD_STRUCTURE, ADD_STRUCTURES, EDIT_STRUCTURE, DELETE_STRUCTURE, ADD_SETTINGS, ADD_FIELDS, ADD_USERS } from './constants';
+import { ADD_STRUCTURE, ADD_STRUCTURES, EDIT_STRUCTURE, DELETE_STRUCTURE, ADD_SETTINGS, ADD_FIELDS, ADD_USERS, ADD_PAGES } from './constants';
 import { request, modal, magic, additives } from '../../base/reducers';
 
 const defaultSettings = {
@@ -91,8 +91,18 @@ const database = (state = null, action) => {
   }
 };
 
+const pages = (state = null, action) => {
+  switch (action.type) {
+    case ADD_PAGES:
+      return { ...action.pages };
+    default:
+      return state;
+  }
+};
+
 
 export default combineReducers({
+  pages,
   request,
   database,
   structures,
