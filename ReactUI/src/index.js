@@ -1,7 +1,7 @@
-import React from 'react';
 import ReactDOM from 'react-dom';
-import Routers from './routers';
-
-ReactDOM.render(<Routers />,
+/* eslint-disable */
+import App from './search/App';
+ReactDOM.render(
+    App,
     document.getElementById('root'),
 );

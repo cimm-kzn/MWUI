@@ -1,0 +1,21 @@
+# See https://help.github.com/ignore-files/ for more about ignoring files.
+
+# dependencies
+/ReactUI/node_modules
+
+# testing
+/ReactUI/coverage
+
+# production
+/ReactUI/build
+
+# misc
+/ReactUI/.DS_Store
+/ReactUI/.env.local
+/ReactUI/.env.development.local
+/ReactUI/.env.test.local
+/ReactUI/.env.production.local
+
+/ReactUI/npm-debug.log*
+/ReactUI/yarn-debug.log*
+/ReactUI/yarn-error.log*
