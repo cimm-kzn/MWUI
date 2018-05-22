@@ -69,13 +69,13 @@ const ConditionList = ({
       </FormItem>
       { solvents && !!solvents.length && <FormItem label="Solvents">
 
-        {getFieldDecorator(fieldName('solvents'))(
+        {getFieldDecorator(fieldName('additives-1'))(
           <SlidersSelect data={solvents} sumEqual={100} />,
         )}
       </FormItem>}
       { catalysts && !!catalysts.length && <FormItem label="Solvents">
 
-        {getFieldDecorator(fieldName('catalysts'))(
+        {getFieldDecorator(fieldName('additives-2'))(
           <SlidersSelect data={catalysts} />,
         )}
       </FormItem>}

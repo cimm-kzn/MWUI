@@ -39,6 +39,7 @@ import {
   SAGA_EDIT_STRUCTURE_VALIDATE_CALLBACK,
   SAGA_EDIT_STRUCTURE_INDEX_CALLBACK,
   SAGA_REVALIDATE_VALIDATE_PAGE,
+  SAGA_SAVE_TASK,
 } from './constants';
 
 // Index Page
@@ -138,9 +139,9 @@ function* resultPageInit() {
   yield put(addStructuresResult(results));
 }
 
-function* saveTask(){
+function* saveTask() {
   const urlParams = yield getUrlParams();
-  const responce = yield call(Request.saveStructure, urlParams.task);
+  yield call(Request.saveStructure, urlParams.task);
   yield put(succsessRequest());
   yield call(message.success, 'Task saved');
 }
