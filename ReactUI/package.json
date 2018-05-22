@@ -17,8 +17,7 @@
     "history": "^4.7.2",
     "query-string": "^5.0.1",
     "prop-types": "^15.6.0",
-    "reselect": "^3.0.1",
-    "moment": "^2.22.1"
+    "reselect": "^3.0.1"
   },
   "devDependencies": {
     "@storybook/react": "^4.0.0-alpha.3",

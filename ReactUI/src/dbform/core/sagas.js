@@ -4,7 +4,7 @@ import { Structures, Records, Settings, Users } from './requests';
 import { getAdditives, getMagic } from '../../base/requests';
 import { addAdditives, addMagic } from '../../base/actions';
 import { addStructures, deleteStructure, addStructure, editStructure, showModal, addDBFields, addUsers } from './actions';
-import { catchErrSaga, requestSaga, requestSagaContinius } from '../../base/sagas';
+import { catchErrSaga, requestSaga, requestSagaContinius, repeatedRequests } from '../../base/sagas';
 import { convertCmlToBase64, convertCmlToBase64Arr, exportCml } from '../../base/marvinAPI';
 import {
   SAGA_INIT_STRUCTURE_LIST_PAGE,
@@ -12,6 +12,7 @@ import {
   SAGA_DELETE_STRUCTURE,
   SAGA_ADD_STRUCTURE,
   SAGA_GET_RECORDS,
+  SAGA_ADD_STRUCTURE_AFTER_VALIDATE,
 } from './constants';
 import { MARVIN_EDITOR_IS_EMPTY } from '../../config';
 
@@ -51,20 +52,19 @@ function* getRecords(action) {
   yield put(addStructures(structures));
 }
 
-function* requestAddNewStructure({ data, conditions }){
-  const response = yield call(Structures.validate, { data, conditions });
-  const { database, table } = conditions;
-  const task = response.data.task;
-  yield call(Structures.add, task, database, table);
+function* requestAddNewStructure({ task,  database, table }) {
+  yield call(repeatedRequests, Structures.add, task, database, table);
   yield message.success('Add structure');
 }
 
-function* addNewStructure({ conditions, database, table }) {
+function* addNewStructure({  database, table, ...conditions }) {
   const data = yield call(exportCml, 'marvinjs_create_page');
-  if(data === MARVIN_EDITOR_IS_EMPTY){
+  if (data === MARVIN_EDITOR_IS_EMPTY) {
     new Error('Structure is empty!');
   }
-  yield call(requestSaga, requestAddNewStructure, { data, conditions });
+  const response = yield call(Structures.validate, { data, conditions });
+  const task = response.data.task;
+  yield put({ type: SAGA_ADD_STRUCTURE_AFTER_VALIDATE, database, table, task });
 }
 
 function* deleteStructureInList(action) {
@@ -85,6 +85,7 @@ function* modalDiscard(action) {
 export function* sagas() {
   yield takeEvery(SAGA_INIT_STRUCTURE_LIST_PAGE, requestSagaContinius, initStructureListPage);
   yield takeEvery(SAGA_ADD_STRUCTURE, catchErrSaga, addNewStructure);
+  yield takeEvery(SAGA_ADD_STRUCTURE_AFTER_VALIDATE, requestSagaContinius, requestAddNewStructure);
   yield takeEvery(SAGA_DELETE_STRUCTURE, requestSaga, deleteStructureInList);
   yield takeEvery(SAGA_EDIT_STRUCTURE, requestSaga, modalDiscard);
   yield takeEvery(SAGA_GET_RECORDS, requestSaga, getRecordsByUser);

@@ -19,8 +19,8 @@ class CreatePage extends Component {
     form.validateFields((err, values) => {
       if (!err) {
         console.log(values);
-        //const conditions = normalizeDBFormData(values);
-        //createStructure(conditions);
+        const conditions = normalizeDBFormData(values);
+        createStructure(conditions);
       }
     });
   }
