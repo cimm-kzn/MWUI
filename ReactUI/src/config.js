@@ -13,7 +13,7 @@ const API = {
   ADDITIVES: '/api/jobs/additives',
   MODELS: '/api/jobs/models',
   UPLOAD_FILE: '/api/jobs/task/upload',
-  SAVE_TASK: '/api/jobs/task/results/',
+  SAVE_TASK: '/api/jobs/saves/',
   USER_AUTH: '/api/jobs/auth',
   MAGIC: '/api/jobs/magic',
 

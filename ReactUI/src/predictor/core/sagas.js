@@ -1,4 +1,5 @@
 import { takeEvery, put, call } from 'redux-saga/effects';
+import { message } from 'antd';
 import {
   addStructureIndex,
   addStructuresValidate,
@@ -11,6 +12,7 @@ import {
   addModels,
   addAdditives,
   addMagic,
+  succsessRequest,
 } from '../../base/actions';
 import * as Request from '../../base/requests';
 import history from '../../base/history';
@@ -136,6 +138,13 @@ function* resultPageInit() {
   yield put(addStructuresResult(results));
 }
 
+function* saveTask(){
+  const urlParams = yield getUrlParams();
+  const responce = yield call(Request.saveStructure, urlParams.task);
+  yield put(succsessRequest());
+  yield call(message.success, 'Task saved');
+}
+
 export function* sagas() {
   // Index page
   yield takeEvery(SAGA_NEW_STRUCTURE, catchErrSaga, createNewStructure);
@@ -154,4 +163,5 @@ export function* sagas() {
 
   // Result Page
   yield takeEvery(SAGA_INIT_RESULT_PAGE, requestSaga, resultPageInit);
+  yield takeEvery(SAGA_SAVE_TASK, requestSagaContinius, saveTask);
 }

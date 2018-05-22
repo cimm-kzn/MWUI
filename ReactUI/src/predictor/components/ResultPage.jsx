@@ -7,6 +7,7 @@ import { ModalIncrease } from '../../components';
 import { URLS } from '../../config';
 import {
   SAGA_INIT_RESULT_PAGE,
+  SAGA_SAVE_TASK,
 } from '../core/constants';
 import { getResultPageStructure } from '../core/selectors';
 
@@ -33,7 +34,7 @@ class ResultPage extends Component {
   }
 
   render() {
-    const { results, history } = this.props;
+    const { results, history, saveTask } = this.props;
 
     return results && (
       <div>
@@ -51,6 +52,7 @@ class ResultPage extends Component {
               type="primary"
               htmlType="submit"
               icon="save"
+              onClick={saveTask}
             >
                 Save
             </Button>
@@ -105,6 +107,7 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
   initPage: () => dispatch({ type: SAGA_INIT_RESULT_PAGE }),
+  saveTask: () => dispatch({ type: SAGA_SAVE_TASK }),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(ResultPage);
