@@ -12,17 +12,12 @@ const TableListDisplay = ({
   const columns = [{
     title: '#',
     dataIndex: 'structure',
-    key: 'name',
+    key: 'structure',
   }, {
-    title: 'Age',
-    dataIndex: 'age',
-    key: 'age',
+    title: 'Date',
+    dataIndex: 'date',
+    key: 'date',
   }, {
-    title: 'Address',
-    dataIndex: 'address',
-    key: 'address',
-  },
-  {
     title: 'Actions',
     render: (text, record) => (
       <span>

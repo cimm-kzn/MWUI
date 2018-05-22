@@ -1,23 +1,14 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import { Form, Row, Col, Button, Icon, Collapse, Card as BaseCard, Pagination, Select } from 'antd';
-import styled from 'styled-components';
+import { Form, Row, Col, Button, Icon, Pagination, Select } from 'antd';
 import { showModal } from '../core/actions';
-import { getSettings, getUsers, getDatabase } from '../core/selectors';
+import { getSettings, getUsers, getDatabase, getStructures } from '../core/selectors';
 import { SAGA_DELETE_STRUCTURE, SAGA_GET_RECORDS, SAGA_INIT_STRUCTURE_LIST_PAGE } from '../core/constants';
 import { DatabaseTableSelect, DatabaseSelect, UsersSelect } from '../hoc';
 import TableListDisplay from './TableListDisplay';
 import BlockListDisplay from './BlockListDisplay';
 
-const Card = styled(BaseCard)`
-    .ant-card-body {
-        padding: 0;
-        margin: 0;
-    }
-`;
-
-const Panel = Collapse.Panel;
 const FormItem = Form.Item;
 const Option = Select.Option;
 
@@ -33,10 +24,22 @@ class StructureListPage extends Component {
     this.onShowSizeChange = this.onShowSizeChange.bind(this);
   }
 
+  componentDidUpdate(prevProps) {
+    const { settings: { full }, structures, form, getStructure } = this.props;
+
+    if (full && !structures.every(s => s.data)) {
+      form.validateFields((err, values) => {
+        const { database, table, user } = values;
+        getStructure({ database, table, user, full, page: 1 });
+      });
+    }
+  }
+
   componentDidMount() {
     const { settings: { full } } = this.props;
     this.props.initPage(full);
   }
+
 
   onShowSizeChange(current, pageSize) {
     this.setState({ current, pageSize });
@@ -132,11 +135,11 @@ class StructureListPage extends Component {
         </Row>
         { settings.full ?
           <BlockListDisplay
-            {...lists}
+            structures={structures}
           />
           :
           <TableListDisplay
-            {...lists}
+            structures={structures}
           />
         }
       </div>
@@ -157,7 +160,7 @@ const mapStateToProps = state => ({
   settings: getSettings(state),
   users: getUsers(state),
   database: getDatabase(state),
-  structures: [],
+  structures: getStructures(state),
 });
 
 const mapDispatchToProps = dispatch => ({

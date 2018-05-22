@@ -1,7 +1,17 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import styled from 'styled-components';
 import PropTypes from 'prop-types';
-import { Icon, List, Collapse, Popconfirm } from 'antd';
+import { Icon, List, Collapse, Popconfirm, Card as BaseCard } from 'antd';
+
+const Card = styled(BaseCard)`
+    .ant-card-body {
+        padding: 0;
+        margin: 0;
+    }
+`;
+
+const Panel = Collapse.Panel;
 
 const BlockListDisplay = ({
   gridSettings,
@@ -32,9 +42,9 @@ const BlockListDisplay = ({
               </Popconfirm>]}
         >
           <div style={{ lineHeight: 2, paddingLeft: 40 }}>
-            Temperature: {item.condition && item.condition.temperature} K
+            Temperature: {item.temperature} K
           </div>
-          <div style={{ lineHeight: 2, paddingLeft: 40 }}>Pressure: {item.condition && item.condition.pressure}
+          <div style={{ lineHeight: 2, paddingLeft: 40 }}>Pressure: {item.pressure}
             atm
           </div>
           <Collapse bordered={false} style={{ height: 50, padding: 0, margin: 0 }}>
@@ -50,7 +60,7 @@ const BlockListDisplay = ({
               }}
             >
               <div>
-                {item.params && item.params.map((param, i) =>
+                {item.descriptions && item.descriptions.map((param, i) =>
                   <div key={i}>{param.key} : {param.value}</div>)}
               </div>
             </Panel>

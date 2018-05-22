@@ -97,7 +97,7 @@ const SettingsPage = ({ setSettings, settings }) => {
       >
 
         <Switch
-          defaultChecked={settings.full}
+          defaultChecked={!!settings.full}
           onChange={(val) => {
             val ? handleChange(1, 'full') : handleChange(0, 'full');
           }}

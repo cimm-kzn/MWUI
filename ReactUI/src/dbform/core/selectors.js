@@ -11,6 +11,8 @@ export const getAdditives = state => state.additives;
 
 export const getMagic = state => state.magic;
 
+export const getStructures = state => state.structures;
+
 export const getAdditivesForSelect = createSelector(
   [
     getAdditives,

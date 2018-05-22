@@ -37,49 +37,6 @@ const Body = styled.div`
 
 
 class DBFormModal extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      btnLoading: false,
-    };
-  }
-
-  init(structures, id) {
-    const structure = structures.filter(struct => struct.id === id)[0];
-    importCml(structure.data);
-    this.form.setFieldsValue({
-      keys: structure.params.map((struct, id) => ({ id, ...struct })),
-      condition: structure.condition,
-    });
-  }
-
-  handleSubmit(e) {
-    const { id } = this.props;
-    e.preventDefault();
-    this.form.validateFields((err, values) => {
-      if (!err) {
-
-        const params = values.keys.map(k => ({
-          key: values[`key-${k.id}`],
-          value: values[`value-${k.id}`],
-        }));
-        this.setState({ btnLoading: true });
-        exportCml()
-          .then((cml) => {
-            if (cml === MARVIN_EDITOR_IS_EMPTY) {
-              throw new Error('Structure is empty');
-            }
-            this.props.onOk(id, cml, params, values.condition);
-          })
-          .catch(e => message.error(e.message));
-      }
-    });
-  }
-
-  handlersReset() {
-    this.form.resetFields();
-    clearEditor().catch(e => message.error(e.message));
-  }
 
   render() {
     const { onCancel, visible, id, structures } = this.props;
@@ -113,7 +70,7 @@ class DBFormModal extends Component {
                 />
               </Col>
               <Col md={10}>
-                <DynamicForm ref={(form) => { this.form = form; }} condition={this.props.condition} />
+
               </Col>
 
               <Col md={24}>
@@ -128,7 +85,7 @@ class DBFormModal extends Component {
                   type="primary"
                   icon="upload"
                   size="large"
-                  onClick={this.handleSubmit.bind(this)}
+
                 >Edit</Button>
               </Col>
             </Row>
