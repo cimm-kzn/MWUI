@@ -10,6 +10,7 @@ class CreatePage extends Component {
   constructor(props){
     super(props);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handlersReset= this.handlersReset.bind(this);
   }
   handleSubmit(e) {
     e.preventDefault();
@@ -25,9 +26,9 @@ class CreatePage extends Component {
     });
   }
 
-
   handlersReset() {
-
+    const { form } = this.props;
+    form.resetFields();
   }
 
   render() {
@@ -59,7 +60,7 @@ class CreatePage extends Component {
           <Col md={24}>
             <Button
               size="large"
-              onClick={this.handlersReset.bind(this)}
+              onClick={this.handlersReset}
             >
                         Reset
             </Button>

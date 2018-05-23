@@ -76,8 +76,10 @@ export const convertCmlToBase64Arr = (arrStructures, settings = SETTINGS, editor
     .then((marvinName) => {
       marvinName.onReady(() => {
         const c = arrStructures.map((structure) => {
-          structure.base64 = marvinName.ImageExporter.mrvToDataUrl(structure.data,
-            SETTINGS.typeImg, settings);
+          if(structure.data){
+            structure.base64 = marvinName.ImageExporter.mrvToDataUrl(structure.data,
+              SETTINGS.typeImg, settings);
+          }
           return structure;
         });
         resolve(c);

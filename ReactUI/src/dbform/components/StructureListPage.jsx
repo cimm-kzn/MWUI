@@ -1,23 +1,15 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import { Form, Row, Col, Button, Icon, List, Collapse, Card as BaseCard, Popconfirm, Pagination, Select } from 'antd';
-import styled from 'styled-components';
+import { Form, Row, Col, Button, Icon } from 'antd';
 import { showModal } from '../core/actions';
-import { getSettings, getUsers, getDatabase } from '../core/selectors';
+import { getSettings, getStructures } from '../core/selectors';
 import { SAGA_DELETE_STRUCTURE, SAGA_GET_RECORDS, SAGA_INIT_STRUCTURE_LIST_PAGE } from '../core/constants';
-import { DatabaseTableSelect, DatabaseSelect, UsersSelect } from '../hoc';
+import { DatabaseTableSelect, DatabaseSelect, UsersSelect, PaginationComp } from '../hoc';
+import TableListDisplay from './TableListDisplay';
+import BlockListDisplay from './BlockListDisplay';
 
-const Card = styled(BaseCard)`
-    .ant-card-body {
-        padding: 0;
-        margin: 0;
-    }
-`;
-
-const Panel = Collapse.Panel;
 const FormItem = Form.Item;
-const Option = Select.Option;
 
 class StructureListPage extends Component {
   constructor(props) {
@@ -28,37 +20,39 @@ class StructureListPage extends Component {
 
     this.toggle = this.toggle.bind(this);
     this.handleSearch = this.handleSearch.bind(this);
-    this.onShowSizeChange = this.onShowSizeChange.bind(this);
+    this.changePage = this.changePage.bind(this);
+    this.deleteStructure = this.deleteStructure.bind(this);
+  }
+
+  componentDidUpdate() {
+    const { settings: { full }, structures, form, getStructure } = this.props;
+
+    if (full && !structures.every(s => s.data)) {
+      form.validateFields((err, values) => {
+        const { database, table, user } = values;
+        getStructure({ database, table, user, full, page: 1 });
+      });
+    }
   }
 
   componentDidMount() {
-    const { settings: { full } } = this.props;
-    this.props.initPage(full);
+    const { settings: { full }, initPage } = this.props;
+    initPage(full);
   }
 
-  onShowSizeChange(current, pageSize) {
-    this.setState({ current, pageSize });
-  }
-
-  changePage(pageNumber) {
-    this.setState({ current: pageNumber });
-  }
-
-  changeInput(sorted) {
-    this.setState({ sorted });
+  changePage(page) {
+    const { form, getStructure, settings: { full } } = this.props;
+    form.validateFields((err,{ database, table, user }) => {
+      getStructure({ database, table, user, full, page });
+    });
   }
 
   handleSearch(e) {
     e.preventDefault();
     const { form, getStructure, settings: { full } } = this.props;
-    form.validateFields((err, values) => {
-      const { database, table, user } = values;
+    form.validateFields((err,{ database, table, user }) => {
       getStructure({ database, table, user, full, page: 1 });
     });
-  }
-
-  handleReset() {
-    this.props.form.resetFields();
   }
 
   toggle() {
@@ -66,8 +60,15 @@ class StructureListPage extends Component {
     this.setState({ expand: !expand });
   }
 
+  deleteStructure(metadata){
+    const { deleteStructure, form } = this.props;
+    form.validateFields((err,{ database, table, user }) => {
+      deleteStructure({ database, table, user, metadata });
+    });
+  }
+
   render() {
-    const { structures, editStructure, deleteStructure, settings, form, users, database } = this.props;
+    const { structures, settings, form } = this.props;
     const { expand } = this.state;
     const gridSettings = settings && settings.grid;
 
@@ -108,69 +109,29 @@ class StructureListPage extends Component {
           <Col span={8}>
             <a style={{ marginLeft: 8 }} onClick={this.toggle}>
               {this.state.expand ? <span> Hide filters <Icon type="up" /></span> :
-                <span> Show filters <Icon type="down" /></span>}
+              <span> Show filters <Icon type="down" /></span>}
             </a>
           </Col>
           <Col span={16} style={{ textAlign: 'right' }}>
-            <Pagination
-              showSizeChanger
+            <PaginationComp
+              showQuickJumper
               onChange={this.changePage}
-              onShowSizeChange={this.onShowSizeChange}
-              // defaultCurrent={}
-              total={structures.length}
             />
           </Col>
         </Row>
-        <List
-          grid={{ ...gridSettings, gutter: 20 }}
-          dataSource={structures}
-          renderItem={item => (
-            <List.Item
-              key={item.id}
-            >
-              <Card
-                style={{ width: '100%' }}
-                cover={<img alt="example" src={item.base64} />}
-                actions={
-                  [<Icon type="edit" onClick={() => editStructure(item.id)} />,
-                    <Popconfirm
-                      placement="topLeft"
-                      title="Are you sure delete this structure?"
-                      onConfirm={() => deleteStructure(item.id)}
-                      okText="Yes"
-                      cancelText="No"
-                    >
-                      <Icon type="delete" />
-                    </Popconfirm>]}
-              >
-                <div style={{ lineHeight: 2, paddingLeft: 40 }}>
-                  Temperature: {item.condition && item.condition.temperature} K
-                </div>
-                <div style={{ lineHeight: 2, paddingLeft: 40 }}>Pressure: {item.condition && item.condition.pressure}
-                  atm
-                </div>
-                <Collapse bordered={false} style={{ height: 50, padding: 0, margin: 0 }}>
-                  <Panel
-                    header="Parameters"
-                    key="1"
-                    style={{
-                      position: 'absolute',
-                      width: '100%',
-                      background: 'white',
-                      zIndex: 1,
-                      border: '1px solid gray',
-                    }}
-                  >
-                    <div>
-                      {item.params && item.params.map((param, i) =>
-                        <div key={i}>{param.key} : {param.value}</div>)}
-                    </div>
-                  </Panel>
-                </Collapse>
-              </Card>
-            </List.Item>
-          )}
-        />
+
+        { settings.full ?
+          <BlockListDisplay
+            structures={structures}
+            gridSettings={gridSettings}
+            deleteStructure={this.deleteStructure}
+          />
+          :
+          <TableListDisplay
+            structures={structures}
+            deleteStructure={this.deleteStructure}
+          />
+        }
       </div>
 
     );
@@ -187,15 +148,13 @@ StructureListPage.propTypes = {
 
 const mapStateToProps = state => ({
   settings: getSettings(state),
-  users: getUsers(state),
-  database: getDatabase(state),
-  structures: [],
+  structures: getStructures(state),
 });
 
 const mapDispatchToProps = dispatch => ({
   getStructure: obj => dispatch({ type: SAGA_GET_RECORDS, ...obj }),
   editStructure: id => dispatch(showModal(true, id)),
-  deleteStructure: id => dispatch({ type: SAGA_DELETE_STRUCTURE, id }),
+  deleteStructure: obj => dispatch({ type: SAGA_DELETE_STRUCTURE, ...obj }),
   initPage: full => dispatch({ type: SAGA_INIT_STRUCTURE_LIST_PAGE, full }),
 });
 

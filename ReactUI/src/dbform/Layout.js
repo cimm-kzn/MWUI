@@ -8,6 +8,7 @@ import {
 } from './components';
 import { LoaderView, ErrorView } from '../base/wrapper';
 import { MainLayout } from '../components';
+import { DBFormModalView } from './components';
 import 'antd/dist/antd.css';
 
 const TabPane = Tabs.TabPane;
@@ -18,9 +19,10 @@ class Main extends Component {
     const tabs = settings && settings.tabs;
 
     return (
-      <MainLayout style={{ paddingTop: 75 }}>
+      <MainLayout style={{ paddingTop: '75px' }}>
         <LoaderView />
         <ErrorView />
+        <DBFormModalView />
         <Tabs
           defaultActiveKey="3"
           {...tabs}

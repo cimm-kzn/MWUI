@@ -34,6 +34,7 @@ function urlConverter(template, base, get = null) {
   for (const key in base) {
     template = template.replace(`:${key}`, base[key]);
   }
+
   if (get) {
     const getKey = Object.keys(get).reduce((acc, key) => {
       if (get[key]) {
@@ -93,9 +94,9 @@ function normalizeDBFormData(values) {
     value: values[`value-${k.id}`],
   }));
 
+  const additives = values.solvents.concat(values.catalysts);
 
-
-  return { temperature, pressure, database, table, description };
+  return { temperature, pressure, database, table, description, additives };
 }
 
 export { merge, urlConverter, getWindowSize, currentGrid, normalizeDBFormData };
