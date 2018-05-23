@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import styled from 'styled-components';
-import PropTypes from 'prop-types';
 import { Button, Row, Col, Form } from 'antd';
 import { MARVIN_PATH_IFRAME } from '../../config';
 import { DBConditionList } from '../hoc';
+import { modal } from '../../base/actions'
 import { getModalState, getStructures } from '../core/selectors';
 
 const Modal = styled.div`
@@ -16,7 +16,6 @@ const Modal = styled.div`
   bottom: 0;
   left: 0;
   z-index: ${props => (props.isShow ? 100500 : -1)};
-
   outline: 0;
   background: rgba(0,0,0,0.4);
 `;
@@ -68,13 +67,14 @@ class DBFormModal extends Component {
                   style={{ border: '1px dashed #d9d9d9', padding: '10px' }}
                 />
               </Col>
-              <Col md={10} />
+              <Col md={10} >
               <Form>
                 <DBConditionList
                   form={form}
                   formComponent={Form}
                 />
               </Form>
+              </Col>
               <Col md={24}>
                 <Button
                   size="large"
@@ -102,9 +102,8 @@ const mapStateToProps = state => ({
   modal: getModalState(state),
 });
 
-// const mapDispatchToProps = dispatch => ({
-//   onOk: (id, data, params, condition) => dispatch({ type: SAGA_EDIT_STRUCTURE, id, data, params, condition }),
-//   onCancel: () => dispatch(showModal(false)),
-// });
+const mapDispatchToProps = dispatch => ({
+  onCancel: () => dispatch(modal(false)),
+});
 
-export default connect(mapStateToProps)(Form.create()(DBFormModal));
+export default connect(mapStateToProps, mapDispatchToProps)(Form.create()(DBFormModal));
