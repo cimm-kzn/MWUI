@@ -66,15 +66,15 @@ function* addNewStructure({ conditions }) {
   if (data === MARVIN_EDITOR_IS_EMPTY) {
     throw new Error('Structure is empty!');
   }
-  const response = yield call(Structures.validate, { data, conditions });
+  const response = yield call(Structures.validate, { data, ...conditions });
   const task = response.data.task;
   const { database, table } = conditions;
   yield put({ type: SAGA_ADD_STRUCTURE_AFTER_VALIDATE, database, table, task });
 }
 
-function* deleteStructureInList(action) {
-  yield call(Structures.delete, action.id);
-  yield put(deleteStructure, action.id);
+function* deleteStructureInList({ database, table, metadata  }) {
+  yield call(Structures.delete, { database, table, metadata });
+  yield put(deleteStructure(metadata));
   yield message.success('Delete structure');
 }
 

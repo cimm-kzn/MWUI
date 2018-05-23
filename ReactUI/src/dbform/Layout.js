@@ -19,10 +19,10 @@ class Main extends Component {
     const tabs = settings && settings.tabs;
 
     return (
-      <MainLayout style={{ paddingTop: 75 }}>
+      <MainLayout style={{ paddingTop: '75px' }}>
         <LoaderView />
         <ErrorView />
-      <DBFormModalView />
+        <DBFormModalView />
         <Tabs
           defaultActiveKey="3"
           {...tabs}

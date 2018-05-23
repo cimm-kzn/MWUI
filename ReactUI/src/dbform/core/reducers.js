@@ -46,8 +46,8 @@ export const structures = (state = [], action) => {
       );
 
     case DELETE_STRUCTURE:
-      return state.filter(apple =>
-        apple.id !== action.id,
+      return state.filter(structure =>
+        structure.metadata !== action.metadata,
       );
 
     default:

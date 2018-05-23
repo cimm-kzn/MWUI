@@ -12,13 +12,15 @@ const AdditivesSelect = ({ form, formComponent, additives }) => {
   return (
     <div>
       <FormItem label="Solvents">
-        {getFieldDecorator('solvents')(
+        {getFieldDecorator('solvents', {
+          initialValue: [],
+        })(
           <SlidersSelect data={solvents} sumEqual={100} />,
         )}
       </FormItem>
       <FormItem label="Catalysts">
-        {getFieldDecorator('catalysts',{
-          initialValue: null,
+        {getFieldDecorator('catalysts', {
+          initialValue: [],
         })(
           <SlidersSelect data={catalysts} />,
         )}

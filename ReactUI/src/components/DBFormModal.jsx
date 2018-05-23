@@ -85,7 +85,6 @@ class DBFormModal extends Component {
                   type="primary"
                   icon="upload"
                   size="large"
-
                 >Edit</Button>
               </Col>
             </Row>

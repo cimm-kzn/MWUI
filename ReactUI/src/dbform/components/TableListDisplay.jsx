@@ -7,7 +7,7 @@ import { Table, Button, Popconfirm } from 'antd';
 const TableListDisplay = ({
   structures,
   editStructure,
-  deleteStructure,
+  deleteStructure
 }) => {
   const columns = [{
     title: '#',
@@ -27,10 +27,10 @@ const TableListDisplay = ({
         />
         <Popconfirm
           placement="top"
-          title="Вы действительно хотите удалить запись?"
-          onConfirm={() => deleteStructure(record.structure)}
-          okText="Да"
-          cancelText="Нет"
+          title="Are you sure delete this structure?"
+          onConfirm={() => deleteStructure(record.metadata)}
+          okText="Yes"
+          cancelText="No"
         >
           <Button
             type="danger"
@@ -45,6 +45,7 @@ const TableListDisplay = ({
     <Table
       dataSource={structures}
       columns={columns}
+      pagination={false}
     />
   );
 };

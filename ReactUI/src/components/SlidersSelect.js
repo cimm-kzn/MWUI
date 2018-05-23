@@ -72,7 +72,7 @@ class SlidersSelect extends Component {
           onBlur={this.handleBlur}
           defaultValue={defaultValue && defaultValue.map(value => value.additive)}
         >
-          {data.map((item, i) =>
+          {data && data.map((item, i) =>
             (<Option
               key={item.additive + i}
               value={item.additive}
@@ -99,12 +99,6 @@ SlidersSelect.propTypes = {
   data: PropTypes.array,
   defaultValue: PropTypes.array,
   sumEqual: PropTypes.number,
-};
-
-SlidersSelect.defaultProps = {
-  data: [],
-  defaultValue: [],
-  sumEqual: null,
 };
 
 

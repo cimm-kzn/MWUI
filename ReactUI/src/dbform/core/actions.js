@@ -8,8 +8,8 @@ export const addStructure = structure => ({
   type: ADD_STRUCTURE, structure,
 });
 
-export const deleteStructure = id => ({
-  type: DELETE_STRUCTURE, id,
+export const deleteStructure = metadata => ({
+  type: DELETE_STRUCTURE, metadata,
 });
 
 export const showModal = (visible, id) => ({

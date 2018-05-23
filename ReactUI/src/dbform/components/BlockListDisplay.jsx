@@ -34,7 +34,7 @@ const BlockListDisplay = ({
               <Popconfirm
                 placement="topLeft"
                 title="Are you sure delete this structure?"
-                onConfirm={() => deleteStructure(item.id)}
+                onConfirm={() => deleteStructure(item.metadata)}
                 okText="Yes"
                 cancelText="No"
               >
@@ -60,8 +60,14 @@ const BlockListDisplay = ({
               }}
             >
               <div>
-                {item.descriptions && item.descriptions.map((param, i) =>
+                <b>Descriptions:</b>
+                {item.description && item.description.map((param, i) =>
                   <div key={i}>{param.key} : {param.value}</div>)}
+              </div>
+              <div>
+                <b>Additives:</b>
+                {item.additives && item.additives.map((param, i) =>
+                  <div key={i}>{param.name} : {param.amount}</div>)}
               </div>
             </Panel>
           </Collapse>
