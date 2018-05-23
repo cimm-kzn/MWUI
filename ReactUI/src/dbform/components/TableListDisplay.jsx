@@ -23,7 +23,7 @@ const TableListDisplay = ({
       <span>
         <Button
           icon="edit"
-          onClick={() => editStructure(record.structure)}
+          onClick={() => editStructure(record.metadata)}
         />
         <Popconfirm
           placement="top"

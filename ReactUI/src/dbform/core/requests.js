@@ -10,6 +10,7 @@ const Structures = {
   delete: ({ database, table, metadata }) => axios.delete(urlConverter(API_URLS.RECORDS_METADATA, { database, table, metadata })),
   edit: (id, data, params, condition) => axios.put(`${API_URLS.STRUCTURES}/${id}`, { data, params, condition }),
   getPages: ({ database, table }) => axios.get(urlConverter(API_URLS.PAGES, { database, table })),
+  get: ({ database, table, metadata }) => axios.get(urlConverter(API_URLS.RECORDS_METADATA, { database, table, metadata })),
 };
 
 const Settings = {

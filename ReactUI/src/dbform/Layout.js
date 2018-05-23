@@ -14,9 +14,22 @@ import 'antd/dist/antd.css';
 const TabPane = Tabs.TabPane;
 
 class Main extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      activeKey: '',
+    };
+    this.changeTab = this.changeTab.bind(this);
+  }
+
+  changeTab(activeKey) {
+    this.setState({ activeKey });
+  }
+
   render() {
     const { settings } = this.props;
     const tabs = settings && settings.tabs;
+    const { activeKey } = this.state;
 
     return (
       <MainLayout style={{ paddingTop: '75px' }}>
@@ -24,17 +37,18 @@ class Main extends Component {
         <ErrorView />
         <DBFormModalView />
         <Tabs
-          defaultActiveKey="3"
+          defaultActiveKey="2"
+          onChange={this.changeTab}
           {...tabs}
         >
           <TabPane tab={<span><Icon type="file-add" />Create</span>} key="1">
-            <CreatePage />
+            <CreatePage active={activeKey === '1'} />
           </TabPane>
-          <TabPane tab={<span><Icon type="database" />List</span>} key="3">
-            <StructureListPage />
+          <TabPane tab={<span><Icon type="database" />List</span>} key="2">
+            <StructureListPage active={activeKey === '2'}  />
           </TabPane>
-          <TabPane tab={<span><Icon type="setting" />Settings</span>} key="4">
-            <SettingsPage />
+          <TabPane tab={<span><Icon type="setting" />Settings</span>} key="3">
+            <SettingsPage active={activeKey === '3'}  />
           </TabPane>
         </Tabs>
       </MainLayout>

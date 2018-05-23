@@ -24,13 +24,13 @@ const BlockListDisplay = ({
     dataSource={structures}
     renderItem={item => (
       <List.Item
-        key={item.id}
+        key={item.metadata}
       >
         <Card
           style={{ width: '100%' }}
           cover={<img alt="example" src={item.base64} />}
           actions={
-            [<Icon type="edit" onClick={() => editStructure(item.id)} />,
+            [<Icon type="edit" onClick={() => editStructure(item.metadata)} />,
               <Popconfirm
                 placement="topLeft"
                 title="Are you sure delete this structure?"

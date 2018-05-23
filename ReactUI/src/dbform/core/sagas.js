@@ -2,8 +2,8 @@ import { takeEvery, call, put } from 'redux-saga/effects';
 import { message } from 'antd';
 import { Structures, Records, Settings, Users } from './requests';
 import { getAdditives, getMagic } from '../../base/requests';
-import { addAdditives, addMagic, succsessRequest } from '../../base/actions';
-import { addStructures, deleteStructure, addStructure, editStructure, showModal, addDBFields, addUsers, addPages } from './actions';
+import { addAdditives, addMagic, succsessRequest, modal } from '../../base/actions';
+import { addStructures, deleteStructure, addStructure, editStructure, addDBFields, addUsers, addPages } from './actions';
 import { catchErrSaga, requestSaga, requestSagaContinius, repeatedRequests } from '../../base/sagas';
 import { convertCmlToBase64, convertCmlToBase64Arr, exportCml } from '../../base/marvinAPI';
 import {
@@ -78,12 +78,13 @@ function* deleteStructureInList({ database, table, metadata  }) {
   yield message.success('Delete structure');
 }
 
-function* modalDiscard(action) {
-  const { data, params, condition } = action;
-  const response = yield call(Structures.edit, action.id, data, params, condition);
-  const base64 = yield call(convertCmlToBase64, response.data.data);
-  yield put(editStructure({ base64, ...response.data }));
-  yield put(showModal(false));
+function* editStructureModal({ database, table, full, metadata }) {
+
+  if(!full){
+    const structMeta = yield call(Structures.get, { database, table, metadata });
+    yield put(addStructure(metadata, structMeta.data));
+  }
+  yield put(modal(true, metadata));
 }
 
 
@@ -92,6 +93,6 @@ export function* sagas() {
   yield takeEvery(SAGA_ADD_STRUCTURE, catchErrSaga, addNewStructure);
   yield takeEvery(SAGA_ADD_STRUCTURE_AFTER_VALIDATE, requestSagaContinius, requestAddNewStructure);
   yield takeEvery(SAGA_DELETE_STRUCTURE, requestSaga, deleteStructureInList);
-  yield takeEvery(SAGA_EDIT_STRUCTURE, requestSaga, modalDiscard);
+  yield takeEvery(SAGA_EDIT_STRUCTURE, catchErrSaga, editStructureModal);
   yield takeEvery(SAGA_GET_RECORDS, requestSaga, getRecordsByUser);
 }

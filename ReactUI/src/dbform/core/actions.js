@@ -4,8 +4,8 @@ export const addStructures = structures => ({
   type: ADD_STRUCTURES, structures,
 });
 
-export const addStructure = structure => ({
-  type: ADD_STRUCTURE, structure,
+export const addStructure = (metadata, data) => ({
+  type: ADD_STRUCTURE, metadata, data,
 });
 
 export const deleteStructure = metadata => ({

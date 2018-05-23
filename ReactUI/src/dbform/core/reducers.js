@@ -24,16 +24,18 @@ const defaultSettings = {
 };
 
 
-
 export const structures = (state = [], action) => {
   switch (action.type) {
     case ADD_STRUCTURE:
-      return [
-        ...state,
-        {
-          ...action.structure,
-        },
-      ];
+      return state.map((data) => {
+        if (data.metadata === action.metadata) {
+          return {
+            ...data,
+            ...action.data,
+          };
+        }
+        return data;
+      });
 
     case ADD_STRUCTURES:
       return action.structures;
