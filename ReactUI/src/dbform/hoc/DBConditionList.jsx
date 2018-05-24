@@ -10,13 +10,9 @@ import AdditivesSelect from './AdditivesSelect';
 import { getSettings } from '../core/selectors';
 
 const DBConditionList = ({
-  id,
-  solvents,
-  catalysts,
   formComponent,
   form,
   settings,
-  type,
 }) => {
   const FormItem = formComponent.Item;
   const { getFieldDecorator } = form;
@@ -64,21 +60,6 @@ const DBConditionList = ({
       />
     </div>
   );
-};
-
-DBConditionList.propTypes = {
-  selectModel: PropTypes.number,
-  catalysts: PropTypes.array,
-  solvents: PropTypes.array,
-  type: PropTypes.number,
-};
-
-DBConditionList.defaultProps = {
-  selectModel: null,
-  models: [],
-  catalysts: [],
-  solvents: [],
-  type: 0,
 };
 
 const mapStateToProps = state => ({
