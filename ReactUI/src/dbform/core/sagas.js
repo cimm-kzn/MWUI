@@ -83,17 +83,19 @@ function* editStructureModal({ data, database, table, metadata }) {
     yield importCml(data);
   }
 
-  yield put(modal(true, null, metadata));
+  yield put(modal(true, null, { metadata, database, table }));
 }
 
-function* editStructureModalOnOk({ conditions, metadata }) {
+function* editStructureModalOnOk({ conditions, structure }) {
+
+  const { metadata, database, table } = structure;
+
   const data = yield call(exportCml);
   if (data === MARVIN_EDITOR_IS_EMPTY) {
     throw new Error('Structure is empty!');
   }
   const response = yield call(Structures.validate, { data, ...conditions });
   const task = response.data.task;
-  const { database, table } = conditions;
   yield put({ type: SAGA_EDIT_STRUCTURE_AFTER_VALIDATE, database, table, task, metadata });
 }
 

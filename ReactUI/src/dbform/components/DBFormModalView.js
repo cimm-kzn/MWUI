@@ -7,6 +7,7 @@ import { DBConditionList } from '../hoc';
 import { modal } from '../../base/actions';
 import { getModalState, getConditionsByMetadata } from '../core/selectors';
 import { SAGA_EDIT_STRUCTURE_ON_OK } from '../core/constants';
+import { normalizeDBFormData } from '../../base/functions';
 
 const Modal = styled.div`
   opacity: ${props => (props.isShow ? 1 : 0)};
@@ -16,7 +17,7 @@ const Modal = styled.div`
   right: 0;
   bottom: 0;
   left: 0;
-  z-index: ${props => (props.isShow ? 500 : -1)};
+  z-index: ${props => (props.isShow ? 1000 : -1)};
   outline: 0;
   background: rgba(0,0,0,0.4);
 `;
@@ -40,11 +41,26 @@ const Body = styled.div`
 class DBFormModal extends Component {
   constructor(props) {
     super(props);
+    this.onSubmitForm = this.onSubmitForm.bind(this);
+  }
+
+  onSubmitForm(e){
+    e.preventDefault();
+
+    const { form, onOk, modal } = this.props;
+
+    form.validateFields((err, values) => {
+      if (!err) {
+        const conditions = normalizeDBFormData(values);
+        onOk(modal.structure, conditions);
+        form.resetFields();
+      }
+    });
   }
 
 
   render() {
-    const { modal, conditions, onCancel, onOk, form } = this.props;
+    const { modal, conditions, onCancel, form } = this.props;
     window.document.body.style.overflow = modal.visible ? 'hidden' : 'auto';
 
     return (
@@ -60,7 +76,8 @@ class DBFormModal extends Component {
             </button>
           </div>
           <Body>
-            <Row gutter={30} >
+          <Form onSubmit={this.onSubmitForm}>
+            <Row gutter={24} >
               <Col md={14}>
                 <iframe
                   title="marvinjs"
@@ -72,7 +89,7 @@ class DBFormModal extends Component {
                   style={{ border: '1px dashed #d9d9d9', padding: '10px' }}
                 />
               </Col>
-              <Form>
+
                 <Col md={10} >
 
                   <DBConditionList
@@ -91,12 +108,13 @@ class DBFormModal extends Component {
                   <Button
                     className="pull-right"
                     type="primary"
+                    htmlType="submit"
                     icon="upload"
                     size="large"
                   >Edit</Button>
                 </Col>
-              </Form>
             </Row>
+          </Form>
           </Body>
         </Content>
       </Modal>
@@ -112,7 +130,7 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
   onCancel: () => dispatch(modal(false)),
-  onOk: (conditions, metadata) => dispatch({ type: SAGA_EDIT_STRUCTURE_ON_OK, conditions, metadata }),
+  onOk: (structure, conditions) => dispatch({ type: SAGA_EDIT_STRUCTURE_ON_OK, conditions, structure }),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Form.create()(DBFormModal));
