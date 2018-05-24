@@ -41,10 +41,10 @@ export const structures = (state = [], action) => {
       return action.structures;
 
     case EDIT_STRUCTURE:
-      return state.map(structure =>
-        (structure.id === action.structure.id ?
-          { ...action.structure } :
-          structure),
+      return state.map(data =>
+        (data.metadata === action.metadata ?
+          action.data :
+          data),
       );
 
     case DELETE_STRUCTURE:

@@ -8,19 +8,12 @@ const Option = Select.Option;
 class SlidersSelect extends Component {
   constructor(props) {
     super(props);
-    this.state = { selected: [] };
     this.handleBlur = this.handleBlur.bind(this);
     this.handleSlide = this.handleSlide.bind(this);
   }
 
-  componentDidMount() {
-    const { defaultValue, value } = this.props;
-    this.setState({ selected: defaultValue || value });
-  }
-
   handleBlur(val) {
     const { data } = this.props;
-    this.setState({ selected: [] });
     if (val.length) {
       const persent = +(100 / val.length).toFixed(1);
       const lastPersent = +(persent + (100 - (val.length * persent))).toFixed(1);
@@ -32,45 +25,45 @@ class SlidersSelect extends Component {
         }
         return { amount: lastPersent, ...filterData };
       });
-      this.setState({ selected });
+
       this.triggeredChange(selected);
     }
   }
 
   handleSlide(amount, item) {
-    const { selected } = this.state;
-    const { sumEqual } = this.props;
+    const { sumEqual, value } = this.props;
 
-    const sum = selected.reduce((last, it) => last + it.amount, 0);
-    if (!sumEqual || sum <= sumEqual) {
-      const select = selected.map((sel) => {
+    const sum = value.reduce((last, it) => last + it.amount, 0);
+    if (!sumEqual || sum <= Math.ceil(sumEqual / 100)) {
+      const select = value.map((sel) => {
         if (sel.additive === item.additive) {
           return { ...item, amount };
         }
-        return sel;
+        return { ...sel, amount: Math.ceil(sel.amount * 100) };
       });
 
-      this.setState({ selected: select });
       this.triggeredChange(select);
     }
   }
 
   triggeredChange(data) {
-    this.props.onChange(data);
+    const convertData = data.map(dt => ({ ...dt, amount: Math.ceil(dt.amount) / 100 }));
+    this.props.onChange(convertData);
   }
 
   render() {
-    const { data, defaultValue } = this.props;
-    const { selected } = this.state;
+    const { data, value } = this.props;
+
 
     return (
       <div>
         <Select
           mode="multiple"
+          allowClear
           style={{ width: '100%' }}
           placeholder="Please select"
-          onBlur={this.handleBlur}
-          defaultValue={defaultValue && defaultValue.map(value => value.additive)}
+          onChange={this.handleBlur}
+          value={value.map(val => val.additive)}
         >
           {data && data.map((item, i) =>
             (<Option
@@ -81,7 +74,7 @@ class SlidersSelect extends Component {
             </Option>),
           )}
         </Select>
-        { selected.map((item, i) => (
+        { value.map(dt => ({ ...dt, amount: Math.ceil(dt.amount * 100) })).map((item, i) => (
           <div>{ item.name }
             <SliderInput
               key={item.name + i}

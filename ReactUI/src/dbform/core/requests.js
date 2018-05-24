@@ -8,7 +8,7 @@ const Structures = {
   validate: data => axios.post(API_URLS.CREATE_TASK_DBFORM, { ...data }),
   add: ({ task, database, table }) => axios.post(urlConverter(API_URLS.RECORDS, { database, table }), { task }),
   delete: ({ database, table, metadata }) => axios.delete(urlConverter(API_URLS.RECORDS_METADATA, { database, table, metadata })),
-  edit: (id, data, params, condition) => axios.put(`${API_URLS.STRUCTURES}/${id}`, { data, params, condition }),
+  edit: ({ database, table, metadata, task }) => axios.post(urlConverter(API_URLS.RECORDS_METADATA, { database, table, metadata }), { task }),
   getPages: ({ database, table }) => axios.get(urlConverter(API_URLS.PAGES, { database, table })),
   get: ({ database, table, metadata }) => axios.get(urlConverter(API_URLS.RECORDS_METADATA, { database, table, metadata })),
 };

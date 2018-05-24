@@ -67,10 +67,10 @@ class StructureListPage extends Component {
     });
   }
 
-  editStructure(metadata){
-    const { editStructure, form, settings: { full } } = this.props;
+  editStructure(metadata, data){
+    const { editStructure, form } = this.props;
     form.validateFields((err, { database, table }) => {
-      editStructure({ database, table, full, metadata });
+      editStructure({ database, table, data, metadata });
     });
   }
 

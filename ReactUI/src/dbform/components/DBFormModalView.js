@@ -4,8 +4,9 @@ import styled from 'styled-components';
 import { Button, Row, Col, Form } from 'antd';
 import { MARVIN_PATH_IFRAME } from '../../config';
 import { DBConditionList } from '../hoc';
-import { modal } from '../../base/actions'
-import { getModalState, getStructures } from '../core/selectors';
+import { modal } from '../../base/actions';
+import { getModalState, getConditionsByMetadata } from '../core/selectors';
+import { SAGA_EDIT_STRUCTURE_ON_OK } from '../core/constants';
 
 const Modal = styled.div`
   opacity: ${props => (props.isShow ? 1 : 0)};
@@ -15,7 +16,7 @@ const Modal = styled.div`
   right: 0;
   bottom: 0;
   left: 0;
-  z-index: ${props => (props.isShow ? 100500 : -1)};
+  z-index: ${props => (props.isShow ? 500 : -1)};
   outline: 0;
   background: rgba(0,0,0,0.4);
 `;
@@ -37,9 +38,13 @@ const Body = styled.div`
 
 
 class DBFormModal extends Component {
-  render() {
-    const { modal, structures, onCancel, onOk, form } = this.props;
+  constructor(props) {
+    super(props);
+  }
 
+
+  render() {
+    const { modal, conditions, onCancel, onOk, form } = this.props;
     window.document.body.style.overflow = modal.visible ? 'hidden' : 'auto';
 
     return (
@@ -67,28 +72,30 @@ class DBFormModal extends Component {
                   style={{ border: '1px dashed #d9d9d9', padding: '10px' }}
                 />
               </Col>
-              <Col md={10} >
               <Form>
-                <DBConditionList
-                  form={form}
-                  formComponent={Form}
-                />
-              </Form>
-              </Col>
-              <Col md={24}>
-                <Button
-                  size="large"
-                  onClick={onCancel}
-                >
+                <Col md={10} >
+
+                  <DBConditionList
+                    form={form}
+                    formComponent={Form}
+                    data={conditions}
+                  />
+                </Col>
+                <Col md={24}>
+                  <Button
+                    size="large"
+                    onClick={onCancel}
+                  >
                 Cancel
-                </Button>
-                <Button
-                  className="pull-right"
-                  type="primary"
-                  icon="upload"
-                  size="large"
-                >Edit</Button>
-              </Col>
+                  </Button>
+                  <Button
+                    className="pull-right"
+                    type="primary"
+                    icon="upload"
+                    size="large"
+                  >Edit</Button>
+                </Col>
+              </Form>
             </Row>
           </Body>
         </Content>
@@ -100,10 +107,12 @@ class DBFormModal extends Component {
 
 const mapStateToProps = state => ({
   modal: getModalState(state),
+  conditions: getConditionsByMetadata(state),
 });
 
 const mapDispatchToProps = dispatch => ({
   onCancel: () => dispatch(modal(false)),
+  onOk: (conditions, metadata) => dispatch({ type: SAGA_EDIT_STRUCTURE_ON_OK, conditions, metadata }),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Form.create()(DBFormModal));

@@ -29,3 +29,18 @@ export const getAdditivesForSelect = createSelector(
     return {};
   });
 
+export const getConditionsByMetadata = createSelector(
+  [
+    getModalState,
+    getStructures,
+    getMagic,
+  ],
+  (modal, structures, magic) => {
+    if(modal.visible && structures){
+      const data = structures.filter(struct => struct.metadata === modal.structure)[0];
+      const additives = Serialize.additivesOfType(data.additives, magic);
+      return { ...data, ...additives };
+    }
+    return {}
+  },
+);
