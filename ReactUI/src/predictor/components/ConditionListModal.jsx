@@ -88,9 +88,9 @@ class ConditionListModal extends Component {
             id="translation"
             formComponent={Form}
             form={form}
-            models={allModels.filter(model => model.type === typeModel)}
-            catalysts={allAdditives.solvents}
-            solvents={allAdditives.catalysts}
+            models={allModels && allModels.filter(model => model.type === typeModel)}
+            catalysts={allAdditives && allAdditives.solvents}
+            solvents={allAdditives && allAdditives.catalysts}
           />
         </Form>
       </Modal>

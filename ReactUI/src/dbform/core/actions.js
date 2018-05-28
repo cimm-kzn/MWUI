@@ -4,8 +4,8 @@ export const addStructures = structures => ({
   type: ADD_STRUCTURES, structures,
 });
 
-export const addStructure = structure => ({
-  type: ADD_STRUCTURE, structure,
+export const addStructureMetadata = (metadata, data) => ({
+  type: ADD_STRUCTURE, metadata, data,
 });
 
 export const deleteStructure = metadata => ({
@@ -16,8 +16,8 @@ export const showModal = (visible, id) => ({
   type: TRIGGER_MODAL, visible, id,
 });
 
-export const editStructure = structure => ({
-  type: EDIT_STRUCTURE, structure,
+export const editStructure = (metadata, data) => ({
+  type: EDIT_STRUCTURE, metadata, data,
 });
 
 export const addSettings = settings => ({

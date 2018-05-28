@@ -2,9 +2,8 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Form, Row, Col, Button, Icon } from 'antd';
-import { showModal } from '../core/actions';
 import { getSettings, getStructures } from '../core/selectors';
-import { SAGA_DELETE_STRUCTURE, SAGA_GET_RECORDS, SAGA_INIT_STRUCTURE_LIST_PAGE } from '../core/constants';
+import { SAGA_DELETE_STRUCTURE, SAGA_GET_RECORDS, SAGA_INIT_STRUCTURE_LIST_PAGE, SAGA_EDIT_STRUCTURE } from '../core/constants';
 import { DatabaseTableSelect, DatabaseSelect, UsersSelect, PaginationComp } from '../hoc';
 import TableListDisplay from './TableListDisplay';
 import BlockListDisplay from './BlockListDisplay';
@@ -22,17 +21,7 @@ class StructureListPage extends Component {
     this.handleSearch = this.handleSearch.bind(this);
     this.changePage = this.changePage.bind(this);
     this.deleteStructure = this.deleteStructure.bind(this);
-  }
-
-  componentDidUpdate() {
-    const { settings: { full }, structures, form, getStructure } = this.props;
-
-    if (full && !structures.every(s => s.data)) {
-      form.validateFields((err, values) => {
-        const { database, table, user } = values;
-        getStructure({ database, table, user, full, page: 1 });
-      });
-    }
+    this.editStructure = this.editStructure.bind(this);
   }
 
   componentDidMount() {
@@ -40,9 +29,20 @@ class StructureListPage extends Component {
     initPage(full);
   }
 
+  componentDidUpdate() {
+    const { settings: { full }, structures, form, getStructure, active } = this.props;
+
+    if (full && !structures.every(s => s.data) && active) {
+      form.validateFields((err, values) => {
+        const { database, table, user } = values;
+        getStructure({ database, table, user, full, page: 1 });
+      });
+    }
+  }
+
   changePage(page) {
     const { form, getStructure, settings: { full } } = this.props;
-    form.validateFields((err,{ database, table, user }) => {
+    form.validateFields((err, { database, table, user }) => {
       getStructure({ database, table, user, full, page });
     });
   }
@@ -50,7 +50,7 @@ class StructureListPage extends Component {
   handleSearch(e) {
     e.preventDefault();
     const { form, getStructure, settings: { full } } = this.props;
-    form.validateFields((err,{ database, table, user }) => {
+    form.validateFields((err, { database, table, user }) => {
       getStructure({ database, table, user, full, page: 1 });
     });
   }
@@ -60,10 +60,17 @@ class StructureListPage extends Component {
     this.setState({ expand: !expand });
   }
 
-  deleteStructure(metadata){
+  deleteStructure(metadata) {
     const { deleteStructure, form } = this.props;
-    form.validateFields((err,{ database, table, user }) => {
+    form.validateFields((err, { database, table, user }) => {
       deleteStructure({ database, table, user, metadata });
+    });
+  }
+
+  editStructure(metadata, data){
+    const { editStructure, form } = this.props;
+    form.validateFields((err, { database, table }) => {
+      editStructure({ database, table, data, metadata });
     });
   }
 
@@ -125,11 +132,13 @@ class StructureListPage extends Component {
             structures={structures}
             gridSettings={gridSettings}
             deleteStructure={this.deleteStructure}
+            editStructure={this.editStructure}
           />
           :
           <TableListDisplay
             structures={structures}
             deleteStructure={this.deleteStructure}
+            editStructure={this.editStructure}
           />
         }
       </div>
@@ -153,7 +162,7 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
   getStructure: obj => dispatch({ type: SAGA_GET_RECORDS, ...obj }),
-  editStructure: id => dispatch(showModal(true, id)),
+  editStructure: obj => dispatch({ type: SAGA_EDIT_STRUCTURE, ...obj }),
   deleteStructure: obj => dispatch({ type: SAGA_DELETE_STRUCTURE, ...obj }),
   initPage: full => dispatch({ type: SAGA_INIT_STRUCTURE_LIST_PAGE, full }),
 });

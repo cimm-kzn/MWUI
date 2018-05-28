@@ -2,10 +2,10 @@ import { takeEvery, call, put } from 'redux-saga/effects';
 import { message } from 'antd';
 import { Structures, Records, Settings, Users } from './requests';
 import { getAdditives, getMagic } from '../../base/requests';
-import { addAdditives, addMagic, succsessRequest } from '../../base/actions';
-import { addStructures, deleteStructure, addStructure, editStructure, showModal, addDBFields, addUsers, addPages } from './actions';
+import { addAdditives, addMagic, succsessRequest, modal } from '../../base/actions';
+import { addStructures, deleteStructure, addStructureMetadata, editStructure, addDBFields, addUsers, addPages } from './actions';
 import { catchErrSaga, requestSaga, requestSagaContinius, repeatedRequests } from '../../base/sagas';
-import { convertCmlToBase64, convertCmlToBase64Arr, exportCml } from '../../base/marvinAPI';
+import { convertCmlToBase64, convertCmlToBase64Arr, exportCml, importCml } from '../../base/marvinAPI';
 import {
   SAGA_INIT_STRUCTURE_LIST_PAGE,
   SAGA_EDIT_STRUCTURE,
@@ -13,6 +13,8 @@ import {
   SAGA_ADD_STRUCTURE,
   SAGA_GET_RECORDS,
   SAGA_ADD_STRUCTURE_AFTER_VALIDATE,
+  SAGA_EDIT_STRUCTURE_ON_OK,
+  SAGA_EDIT_STRUCTURE_AFTER_VALIDATE,
 } from './constants';
 import { MARVIN_EDITOR_IS_EMPTY } from '../../config';
 
@@ -49,13 +51,7 @@ function* getRecordsByUser({ full, user, database, table, page }) {
   yield put(addPages(pages.data));
 }
 
-function* getRecords(action) {
-  const data = yield call(Records.getAllbyUser, action.database, action.table, action.user);
-  const structures = yield call(convertCmlToBase64Arr, data.data);
-  yield put(addStructures(structures));
-}
-
-function* requestAddNewStructure({ task,  database, table }) {
+function* requestAddNewStructure({ task, database, table }) {
   yield call(repeatedRequests, Structures.add, { task, database, table });
   yield put(succsessRequest());
   yield message.success('Add structure');
@@ -72,18 +68,43 @@ function* addNewStructure({ conditions }) {
   yield put({ type: SAGA_ADD_STRUCTURE_AFTER_VALIDATE, database, table, task });
 }
 
-function* deleteStructureInList({ database, table, metadata  }) {
+function* deleteStructureInList({ database, table, metadata }) {
   yield call(Structures.delete, { database, table, metadata });
   yield put(deleteStructure(metadata));
   yield message.success('Delete structure');
 }
 
-function* modalDiscard(action) {
-  const { data, params, condition } = action;
-  const response = yield call(Structures.edit, action.id, data, params, condition);
-  const base64 = yield call(convertCmlToBase64, response.data.data);
-  yield put(editStructure({ base64, ...response.data }));
-  yield put(showModal(false));
+function* editStructureModal({ data, database, table, metadata }) {
+  if (!data) {
+    const structMeta = yield call(Structures.get, { database, table, metadata });
+    yield put(addStructureMetadata(metadata, structMeta.data));
+    yield importCml(structMeta.data.data);
+  } else {
+    yield importCml(data);
+  }
+
+  yield put(modal(true, null, { metadata, database, table }));
+}
+
+function* editStructureModalOnOk({ conditions, structure }) {
+
+  const { metadata, database, table } = structure;
+
+  const data = yield call(exportCml);
+  if (data === MARVIN_EDITOR_IS_EMPTY) {
+    throw new Error('Structure is empty!');
+  }
+  const response = yield call(Structures.validate, { data, ...conditions });
+  const task = response.data.task;
+  yield put({ type: SAGA_EDIT_STRUCTURE_AFTER_VALIDATE, database, table, task, metadata });
+}
+
+function* requestEditStructure({ database, table, task, metadata }) {
+  const structure = yield call(repeatedRequests, Structures.edit, { task, database, table, metadata });
+  yield put(editStructure(metadata, structure.data));
+  yield put(modal(false));
+  yield put(succsessRequest());
+  yield message.success('Update structure');
 }
 
 
@@ -92,6 +113,10 @@ export function* sagas() {
   yield takeEvery(SAGA_ADD_STRUCTURE, catchErrSaga, addNewStructure);
   yield takeEvery(SAGA_ADD_STRUCTURE_AFTER_VALIDATE, requestSagaContinius, requestAddNewStructure);
   yield takeEvery(SAGA_DELETE_STRUCTURE, requestSaga, deleteStructureInList);
-  yield takeEvery(SAGA_EDIT_STRUCTURE, requestSaga, modalDiscard);
+
+  yield takeEvery(SAGA_EDIT_STRUCTURE, catchErrSaga, editStructureModal);
+  yield takeEvery(SAGA_EDIT_STRUCTURE_ON_OK, catchErrSaga, editStructureModalOnOk);
+  yield takeEvery(SAGA_EDIT_STRUCTURE_AFTER_VALIDATE, requestSagaContinius, requestEditStructure);
+
   yield takeEvery(SAGA_GET_RECORDS, requestSaga, getRecordsByUser);
 }

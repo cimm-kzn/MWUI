@@ -69,13 +69,17 @@ const ConditionList = ({
       </FormItem>
       { solvents && !!solvents.length && <FormItem label="Solvents">
 
-        {getFieldDecorator(fieldName('additives-1'))(
+        {getFieldDecorator(fieldName('additives-1'), {
+          initialValue: [],
+        })(
           <SlidersSelect data={solvents} sumEqual={100} />,
         )}
       </FormItem>}
       { catalysts && !!catalysts.length && <FormItem label="Solvents">
 
-        {getFieldDecorator(fieldName('additives-2'))(
+        {getFieldDecorator(fieldName('additives-2'), {
+          initialValue: [],
+        })(
           <SlidersSelect data={catalysts} />,
         )}
       </FormItem>}
@@ -99,8 +103,6 @@ ConditionList.defaultProps = {
   models: [],
   temperature: 298,
   pressure: 1,
-  catalysts: [],
-  solvents: [],
   type: 0,
 };
 
