@@ -18,6 +18,7 @@ class SlidersSelect extends Component {
       const persent = +(100 / val.length).toFixed(1);
       const lastPersent = +(persent + (100 - (val.length * persent))).toFixed(1);
       const selected = val.map((dt, id) => {
+
         const filterData = data.filter(n => n.additive === dt)[0];
 
         if (id < data.length - 1) {
@@ -27,23 +28,37 @@ class SlidersSelect extends Component {
       });
 
       this.triggeredChange(selected);
+    } else{
+      this.triggeredChange(val);
     }
   }
 
   handleSlide(amount, item) {
     const { sumEqual, value } = this.props;
+    let newAmound;
+    const sum = value.reduce((last, it) => {
+      if (it.additive === item.additive) {
+        return last + amount / 100;
+      }
+      return last + it.amount;
+    }, 0);
 
-    const sum = value.reduce((last, it) => last + it.amount, 0);
+
+
     if (!sumEqual || sum <= Math.ceil(sumEqual / 100)) {
-      const select = value.map((sel) => {
-        if (sel.additive === item.additive) {
-          return { ...item, amount };
-        }
-        return { ...sel, amount: Math.ceil(sel.amount * 100) };
-      });
-
-      this.triggeredChange(select);
+      newAmound = amount;
+    } else if (sum > Math.ceil(sumEqual / 100)) {
+      newAmound = amount - (sum * 100 - sumEqual );
     }
+
+    const select = value.map((sel) => {
+      if (sel.additive === item.additive) {
+        return { ...item, amount: newAmound };
+      }
+      return { ...sel, amount: Math.ceil(sel.amount * 100) };
+    });
+
+    this.triggeredChange(select);
   }
 
   triggeredChange(data) {

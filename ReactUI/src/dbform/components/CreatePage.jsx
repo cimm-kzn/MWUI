@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { Button, Row, Col, Form } from 'antd';
 import { normalizeDBFormData } from '../../base/functions';
-import { DBConditionList } from '../hoc';
+import { DatabaseTableSelect, DatabaseSelect, DBConditionList } from '../hoc';
 import { MARVIN_PATH_IFRAME } from '../../config';
 import { SAGA_ADD_STRUCTURE } from '../core/constants';
 
@@ -52,6 +52,15 @@ class CreatePage extends Component {
             />
           </Col>
           <Col md={10}>
+            <DatabaseSelect
+              formComponent={Form}
+              form={form}
+            />
+
+            <DatabaseTableSelect
+              formComponent={Form}
+              form={form}
+            />
             <DBConditionList
               form={form}
               formComponent={Form}

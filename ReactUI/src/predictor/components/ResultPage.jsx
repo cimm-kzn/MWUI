@@ -72,7 +72,14 @@ class ResultPage extends Component {
               <Conditions>
                 <p>Temperature(K): {result.temperature}</p>
                 <p>Pressure(atm): {result.pressure}</p>
-                <p>Additives:</p>
+                { result.additives && result.additives.length &&
+                (<div>
+                  <p>Additives:</p>
+                  {result.additives.map((item, i) =>
+                    <p key={i + item.name}>{item.name} : { item.amount }</p>
+                  )}
+                </div>)
+                }
               </Conditions>
               <Tabs defaultActiveKey={0}>
                 { result.models && result.models.map((model, idx) =>

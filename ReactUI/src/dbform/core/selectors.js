@@ -41,6 +41,6 @@ export const getConditionsByMetadata = createSelector(
       const additives = Serialize.additivesOfType(data.additives, magic);
       return { ...data, ...additives };
     }
-    return {}
+    return null;
   },
 );

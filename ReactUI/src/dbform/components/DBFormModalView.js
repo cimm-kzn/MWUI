@@ -44,7 +44,7 @@ class DBFormModal extends Component {
     this.onSubmitForm = this.onSubmitForm.bind(this);
   }
 
-  onSubmitForm(e){
+  onSubmitForm(e) {
     e.preventDefault();
 
     const { form, onOk, modal } = this.props;
@@ -53,9 +53,16 @@ class DBFormModal extends Component {
       if (!err) {
         const conditions = normalizeDBFormData(values);
         onOk(modal.structure, conditions);
-        form.resetFields();
       }
     });
+  }
+
+  componentWillUpdate(nextProps) {
+    const { form, modal } = this.props;
+
+    if (nextProps.modal.visible && !modal.visible) {
+      form.resetFields();
+    }
   }
 
 
@@ -76,19 +83,19 @@ class DBFormModal extends Component {
             </button>
           </div>
           <Body>
-          <Form onSubmit={this.onSubmitForm}>
-            <Row gutter={24} >
-              <Col md={14}>
-                <iframe
-                  title="marvinjs"
-                  id="marvinjs"
-                  data-toolbars="reaction"
-                  src={MARVIN_PATH_IFRAME}
-                  width="100%"
-                  height={500}
-                  style={{ border: '1px dashed #d9d9d9', padding: '10px' }}
-                />
-              </Col>
+            <Form onSubmit={this.onSubmitForm}>
+              <Row gutter={24} >
+                <Col md={14}>
+                  <iframe
+                    title="marvinjs"
+                    id="marvinjs"
+                    data-toolbars="reaction"
+                    src={MARVIN_PATH_IFRAME}
+                    width="100%"
+                    height={500}
+                    style={{ border: '1px dashed #d9d9d9', padding: '10px' }}
+                  />
+                </Col>
 
                 <Col md={10} >
 
@@ -113,8 +120,8 @@ class DBFormModal extends Component {
                     size="large"
                   >Edit</Button>
                 </Col>
-            </Row>
-          </Form>
+              </Row>
+            </Form>
           </Body>
         </Content>
       </Modal>
