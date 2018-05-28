@@ -17,6 +17,8 @@ export const getPages = state => state.pages;
 
 export const getModalState = state => state.modal;
 
+export const getRequest = state => state.request;
+
 export const getAdditivesForSelect = createSelector(
   [
     getAdditives,

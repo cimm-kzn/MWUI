@@ -1,17 +1,31 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import PropTypes from 'prop-types';
 import { Button, Row, Col, Form } from 'antd';
+import { getRequest, getSettings } from '../core/selectors';
 import { normalizeDBFormData } from '../../base/functions';
 import { DatabaseTableSelect, DatabaseSelect, DBConditionList } from '../hoc';
 import { MARVIN_PATH_IFRAME } from '../../config';
 import { SAGA_ADD_STRUCTURE } from '../core/constants';
 
 class CreatePage extends Component {
-  constructor(props){
+  constructor(props) {
     super(props);
     this.handleSubmit = this.handleSubmit.bind(this);
-    this.handlersReset= this.handlersReset.bind(this);
+    this.handlersReset = this.handlersReset.bind(this);
   }
+
+  componentWillUpdate(nextProps) {
+    const { form, settings: { autoreset }, request } = this.props;
+
+    if (autoreset
+      && request.loading
+      && !nextProps.request.loading
+      && !nextProps.request.error) {
+      form.resetFields();
+    }
+  }
+
   handleSubmit(e) {
     e.preventDefault();
 
@@ -19,7 +33,6 @@ class CreatePage extends Component {
 
     form.validateFields((err, values) => {
       if (!err) {
-        console.log(values);
         const conditions = normalizeDBFormData(values);
         createStructure(conditions);
       }
@@ -32,7 +45,6 @@ class CreatePage extends Component {
   }
 
   render() {
-
     const { form } = this.props;
 
     return (
@@ -87,14 +99,20 @@ class CreatePage extends Component {
   }
 }
 
+CreatePage.propTypes = {
+  form: PropTypes.object,
+  createStructure: PropTypes.func.isRequired,
+  settings: PropTypes.object,
+  request: PropTypes.object,
+};
+
 const mapStateToProps = state => ({
-  condition: state.settings.condition,
-  autoreset: state.settings.auto_reset,
+  settings: getSettings(state),
+  request: getRequest(state),
 });
 
-
 const mapDispatchToProps = dispatch => ({
-  createStructure: (conditions) => dispatch({ type: SAGA_ADD_STRUCTURE, conditions }),
+  createStructure: conditions => dispatch({ type: SAGA_ADD_STRUCTURE, conditions }),
 });
 
 
