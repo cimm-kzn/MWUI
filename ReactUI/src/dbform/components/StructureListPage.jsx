@@ -3,7 +3,12 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Form, Row, Col, Button, Icon } from 'antd';
 import { getSettings, getStructures } from '../core/selectors';
-import { SAGA_DELETE_STRUCTURE, SAGA_GET_RECORDS, SAGA_INIT_STRUCTURE_LIST_PAGE, SAGA_EDIT_STRUCTURE } from '../core/constants';
+import {
+  SAGA_DELETE_STRUCTURE,
+  SAGA_GET_RECORDS,
+  SAGA_INIT_STRUCTURE_LIST_PAGE,
+  SAGA_EDIT_STRUCTURE,
+} from '../core/constants';
 import { DatabaseTableSelect, DatabaseSelect, UsersSelect, PaginationComp } from '../hoc';
 import TableListDisplay from './TableListDisplay';
 import BlockListDisplay from './BlockListDisplay';
@@ -67,7 +72,7 @@ class StructureListPage extends Component {
     });
   }
 
-  editStructure(metadata, data){
+  editStructure(metadata, data) {
     const { editStructure, form } = this.props;
     form.validateFields((err, { database, table }) => {
       editStructure({ database, table, data, metadata });
@@ -79,6 +84,8 @@ class StructureListPage extends Component {
     const { expand } = this.state;
     const gridSettings = settings && settings.grid;
 
+    const formControls = { form, formComponent: Form };
+
     return structures && settings && (
       <div>
         <Form
@@ -88,20 +95,17 @@ class StructureListPage extends Component {
           <Row gutter={24}>
             <Col span={8} style={{ display: expand ? 'block' : 'none' }}>
               <DatabaseSelect
-                formComponent={Form}
-                form={form}
+                {...formControls}
               />
             </Col>
             <Col span={8} style={{ display: expand ? 'block' : 'none' }}>
               <DatabaseTableSelect
-                formComponent={Form}
-                form={form}
+                {...formControls}
               />
             </Col>
             <Col span={8} style={{ display: expand ? 'block' : 'none' }}>
               <UsersSelect
-                formComponent={Form}
-                form={form}
+                {...formControls}
               />
             </Col>
             <Col span={24} style={{ textAlign: 'right', display: expand ? 'block' : 'none' }}>
@@ -151,7 +155,9 @@ StructureListPage.propTypes = {
   editStructure: PropTypes.func.isRequired,
   deleteStructure: PropTypes.func.isRequired,
   structures: PropTypes.array,
+  settings: PropTypes.object,
   getStructure: PropTypes.func.isRequired,
+  initPage: PropTypes.func.isRequired,
 };
 
 
