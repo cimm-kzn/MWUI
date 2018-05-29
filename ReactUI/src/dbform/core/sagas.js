@@ -5,7 +5,7 @@ import { getAdditives, getMagic } from '../../base/requests';
 import { addAdditives, addMagic, succsessRequest, modal } from '../../base/actions';
 import { addStructures, deleteStructure, addStructureMetadata, editStructure, addDBFields, addUsers, addPages } from './actions';
 import { catchErrSaga, requestSaga, requestSagaContinius, repeatedRequests } from '../../base/sagas';
-import { convertCmlToBase64, convertCmlToBase64Arr, exportCml, importCml } from '../../base/marvinAPI';
+import { convertCmlToBase64Arr, exportCml, importCml } from '../../base/marvinAPI';
 import {
   SAGA_INIT_STRUCTURE_LIST_PAGE,
   SAGA_EDIT_STRUCTURE,

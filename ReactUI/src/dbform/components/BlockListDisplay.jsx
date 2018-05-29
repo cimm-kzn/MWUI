@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import { Icon, List, Collapse, Popconfirm, Card as BaseCard } from 'antd';
@@ -77,5 +76,11 @@ const BlockListDisplay = ({
   />
 );
 
+BlockListDisplay.propTypes = {
+  gridSettings: PropTypes.object,
+  structures: PropTypes.array,
+  editStructure: PropTypes.func.isRequired,
+  deleteStructure: PropTypes.func.isRequired,
+};
 
 export default BlockListDisplay;

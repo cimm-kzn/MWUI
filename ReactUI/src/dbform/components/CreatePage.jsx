@@ -7,6 +7,7 @@ import { normalizeDBFormData } from '../../base/functions';
 import { DatabaseTableSelect, DatabaseSelect, DBConditionList } from '../hoc';
 import { MARVIN_PATH_IFRAME } from '../../config';
 import { SAGA_ADD_STRUCTURE } from '../core/constants';
+import { clearEditor } from '../../base/marvinAPI';
 
 class CreatePage extends Component {
   constructor(props) {
@@ -16,13 +17,14 @@ class CreatePage extends Component {
   }
 
   componentWillUpdate(nextProps) {
-    const { form, settings: { autoreset }, request } = this.props;
+    const { form, settings: { auto_reset }, request } = this.props;
 
-    if (autoreset
+    if (auto_reset
       && request.loading
       && !nextProps.request.loading
       && !nextProps.request.error) {
       form.resetFields();
+      clearEditor('marvinjs_create_page');
     }
   }
 
@@ -46,6 +48,7 @@ class CreatePage extends Component {
 
   render() {
     const { form } = this.props;
+    const formControls = { form, formComponent: Form };
 
     return (
       <Form
@@ -65,17 +68,14 @@ class CreatePage extends Component {
           </Col>
           <Col md={10}>
             <DatabaseSelect
-              formComponent={Form}
-              form={form}
+              {...formControls}
             />
 
             <DatabaseTableSelect
-              formComponent={Form}
-              form={form}
+              {...formControls}
             />
             <DBConditionList
-              form={form}
-              formComponent={Form}
+              {...formControls}
             />
           </Col>
           <Col md={24}>

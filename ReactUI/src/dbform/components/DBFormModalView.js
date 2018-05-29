@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import { Button, Row, Col, Form } from 'antd';
 import { MARVIN_PATH_IFRAME } from '../../config';
@@ -44,6 +45,14 @@ class DBFormModal extends Component {
     this.onSubmitForm = this.onSubmitForm.bind(this);
   }
 
+  componentWillUpdate(nextProps) {
+    const { form, modal } = this.props;
+
+    if (nextProps.modal.visible && !modal.visible) {
+      form.resetFields();
+    }
+  }
+
   onSubmitForm(e) {
     e.preventDefault();
 
@@ -56,15 +65,6 @@ class DBFormModal extends Component {
       }
     });
   }
-
-  componentWillUpdate(nextProps) {
-    const { form, modal } = this.props;
-
-    if (nextProps.modal.visible && !modal.visible) {
-      form.resetFields();
-    }
-  }
-
 
   render() {
     const { modal, conditions, onCancel, form } = this.props;
@@ -129,6 +129,13 @@ class DBFormModal extends Component {
   }
 }
 
+DBFormModal.propTypes = {
+  modal: PropTypes.object,
+  conditions: PropTypes.object,
+  form: PropTypes.object,
+  onCancel: PropTypes.func.isRequired,
+  onOk: PropTypes.func.isRequired,
+};
 
 const mapStateToProps = state => ({
   modal: getModalState(state),

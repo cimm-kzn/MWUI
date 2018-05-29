@@ -1,4 +1,13 @@
-import { ADD_STRUCTURE, ADD_STRUCTURES, EDIT_STRUCTURE, DELETE_STRUCTURE, TRIGGER_MODAL, ADD_SETTINGS, ADD_FIELDS, ADD_USERS, ADD_PAGES } from './constants';
+import {
+  ADD_STRUCTURE,
+  ADD_STRUCTURES,
+  EDIT_STRUCTURE,
+  DELETE_STRUCTURE,
+  ADD_SETTINGS,
+  ADD_FIELDS,
+  ADD_USERS,
+  ADD_PAGES,
+} from './constants';
 
 export const addStructures = structures => ({
   type: ADD_STRUCTURES, structures,
@@ -10,10 +19,6 @@ export const addStructureMetadata = (metadata, data) => ({
 
 export const deleteStructure = metadata => ({
   type: DELETE_STRUCTURE, metadata,
-});
-
-export const showModal = (visible, id) => ({
-  type: TRIGGER_MODAL, visible, id,
 });
 
 export const editStructure = (metadata, data) => ({
