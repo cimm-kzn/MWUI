@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Table, Button, Popconfirm } from 'antd';
 
@@ -7,7 +6,7 @@ import { Table, Button, Popconfirm } from 'antd';
 const TableListDisplay = ({
   structures,
   editStructure,
-  deleteStructure
+  deleteStructure,
 }) => {
   const columns = [{
     title: '#',
@@ -23,7 +22,7 @@ const TableListDisplay = ({
       <span>
         <Button
           icon="edit"
-          onClick={() => editStructure(record.structure)}
+          onClick={() => editStructure(record.metadata, record.data)}
         />
         <Popconfirm
           placement="top"
@@ -48,6 +47,12 @@ const TableListDisplay = ({
       pagination={false}
     />
   );
+};
+
+TableListDisplay.propTypes = {
+  structures: PropTypes.array,
+  editStructure: PropTypes.func.isRequired,
+  deleteStructure: PropTypes.func.isRequired,
 };
 
 

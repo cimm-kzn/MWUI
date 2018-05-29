@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { Spin } from 'antd';
 
 const LoaderContain = styled.div`
-    z-index: 1;
+    z-index: 100500;
     overflow: hidden;
     position: absolute;
     display: flex;

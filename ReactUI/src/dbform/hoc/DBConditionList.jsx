@@ -13,21 +13,20 @@ const DBConditionList = ({
   formComponent,
   form,
   settings,
+  data,
 }) => {
   const FormItem = formComponent.Item;
   const { getFieldDecorator } = form;
-  const { temperature, pressure } = settings.condition;
+  const {
+    temperature,
+    pressure,
+    description,
+    catalysts,
+    solvents,
+  } = data || settings.condition;
 
   return (
     <div>
-      <DatabaseSelect
-        formComponent={Form}
-        form={form}
-      />
-      <DatabaseTableSelect
-        formComponent={Form}
-        form={form}
-      />
       <FormItem
         label="Temperature:"
       >
@@ -51,10 +50,13 @@ const DBConditionList = ({
         )}
       </FormItem>
       <DynamicForm
+        description={description}
         formComponent={formComponent}
         form={form}
       />
       <AdditivesSelect
+        defaultSolvents={solvents}
+        defaultCatalysts={catalysts}
         formComponent={Form}
         form={form}
       />

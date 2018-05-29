@@ -24,25 +24,27 @@ const defaultSettings = {
 };
 
 
-
 export const structures = (state = [], action) => {
   switch (action.type) {
     case ADD_STRUCTURE:
-      return [
-        ...state,
-        {
-          ...action.structure,
-        },
-      ];
+      return state.map((data) => {
+        if (data.metadata === action.metadata) {
+          return {
+            ...data,
+            ...action.data,
+          };
+        }
+        return data;
+      });
 
     case ADD_STRUCTURES:
       return action.structures;
 
     case EDIT_STRUCTURE:
-      return state.map(structure =>
-        (structure.id === action.structure.id ?
-          { ...action.structure } :
-          structure),
+      return state.map(data =>
+        (data.metadata === action.metadata ?
+          action.data :
+          data),
       );
 
     case DELETE_STRUCTURE:

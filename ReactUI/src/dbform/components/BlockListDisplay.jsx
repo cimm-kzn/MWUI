@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import { Icon, List, Collapse, Popconfirm, Card as BaseCard } from 'antd';
@@ -24,13 +23,13 @@ const BlockListDisplay = ({
     dataSource={structures}
     renderItem={item => (
       <List.Item
-        key={item.id}
+        key={item.metadata}
       >
         <Card
           style={{ width: '100%' }}
           cover={<img alt="example" src={item.base64} />}
           actions={
-            [<Icon type="edit" onClick={() => editStructure(item.id)} />,
+            [<Icon type="edit" onClick={() => editStructure(item.metadata, item.data)} />,
               <Popconfirm
                 placement="topLeft"
                 title="Are you sure delete this structure?"
@@ -77,5 +76,11 @@ const BlockListDisplay = ({
   />
 );
 
+BlockListDisplay.propTypes = {
+  gridSettings: PropTypes.object,
+  structures: PropTypes.array,
+  editStructure: PropTypes.func.isRequired,
+  deleteStructure: PropTypes.func.isRequired,
+};
 
 export default BlockListDisplay;

@@ -48,7 +48,9 @@ class DynamicForm extends React.Component {
     const { getFieldDecorator, getFieldValue } = this.props.form;
     const { description, formComponent } = this.props;
 
-    getFieldDecorator('keys', { initialValue: [{ id: 0, key: '', value: '' }] });
+    const initialValue = (description.length) ? description : [{ id: 0, key: '', value: '' }];
+
+    getFieldDecorator('keys', { initialValue });
 
     const keys = getFieldValue('keys');
     const FormItem = formComponent.Item;

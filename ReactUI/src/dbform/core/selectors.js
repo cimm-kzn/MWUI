@@ -17,6 +17,8 @@ export const getPages = state => state.pages;
 
 export const getModalState = state => state.modal;
 
+export const getRequest = state => state.request;
+
 export const getAdditivesForSelect = createSelector(
   [
     getAdditives,
@@ -29,3 +31,18 @@ export const getAdditivesForSelect = createSelector(
     return {};
   });
 
+export const getConditionsByMetadata = createSelector(
+  [
+    getModalState,
+    getStructures,
+    getMagic,
+  ],
+  (modal, structures, magic) => {
+    if(modal.visible && structures){
+      const data = structures.filter(struct => struct.metadata === modal.structure.metadata)[0];
+      const additives = Serialize.additivesOfType(data.additives, magic);
+      return { ...data, ...additives };
+    }
+    return null;
+  },
+);
