@@ -65,6 +65,9 @@
     "webpack-bundle-analyzer": "^2.11.2",
     "babel-plugin-import": "^1.7.0"
   },
+  "theme": {
+    "primary-color": "#337ab7"
+  },
   "scripts": {
     "start": "webpack-dev-server --config ./develop.config.js --hot",
     "tests": "jest",

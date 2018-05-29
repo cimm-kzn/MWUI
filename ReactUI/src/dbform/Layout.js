@@ -9,7 +9,6 @@ import {
 import { LoaderView, ErrorView } from '../base/wrapper';
 import { MainLayout } from '../components';
 import { DBFormModalView } from './components';
-import 'antd/dist/antd.css';
 
 const TabPane = Tabs.TabPane;
 
