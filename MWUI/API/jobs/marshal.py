@@ -161,7 +161,8 @@ class DestinationFields:
 class ModelRegisterFields:
     resource_fields = dict(name=String, type=type_field_factory(ModelType),
                            destinations=List(Nested(DestinationFields.resource_fields)),
-                           example=Nested(TaskStructureCreateFields.resource_fields))
+                           example=Nested(TaskStructureCreateFields.resource_fields),
+                           description=String)
 
 
 """ db lists
