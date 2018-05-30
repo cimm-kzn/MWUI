@@ -1,7 +1,9 @@
-import React, { Component } from 'react';
+import React from 'react';
+import { connect } from 'react-redux';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import { Icon, List, Collapse, Popconfirm, Card as BaseCard } from 'antd';
+import { getRequest } from '../core/selectors';
 
 const Card = styled(BaseCard)`
     .ant-card-body {
@@ -17,7 +19,8 @@ const BlockListDisplay = ({
   structures,
   editStructure,
   deleteStructure,
-}) => (
+  request: {loading},
+}) => !loading && (
   <List
     grid={{ ...gridSettings, gutter: 20 }}
     dataSource={structures}
@@ -83,4 +86,8 @@ BlockListDisplay.propTypes = {
   deleteStructure: PropTypes.func.isRequired,
 };
 
-export default BlockListDisplay;
+const mapStateToProps = state => ({
+  request: getRequest(state),
+});
+
+export default connect(mapStateToProps)(BlockListDisplay);

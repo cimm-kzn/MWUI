@@ -1,12 +1,15 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Table, Button, Popconfirm } from 'antd';
+import { getRequest } from '../core/selectors';
 
 
 const TableListDisplay = ({
   structures,
   editStructure,
   deleteStructure,
+  request: {loading},
 }) => {
   const columns = [{
     title: '#',
@@ -40,7 +43,7 @@ const TableListDisplay = ({
     ),
   }];
 
-  return (
+  return !loading && (
     <Table
       dataSource={structures}
       columns={columns}
@@ -55,5 +58,9 @@ TableListDisplay.propTypes = {
   deleteStructure: PropTypes.func.isRequired,
 };
 
+const mapStateToProps = state => ({
+  request: getRequest(state),
+});
 
-export default TableListDisplay;
+
+export default connect(mapStateToProps)(TableListDisplay);
