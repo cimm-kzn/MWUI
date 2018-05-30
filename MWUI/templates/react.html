@@ -4,12 +4,18 @@
     <script src="{{ url_for('static', filename='marvinjs/gui/lib/promise-1.0.0.min.js') }}"></script>
     <script src="{{ url_for('static', filename='marvinjs/js/webservices.js') }}"></script>
     <script src="{{ url_for('static', filename='marvinjs/js/marvinjslauncher.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/predictor.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/{}.js'.format(page)) }}"></script>
 {% endblock scripts %}
 
 {% block styles %}
     {{super()}}
-    <link href="{{ url_for('static', filename='css/predictor.css') }}" rel="stylesheet">
+    <link href="//unpkg.com/react-select/dist/react-select.css" rel="stylesheet" >
+    <link href="{{ url_for('static', filename='css/{}.css'.format(page)) }}" rel="stylesheet">
+        <style media="screen" type="text/css">
+        body {
+            padding-top: 0;
+        }
+    </style>
 {% endblock styles %}
 
 {% block content %}

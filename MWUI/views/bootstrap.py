@@ -115,7 +115,7 @@ class CustomBootstrapRenderer(BootstrapRenderer):
         return bar_list
 
 
-class Pagination(object):
+class Pagination:
     def __init__(self, page, total_count, pagesize=10):
         self.per_page = pagesize
         self.total_count = total_count or 1
@@ -159,12 +159,16 @@ def top_nav():
         if current_user.role_is(UserRole.ADMIN):
             user_menu.insert(3, View('Admin Users', '.admin_user'))
             user_menu.insert(3, View('Admin Posts', '.admin_post'))
+            dbform = [View('DB Form', '.db_form')]
+        elif current_user.role_is((UserRole.DATA_MANAGER, UserRole.DATA_FILLER)):
+            dbform = [View('DB Form', '.db_form')]
+        else:
+            dbform = []
 
         rsg = RightSubgroup(View('Search', '.search'),
-                            Subgroup('Modeling', View('Modeling', '.predictor'), View('History', '.results'),
-                                     Separator(),
+                            Subgroup('Modeling', View('Modeling', '.predictor'), Separator(),
                                      View('Available Models', '.models'), View('Modeled Data', '.data')),
-                            Subgroup(current_user.full_name, *user_menu))
+                            *dbform, Subgroup(current_user.full_name, *user_menu))
     else:
         rsg = RightSubgroup(View('Searching', '.search'), View('Modeling', '.predictor'),
                             View('Login', '.login', next=get_redirect_target() or request.path))

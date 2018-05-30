@@ -104,19 +104,19 @@ def page_not_found(*args, **kwargs):
 @view_bp.route('/search', methods=['GET'])
 @login_required
 def search():
-    return render_template("search.html", title='Search')
+    return render_template('react.html', title='Search', page='search')
 
 
-@view_bp.route('/results', methods=['GET'])
+@view_bp.route('/db_form', methods=['GET'])
 @login_required
-def results():
-    return render_template("layout.html")
+def db_form():
+    return render_template('react.html', title='DB Form', page='dbform')
 
 
 @view_bp.route('/predictor', methods=['GET'])
 @login_required
 def predictor():
-    return render_template("predictor.html", title='Predictor', subtitle='UI')
+    return render_template('react.html', title='Predictor', page='predictor')
 
 
 @view_bp.route('/<string:_slug>/')
