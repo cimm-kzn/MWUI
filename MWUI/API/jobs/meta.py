@@ -55,7 +55,6 @@ class ExampleView(View):
 
 class AvailableModels(DBAuthResource):
     @swagger.operation(
-        notes='Get available models',
         nickname='modellist',
         responseClass=ModelMagicResponseFields.__name__,
         responseMessages=[dict(code=200, message="models list"), dict(code=401, message="user not authenticated")])

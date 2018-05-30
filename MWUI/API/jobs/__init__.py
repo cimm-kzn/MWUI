@@ -25,7 +25,7 @@ from .deploy import RegisterModels
 from .meta import AvailableModels, BatchDownload, SubscribeAuth, SubscribeURL, PublishURL
 from .model import ModelTask
 from .prepare import PrepareTask
-from .save import SavedTask, SavedTasksList
+from .save import SavedTask, SavedTasksList, SavedTasksCount
 from ..common import swagger
 from ...config import VIEW_ENABLE
 
@@ -40,6 +40,7 @@ api.add_resource(PrepareTask, '/prepare/<string:task>')
 api.add_resource(ModelTask, '/process/<string:task>')
 api.add_resource(SavedTask, '/saves/<string:task>')
 api.add_resource(SavedTasksList, '/saves')
+api.add_resource(SavedTasksCount, '/saves/count')
 
 api.add_resource(AvailableModels, '/models', '/resources/models')
 api.add_resource(RegisterModels, '/admin/models')

@@ -20,8 +20,9 @@
 #
 from flask import url_for
 from flask_login import current_user
-from flask_restful import reqparse, marshal_with
+from flask_restful import marshal_with
 from flask_restful.inputs import url
+from flask_restful.reqparse import RequestParser
 from pathlib import Path
 from typing import Dict, Tuple
 from uuid import uuid4
@@ -39,7 +40,6 @@ task_types_desc = ', '.join('{0.value} - {0.name}'.format(x) for x in TaskType)
 
 class CreateTask(DBAuthResource):
     @swagger.operation(
-        notes='Create validation task',
         nickname='create',
         responseClass=TaskPostResponseFields.__name__,
         parameters=[dict(name='_type', description='Task type ID: %s' % task_types_desc, required=True,
@@ -107,15 +107,13 @@ class CreateTask(DBAuthResource):
                     user=current_user), 201
 
 
-uf_post = reqparse.RequestParser()
-uf_post.add_argument('file.url', type=url, dest='file_url')
-uf_post.add_argument('file.path', type=str, dest='file_path')
-uf_post.add_argument('structures', type=FileStorage, location='files')
-
-
 class UploadTask(DBAuthResource):
+    request = RequestParser()
+    request.add_argument('file.url', type=url, dest='file_url')
+    request.add_argument('file.path', type=str, dest='file_path')
+    request.add_argument('structures', type=FileStorage, location='files')
+
     @swagger.operation(
-        notes='Create validation task from uploaded structures file',
         nickname='upload',
         responseClass=TaskPostResponseFields.__name__,
         parameters=[dict(name='structures', description='RDF SDF MRV SMILES file', required=True,
@@ -126,11 +124,12 @@ class UploadTask(DBAuthResource):
                           dict(code=403, message="invalid task type"),
                           dict(code=500, message="modeling server error")])
     @marshal_with(TaskPostResponseFields.resource_fields)
-    @request_arguments_parser(uf_post)
+    @request_arguments_parser(request)
     def post(self, structures=None, file_url=None, file_path=None) -> Tuple[Dict, int]:
         """
         Structures file upload
 
+        Create validation task from uploaded structures file
         Need for batch modeling mode.
         Any chemical structure formats convertable with Chemaxon JChem can be passed.
 

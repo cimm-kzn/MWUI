@@ -19,7 +19,8 @@
 #  MA 02110-1301, USA.
 #
 from flask_login import login_user, current_user
-from flask_restful import Resource, marshal_with, marshal, reqparse
+from flask_restful import Resource, marshal_with, marshal
+from flask_restful.reqparse import RequestParser
 from .common import AuthResource, DBAuthResource, swagger, dynamic_docstring, authenticate, request_arguments_parser
 from .marshal import AdditiveMagicResponseFields, LogInFields, LogInResponseFields
 from ..constants import (AdditiveType, ModelType, TaskType, TaskStatus, StructureType, StructureStatus,
@@ -28,18 +29,12 @@ from ..logins import UserLogin
 from ..models import Additive
 
 
-auth_post = reqparse.RequestParser(bundle_errors=True)
-auth_post.add_argument('user', type=str, location='json', required=True, dest='username', case_sensitive=False,
-                       nullable=False, trim=True)
-auth_post.add_argument('password', type=str, location='json', required=True)
-
 additives_types_desc = ', '.join('{0.value} - {0.name}'.format(x) for x in AdditiveType)
 models_types_desc = ', '.join('{0.value} - {0.name}'.format(x) for x in ModelType)
 
 
 class AvailableAdditives(DBAuthResource):
     @swagger.operation(
-        notes='Get available additives',
         nickname='additives',
         responseClass=AdditiveMagicResponseFields.__name__,
         responseMessages=[dict(code=200, message="additives list"), dict(code=401, message="user not authenticated")])
@@ -60,7 +55,6 @@ class AvailableAdditives(DBAuthResource):
 
 class MagicNumbers(AuthResource):
     @swagger.operation(
-        notes='Magic Numbers',
         nickname='magic',
         responseMessages=[dict(code=200, message="magic numbers"),
                           dict(code=401, message="user not authenticated")])
@@ -82,7 +76,6 @@ class MagicNumbers(AuthResource):
 
 class LogIn(Resource):
     @swagger.operation(
-        notes='user login',
         nickname='whoami',
         responseClass=LogInResponseFields.__name__,
         responseMessages=[dict(code=200, message="user data"),
@@ -95,8 +88,12 @@ class LogIn(Resource):
         """
         return current_user
 
+    request = RequestParser(bundle_errors=True)
+    request.add_argument('user', type=str, location='json', required=True, dest='username', case_sensitive=False,
+                         nullable=False, trim=True)
+    request.add_argument('password', type=str, location='json', required=True)
+
     @swagger.operation(
-        notes='App login',
         nickname='login',
         parameters=[dict(name='credentials', description='User credentials', required=True,
                          allowMultiple=False, dataType=LogInFields.__name__, paramType='body')],
@@ -104,7 +101,7 @@ class LogIn(Resource):
         responseMessages=[dict(code=200, message="logged in"),
                           dict(code=400, message="invalid data"),
                           dict(code=403, message="bad credentials")])
-    @request_arguments_parser(auth_post)
+    @request_arguments_parser(request)
     def post(self, username, password):
         """
         Get auth token

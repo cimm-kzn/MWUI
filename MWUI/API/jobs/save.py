@@ -20,23 +20,18 @@
 #
 from flask_login import current_user
 from flask_restful import marshal_with, marshal
-from flask_restful.reqparse import RequestParser
+from math import ceil
 from .marshal import (TaskPostResponseFields, TaskGetResponseFields, TasksList, TaskDeleteResponseFields,
-                      TaskStructureResponseFields, TaskStructureFields)
-from .common import fetch_task, results_fetch
+                      TaskStructureResponseFields, TaskStructureFields, SaveTaskFields, RecordsCountFields)
+from .common import fetch_task, results_page, results_task
 from ..common import DBAuthResource, swagger, request_arguments_parser, abort
 from ...config import RESULTS_PER_PAGE
 from ...constants import TaskType, TaskStatus
 from ...models import Task
 
 
-results_save = RequestParser(bundle_errors=True)
-results_save.add_argument('task', type=str, location='json', required=True, help='modeled task number. {error_msg}')
-
-
 class SavedTask(DBAuthResource):
     @swagger.operation(
-        notes='Get saved modeled task',
         nickname='saved',
         responseClass=TaskGetResponseFields.__name__,
         parameters=[dict(name='task', description='Task ID', required=True,
@@ -49,7 +44,7 @@ class SavedTask(DBAuthResource):
                           dict(code=404, message='invalid task id. perhaps this task has already been removed'),
                           dict(code=406, message='task status is invalid. only validation tasks acceptable')])
     @marshal_with(TaskGetResponseFields.resource_fields)
-    @request_arguments_parser(results_fetch)
+    @request_arguments_parser(results_page)
     def get(self, task, page=None):
         """
         Task with modeling results of structures with conditions
@@ -66,7 +61,6 @@ class SavedTask(DBAuthResource):
                     structures=structures), 200
 
     @swagger.operation(
-        notes='Delete saved modeled task',
         nickname='delete',
         responseClass=TaskDeleteResponseFields.__name__,
         parameters=[dict(name='task', description='Task ID', required=True,
@@ -98,7 +92,6 @@ class SavedTask(DBAuthResource):
 
 class SavedTasksList(DBAuthResource):
     @swagger.operation(
-        notes='Get list of saved tasks',
         nickname='saved_list',
         parameters=[dict(name='page', description='Results pagination', required=False,
                          allowMultiple=False, dataType='int', paramType='query')],
@@ -107,22 +100,18 @@ class SavedTasksList(DBAuthResource):
                           dict(code=400, message="page must be a positive integer or None"),
                           dict(code=401, message="user not authenticated")])
     @marshal_with(TasksList.resource_fields)
-    @request_arguments_parser(results_fetch)
-    def get(self, page=None):
+    @request_arguments_parser(results_page)
+    def get(self, page=1):
         """
         Get current user's saved tasks
         """
-        q = Task.select(lambda x: x.user == current_user.get_user())
-        if page is not None:
-            q = q.page(page, pagesize=RESULTS_PER_PAGE)
-        return list(q)
+        return list(Task.select(lambda x: x.user == current_user.get_user()).page(page, pagesize=RESULTS_PER_PAGE))
 
     @swagger.operation(
-        notes='Save modeled task',
         nickname='save',
         responseClass=TaskPostResponseFields.__name__,
-        parameters=[dict(name='task', description='Task ID', required=True,
-                         allowMultiple=False, dataType='str', paramType='path')],
+        parameters=[dict(name='task', description='Validated structure task id', required=True,
+                         allowMultiple=False, dataType=SaveTaskFields.__name__, paramType='body')],
         responseMessages=[dict(code=201, message="modeled task saved"),
                           dict(code=401, message="user not authenticated"),
                           dict(code=403, message='user access deny. you do not have permission to this task'),
@@ -133,7 +122,7 @@ class SavedTasksList(DBAuthResource):
                           dict(code=500, message="modeling server error"),
                           dict(code=512, message='task not ready')])
     @marshal_with(TaskPostResponseFields.resource_fields)
-    @request_arguments_parser(results_save)
+    @request_arguments_parser(results_task)
     @fetch_task(TaskStatus.PROCESSED)
     def post(self, task, job, ended_at):
         """
@@ -151,3 +140,18 @@ class SavedTasksList(DBAuthResource):
         Task(data, type=job['type'], date=ended_at, user=current_user.get_user(), task=task)
 
         return dict(task=task, status=TaskStatus.PROCESSED, date=ended_at, type=job['type'], user=current_user), 201
+
+
+class SavedTasksCount(DBAuthResource):
+    @swagger.operation(
+        nickname='tasks_count',
+        responseClass=RecordsCountFields.__name__,
+        responseMessages=[dict(code=200, message="saved data"),
+                          dict(code=401, message="user not authenticated"),
+                          dict(code=403, message="user access deny")])
+    def get(self):
+        """
+        Get user's saves count
+        """
+        q = Task.select(lambda x: x.user.id == current_user.id).count()
+        return dict(data=q, pages=ceil(q / RESULTS_PER_PAGE))

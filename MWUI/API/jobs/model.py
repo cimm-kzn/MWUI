@@ -20,7 +20,7 @@
 #
 from flask_login import current_user
 from flask_restful import marshal_with
-from .common import additives_check, fetch_task, redis, results_fetch, request_json_parser
+from .common import additives_check, fetch_task, redis, results_page, request_json_parser
 from .marshal import TaskPostResponseFields, TaskStructureModelFields, TaskGetResponseFields
 from ..common import DBAuthResource, swagger, dynamic_docstring, request_arguments_parser, abort
 from ...constants import StructureStatus, TaskStatus, ResultType
@@ -32,7 +32,6 @@ results_types_desc = ', '.join('{0.value} - {0.name}'.format(x) for x in ResultT
 
 class ModelTask(DBAuthResource):
     @swagger.operation(
-        notes='Get processed task',
         nickname='processed',
         responseClass=TaskGetResponseFields.__name__,
         parameters=[dict(name='task', description='Task ID', required=True,
@@ -48,7 +47,7 @@ class ModelTask(DBAuthResource):
                           dict(code=500, message="modeling server error"),
                           dict(code=512, message='task not ready')])
     @marshal_with(TaskGetResponseFields.resource_fields)
-    @request_arguments_parser(results_fetch)
+    @request_arguments_parser(results_page)
     @fetch_task(TaskStatus.PROCESSED)
     @dynamic_docstring(results_types_desc)
     def get(self, task, job, ended_at):
@@ -66,7 +65,6 @@ class ModelTask(DBAuthResource):
                     structures=job['structures']), 200
 
     @swagger.operation(
-        notes='Create processing task',
         nickname='processing',
         responseClass=TaskPostResponseFields.__name__,
         parameters=[dict(name='task', description='Task ID', required=True,
@@ -87,7 +85,7 @@ class ModelTask(DBAuthResource):
     @request_json_parser(TaskStructureModelFields.resource_fields)
     def post(self, task, data, job, ended_at):
         """
-        Process task
+        Create processing task
 
         send only changed conditions or todelete marks. see task/prepare doc.
         """

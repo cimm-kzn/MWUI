@@ -21,15 +21,14 @@
 from CGRdb.config import DB_DATA_LIST
 from flask_login import current_user
 from flask_restful import marshal_with
-from ..common import DBAuthResource, swagger
 from .marshal import DBUsersResponseFields
+from ..common import DBAuthResource, swagger
 from ...constants import UserRole
 from ...models import User
 
 
 class AvailableDataBases(DBAuthResource):
     @swagger.operation(
-        notes='Get available databases',
         nickname='dblist',
         responseMessages=[dict(code=200, message="db list"), dict(code=401, message="user not authenticated")])
     def get(self):
@@ -41,7 +40,6 @@ class AvailableDataBases(DBAuthResource):
 
 class DataBaseUsers(DBAuthResource):
     @swagger.operation(
-        notes='Get available users',
         nickname='dbusers',
         responseClass=DBUsersResponseFields.__name__,
         responseMessages=[dict(code=200, message="db users list"), dict(code=401, message="user not authenticated")])

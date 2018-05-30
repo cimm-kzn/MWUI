@@ -171,3 +171,13 @@ class ModelRegisterFields:
 @swagger.model
 class TasksList:
     resource_fields = dict(task=String, date=DateTime(dt_format='iso8601'))
+
+
+@swagger.model
+class SaveTaskFields:
+    resource_fields = dict(task=String)
+
+
+@swagger.model
+class RecordsCountFields:
+    resource_fields = dict(data=Integer, pages=Integer)

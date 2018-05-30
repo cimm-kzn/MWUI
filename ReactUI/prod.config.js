@@ -21,7 +21,7 @@ module.exports = {
   },
   output: {
     path: path.join(__dirname, "../MWUI/static/js"),
-    filename: '[name].bundle.js',
+    filename: '[name].js',
     publicPath : 'public/dist'
   },
   optimization: {

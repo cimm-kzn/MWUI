@@ -26,29 +26,26 @@ from flask_restful.reqparse import RequestParser
 from flask_restful.inputs import positive, boolean
 from math import ceil
 from pony.orm import flush
-from .common import db_post
-from .marshal import (RecordStructureFields, RecordResponseFields, RecordStructureResponseFields, RecordCountFields,
-                      CreateRecordFields)
+from .marshal import (RecordStructureFields, RecordResponseFields, RecordStructureResponseFields)
 from ..common import DBAuthResource, swagger, request_arguments_parser, abort
-from ..jobs.common import fetch_task
+from ..jobs.common import fetch_task, results_task
+from ..jobs.marshal import SaveTaskFields, RecordsCountFields
 from ...config import RESULTS_PER_PAGE
 from ...constants import UserRole, TaskStatus, StructureStatus, StructureType, TaskType
 from ...models import User
 
 
-db_get = RequestParser(bundle_errors=True)
-db_get.add_argument('user', type=positive, help='User number. by default current user return. {error_msg}')
-db_get.add_argument('page', type=positive, help='Page number. by default first page return. {error_msg}', default=1)
-db_get.add_argument('full', type=boolean, help='Full records. by default only record metadata return. {error_msg}',
-                    default=False)
-
-db_count = RequestParser(bundle_errors=True)
-db_count.add_argument('user', type=positive, help='User number. by default current user return. {error_msg}')
-
 Loader.load_schemas(user_entity=User)
 
 
 class SavedRecordsList(DBAuthResource):
+    request = RequestParser(bundle_errors=True)
+    request.add_argument('user', type=positive, help='User number. by default current user return. {error_msg}')
+    request.add_argument('page', type=positive, help='Page number. by default first page return. {error_msg}',
+                         default=1)
+    request.add_argument('full', type=boolean, help='Full records. by default only record metadata return. {error_msg}',
+                         default=False)
+
     @swagger.operation(
         notes='Get list of records',
         nickname='records_list',
@@ -67,7 +64,7 @@ class SavedRecordsList(DBAuthResource):
                           dict(code=400, message="user and page must be a positive integer or None"),
                           dict(code=401, message="user not authenticated"),
                           dict(code=403, message="user access deny")])
-    @request_arguments_parser(db_get)
+    @request_arguments_parser(request)
     def get(self, database, table, page, full, user=None):
         """
         Get user's records
@@ -96,7 +93,7 @@ class SavedRecordsList(DBAuthResource):
                     dict(name='table', description='Table name: [molecule, reaction]', required=True,
                          allowMultiple=False, dataType='str', paramType='path'),
                     dict(name='task', description='Validated structure task id', required=True,
-                         allowMultiple=False, dataType=CreateRecordFields.__name__, paramType='body')],
+                         allowMultiple=False, dataType=SaveTaskFields.__name__, paramType='body')],
         responseClass=RecordStructureResponseFields.__name__,
         responseMessages=[dict(code=201, message="saved data"),
                           dict(code=401, message="user not authenticated"),
@@ -107,7 +104,7 @@ class SavedRecordsList(DBAuthResource):
                           dict(code=500, message="modeling server error"),
                           dict(code=512, message='task not ready')])
     @marshal_with(RecordStructureResponseFields.resource_fields)
-    @request_arguments_parser(db_post)
+    @request_arguments_parser(results_task)
     @fetch_task(TaskStatus.PREPARED)
     def post(self, task, database, table, job, ended_at):
         """
@@ -137,6 +134,9 @@ class SavedRecordsList(DBAuthResource):
 
 
 class SavedRecordsCount(DBAuthResource):
+    request = RequestParser(bundle_errors=True)
+    request.add_argument('user', type=positive, help='User number. by default current user return. {error_msg}')
+
     @swagger.operation(
         notes='Get count of records',
         nickname='records_count',
@@ -146,12 +146,12 @@ class SavedRecordsCount(DBAuthResource):
                          allowMultiple=False, dataType='str', paramType='path'),
                     dict(name='user', description='user ID', required=False,
                          allowMultiple=False, dataType='int', paramType='query')],
-        responseClass=RecordCountFields.__name__,
+        responseClass=RecordsCountFields.__name__,
         responseMessages=[dict(code=200, message="saved data"),
                           dict(code=400, message="user must be a positive integer or None"),
                           dict(code=401, message="user not authenticated"),
                           dict(code=403, message="user access deny")])
-    @request_arguments_parser(db_count)
+    @request_arguments_parser(request)
     def get(self, database, table, user=None):
         """
         Get user's records count

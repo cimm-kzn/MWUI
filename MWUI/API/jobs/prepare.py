@@ -20,7 +20,7 @@
 #
 from flask_login import current_user
 from flask_restful import marshal_with
-from .common import additives_check, fetch_task, redis, results_fetch, request_json_parser
+from .common import additives_check, fetch_task, redis, results_page, request_json_parser
 from .marshal import TaskPostResponseFields, TaskStructurePrepareFields, TaskGetResponseFields
 from ..common import DBAuthResource, swagger, dynamic_docstring, request_arguments_parser, abort
 from ...constants import StructureStatus, TaskStatus, ModelType, ResultType, StructureType
@@ -29,7 +29,6 @@ from ...models import Model, Additive
 
 class PrepareTask(DBAuthResource):
     @swagger.operation(
-        notes='Get validated task',
         nickname='prepared',
         responseClass=TaskGetResponseFields.__name__,
         parameters=[dict(name='task', description='Task ID', required=True,
@@ -45,7 +44,7 @@ class PrepareTask(DBAuthResource):
                           dict(code=500, message="modeling server error"),
                           dict(code=512, message='task not ready')])
     @marshal_with(TaskGetResponseFields.resource_fields)
-    @request_arguments_parser(results_fetch)
+    @request_arguments_parser(results_page)
     @fetch_task(TaskStatus.PREPARED)
     @dynamic_docstring(ModelType.PREPARER, StructureStatus.CLEAR, StructureStatus.RAW, StructureStatus.HAS_ERROR,
                        ResultType.TEXT, StructureType.REACTION, StructureType.MOLECULE)
@@ -76,7 +75,6 @@ class PrepareTask(DBAuthResource):
                     structures=job['structures']), 200
 
     @swagger.operation(
-        notes='Create revalidation task',
         nickname='prepare',
         responseClass=TaskPostResponseFields.__name__,
         parameters=[dict(name='task', description='Task ID', required=True,

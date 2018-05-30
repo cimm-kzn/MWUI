@@ -21,8 +21,8 @@
 from flask import request
 from flask_login import current_user
 from flask_restful import marshal
-from flask_restful.reqparse import RequestParser
 from flask_restful.inputs import positive
+from flask_restful.reqparse import RequestParser
 from functools import wraps
 from .redis import RedisCombiner
 from ..common import abort
@@ -34,9 +34,12 @@ redis = RedisCombiner(host=REDIS_HOST, port=REDIS_PORT, password=REDIS_PASSWORD,
                       job_timeout=REDIS_JOB_TIMEOUT, chunks=RESULTS_PER_PAGE)
 
 
-results_fetch = RequestParser(bundle_errors=True)
-results_fetch.add_argument('page', type=positive,
-                           help='Page number of results. by default all pages return. {error_msg}')
+results_page = RequestParser(bundle_errors=True)
+results_page.add_argument('page', type=positive, default=1,
+                          help='Page number of results. by default all pages return. {error_msg}')
+
+results_task = RequestParser(bundle_errors=True)
+results_task.add_argument('task', type=str, location='json', required=True, help='modeled task number. {error_msg}')
 
 
 def request_json_parser(resource_fields):

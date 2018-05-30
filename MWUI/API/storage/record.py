@@ -23,16 +23,15 @@ from CGRdb.config import DB_DATA_LIST
 from flask_login import current_user
 from flask_restful import marshal_with, marshal
 from pony.orm import flush, ObjectNotFound
-from .common import db_post
-from .marshal import RecordResponseFields, RecordStructureFields, RecordStructureResponseFields, CreateRecordFields
+from .marshal import RecordResponseFields, RecordStructureFields, RecordStructureResponseFields
 from ..common import DBAuthResource, swagger, request_arguments_parser, abort
-from ..jobs.common import fetch_task
+from ..jobs.common import fetch_task, results_task
+from ..jobs.marshal import SaveTaskFields
 from ...constants import UserRole, TaskStatus, StructureStatus, StructureType, TaskType
 
 
 class SavedRecord(DBAuthResource):
     @swagger.operation(
-        notes='Get record',
         nickname='get_record',
         responseClass=RecordStructureResponseFields.__name__,
         parameters=[dict(name='database', description='DataBase name: [%s]' % ', '.join(DB_DATA_LIST), required=True,
@@ -53,7 +52,6 @@ class SavedRecord(DBAuthResource):
         return self.__get_record(database, table, metadata), 200
 
     @swagger.operation(
-        notes='Update record',
         nickname='update_record',
         responseClass=RecordStructureResponseFields.__name__,
         parameters=[dict(name='database', description='DataBase name: [%s]' % ', '.join(DB_DATA_LIST), required=True,
@@ -63,7 +61,7 @@ class SavedRecord(DBAuthResource):
                     dict(name='metadata', description='Record ID', required=True,
                          allowMultiple=False, dataType='int', paramType='path'),
                     dict(name='task', description='Validated structure task id', required=True,
-                         allowMultiple=False, dataType=CreateRecordFields.__name__, paramType='body')],
+                         allowMultiple=False, dataType=SaveTaskFields.__name__, paramType='body')],
         responseMessages=[dict(code=201, message='record updated'),
                           dict(code=400, message='task structure has errors or invalid type'),
                           dict(code=400, message='record structure conflict'),
@@ -76,7 +74,7 @@ class SavedRecord(DBAuthResource):
                           dict(code=500, message="modeling server error"),
                           dict(code=512, message='task not ready')])
     @marshal_with(RecordStructureResponseFields.resource_fields)
-    @request_arguments_parser(db_post)
+    @request_arguments_parser(results_task)
     @fetch_task(TaskStatus.PREPARED)
     def post(self, task, database, table, metadata, job, ended_at):
         """
@@ -93,20 +91,15 @@ class SavedRecord(DBAuthResource):
         structure = data.pop('data')
 
         meta = self.__get_record(database, table, metadata)
-        in_db = Loader.get_database(database)[table == 'REACTION'].find_structure(structure)
+        entity = Loader.get_database(database)[table == 'REACTION']
+        in_db = entity.find_structure(structure)
 
         if in_db:
             if in_db != meta.structure:
-                abort(400, message='record structure conflict. db already has this structure. use add_record method')
+                meta.structure = in_db
         else:
-            if table == 'MOLECULE':
-                try:
-                    meta.structure.new_structure(structure, current_user.get_user())
-                except AssertionError as e:
-                    abort(400, message='task structure has errors: {}'.format(e))
-            else:
-                meta.structure.update_structure(structure, current_user.get_user())
-                flush()
+            meta.structure = entity(structure, current_user.get_user())
+            flush()
 
         # update metadata
         meta.data = data
@@ -115,7 +108,6 @@ class SavedRecord(DBAuthResource):
         return meta, 201
 
     @swagger.operation(
-        notes='Delete record',
         nickname='delete_record',
         responseClass=RecordResponseFields.__name__,
         parameters=[dict(name='database', description='DataBase name: [%s]' % ', '.join(DB_DATA_LIST), required=True,

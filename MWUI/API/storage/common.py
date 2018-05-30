@@ -18,8 +18,3 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-from flask_restful import reqparse
-
-
-db_post = reqparse.RequestParser(bundle_errors=True)
-db_post.add_argument('task', type=str, location='json', required=True)
