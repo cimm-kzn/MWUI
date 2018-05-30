@@ -78,12 +78,11 @@ class SavedRecordsList(DBAuthResource):
         elif not current_user.role_is((UserRole.ADMIN, UserRole.DATA_MANAGER)):
             abort(403, message="user access deny. You do not have permission to see another user's data")
 
-        entity = Loader.get_database(database)[table == 'REACTION']
-        q = entity.select(lambda x: x.user_id == user).order_by(lambda x: x.id).prefetch(entity.metadata)\
-            .page(page, pagesize=RESULTS_PER_PAGE)
-
-        return marshal([x for x in q for x in x.metadata],
-                       (RecordStructureResponseFields if full else RecordResponseFields).resource_fields)
+        entity = getattr(Loader.get_schema(database),
+                         'ReactionConditions' if table == 'REACTION' else 'MoleculeProperties')
+        q = entity.select(lambda x: x.user_id == user).order_by(lambda x: x.id).page(page, pagesize=RESULTS_PER_PAGE)
+        # todo: preload structures
+        return marshal(list(q), (RecordStructureResponseFields if full else RecordResponseFields).resource_fields)
 
     @swagger.operation(
         notes='add new record',
@@ -164,7 +163,7 @@ class SavedRecordsCount(DBAuthResource):
         elif not current_user.role_is((UserRole.ADMIN, UserRole.DATA_MANAGER)):
             abort(403, message="user access deny. You do not have permission to see another user's data")
 
-        entity = Loader.get_database(database)[table == 'REACTION']
+        entity = getattr(Loader.get_schema(database),
+                         'ReactionConditions' if table == 'REACTION' else 'MoleculeProperties')
         q = entity.select(lambda x: x.user_id == user).count()
-
         return dict(data=q, pages=ceil(q / RESULTS_PER_PAGE))

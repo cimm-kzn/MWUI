@@ -153,5 +153,5 @@ class SavedTasksCount(DBAuthResource):
         """
         Get user's saves count
         """
-        q = Task.select(lambda x: x.user.id == current_user.id).count()
+        q = Task.select(lambda x: x.user == current_user.get_user()).count()
         return dict(data=q, pages=ceil(q / RESULTS_PER_PAGE))
