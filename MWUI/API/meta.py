@@ -30,7 +30,7 @@ from ..models import Additive
 
 auth_post = reqparse.RequestParser(bundle_errors=True)
 auth_post.add_argument('user', type=str, location='json', required=True, dest='username', case_sensitive=False,
-                       store_missing=False, nullable=False, trim=True)
+                       nullable=False, trim=True)
 auth_post.add_argument('password', type=str, location='json', required=True)
 
 additives_types_desc = ', '.join('{0.value} - {0.name}'.format(x) for x in AdditiveType)

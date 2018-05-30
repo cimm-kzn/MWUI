@@ -20,6 +20,7 @@
 #
 from flask_login import current_user
 from flask_restful import marshal_with, marshal
+from flask_restful.reqparse import RequestParser
 from .marshal import (TaskPostResponseFields, TaskGetResponseFields, TasksList, TaskDeleteResponseFields,
                       TaskStructureResponseFields, TaskStructureFields)
 from .common import fetch_task, results_fetch
@@ -27,6 +28,10 @@ from ..common import DBAuthResource, swagger, request_arguments_parser, abort
 from ...config import RESULTS_PER_PAGE
 from ...constants import TaskType, TaskStatus
 from ...models import Task
+
+
+results_save = RequestParser(bundle_errors=True)
+results_save.add_argument('task', type=str, location='json', required=True, help='modeled task number. {error_msg}')
 
 
 class SavedTask(DBAuthResource):
@@ -59,40 +64,6 @@ class SavedTask(DBAuthResource):
 
         return dict(task=task, status=TaskStatus.PROCESSED, date=result.date, type=result.type, user=current_user,
                     structures=structures), 200
-
-    @swagger.operation(
-        notes='Save modeled task',
-        nickname='save',
-        responseClass=TaskPostResponseFields.__name__,
-        parameters=[dict(name='task', description='Task ID', required=True,
-                         allowMultiple=False, dataType='str', paramType='path')],
-        responseMessages=[dict(code=201, message="modeled task saved"),
-                          dict(code=401, message="user not authenticated"),
-                          dict(code=403, message='user access deny. you do not have permission to this task'),
-                          dict(code=404, message='invalid task id. perhaps this task has already been removed'),
-                          dict(code=406, message='task status is invalid. only modeled tasks acceptable'),
-                          dict(code=406, message='task type is invalid. only modeling tasks acceptable'),
-                          dict(code=409, message='task already exists in db'),
-                          dict(code=500, message="modeling server error"),
-                          dict(code=512, message='task not ready')])
-    @marshal_with(TaskPostResponseFields.resource_fields)
-    @fetch_task(TaskStatus.PROCESSED)
-    def post(self, task, job, ended_at):
-        """
-        Store in database modeled task
-
-        only modeled tasks can be saved.
-        failed models in structures skipped.
-        """
-        if job['type'] != TaskType.MODELING:
-            abort(406, message='task type is invalid. only modeling tasks acceptable')
-
-        if Task.exists(task=task):
-            abort(409, message='task already exists in db')
-        data = marshal(job['structures'], TaskStructureResponseFields.resource_fields)
-        Task(data, type=job['type'], date=ended_at, user=current_user.get_user(), task=task)
-
-        return dict(task=task, status=TaskStatus.PROCESSED, date=ended_at, type=job['type'], user=current_user), 201
 
     @swagger.operation(
         notes='Delete saved modeled task',
@@ -145,3 +116,38 @@ class SavedTasksList(DBAuthResource):
         if page is not None:
             q = q.page(page, pagesize=RESULTS_PER_PAGE)
         return list(q)
+
+    @swagger.operation(
+        notes='Save modeled task',
+        nickname='save',
+        responseClass=TaskPostResponseFields.__name__,
+        parameters=[dict(name='task', description='Task ID', required=True,
+                         allowMultiple=False, dataType='str', paramType='path')],
+        responseMessages=[dict(code=201, message="modeled task saved"),
+                          dict(code=401, message="user not authenticated"),
+                          dict(code=403, message='user access deny. you do not have permission to this task'),
+                          dict(code=404, message='invalid task id. perhaps this task has already been removed'),
+                          dict(code=406, message='task status is invalid. only modeled tasks acceptable'),
+                          dict(code=406, message='task type is invalid. only modeling tasks acceptable'),
+                          dict(code=409, message='task already exists in db'),
+                          dict(code=500, message="modeling server error"),
+                          dict(code=512, message='task not ready')])
+    @marshal_with(TaskPostResponseFields.resource_fields)
+    @request_arguments_parser(results_save)
+    @fetch_task(TaskStatus.PROCESSED)
+    def post(self, task, job, ended_at):
+        """
+        Store in database modeled task
+
+        only modeled tasks can be saved.
+        failed models in structures skipped.
+        """
+        if job['type'] != TaskType.MODELING:
+            abort(406, message='task type is invalid. only modeling tasks acceptable')
+
+        if Task.exists(task=task):
+            abort(409, message='task already exists in db')
+        data = marshal(job['structures'], TaskStructureResponseFields.resource_fields)
+        Task(data, type=job['type'], date=ended_at, user=current_user.get_user(), task=task)
+
+        return dict(task=task, status=TaskStatus.PROCESSED, date=ended_at, type=job['type'], user=current_user), 201
