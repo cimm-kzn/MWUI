@@ -87,12 +87,8 @@ function normalizeDBFormData(values) {
     pressure,
     database,
     table,
+    description,
   } = values;
-
-  const description = values.keys.map(k => ({
-    key: values[`key-${k.id}`],
-    value: values[`value-${k.id}`],
-  }));
 
   const additives = values.solvents.concat(values.catalysts);
 

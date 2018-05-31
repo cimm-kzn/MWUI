@@ -1,129 +1,83 @@
 import React from 'react';
 import { Input, Icon, Button, Row, Col } from 'antd';
 import PropTypes from 'prop-types';
+import { exportCml } from '../base/marvinAPI';
 
 
-class DynamicForm extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      inputValue: 1,
-    };
-    this.add = this.add.bind(this);
-  }
-  onChange(value) {
-    this.setState({
-      inputValue: value,
-    });
-  }
+const DynamicForm = ({
+  value,
+  onChange,
+}) => {
+  const remove = (index) => {
+    const nextValue = value.filter((val, idx) => index !== idx);
 
-  remove(k) {
-    const { form } = this.props;
-    const keys = form.getFieldValue('keys');
-    if (keys.length === 1) {
-      return;
-    }
-    form.setFieldsValue({
-      keys: keys.filter(key => key.id !== k.id),
-    });
-  }
+    onChange(nextValue);
+  };
 
-  getMaxOfArray(numArray) {
-    return Math.max.apply(null, numArray);
-  }
+  const add = () => {
+    if(!value) value = [];
+    const nextValue = value.concat({ key: '', value: '' });
 
-  add() {
-    const { form } = this.props;
-    const keys = form.getFieldValue('keys');
+    onChange(nextValue);
+  };
 
-    const newId = this.getMaxOfArray(keys.map(k => k.id)) + 1;
-    const nextKeys = keys.concat({ id: newId, key: '', value: '' });
+  const inputChangeKey = (e, index) => {
+    const newValue = e.target.value;
+    value[index].key = newValue;
 
-    form.setFieldsValue({
-      keys: nextKeys,
-    });
-  }
+    onChange(value);
+  };
 
-  render() {
-    const { getFieldDecorator, getFieldValue } = this.props.form;
-    const { description, formComponent } = this.props;
+  const inputChangeValue = (e, index) => {
+    const newValue = e.target.value;
+    value[index].value = newValue;
 
-    const initialValue = (description.length) ? description : [{ id: 0, key: '', value: '' }];
+    onChange(value);
+  };
 
-    getFieldDecorator('keys', { initialValue });
 
-    const keys = getFieldValue('keys');
-    const FormItem = formComponent.Item;
-
-    const formItems = keys.map(k => (
-      <FormItem
-        required={false}
-        key={k.id}
-      >
-        <Row>
-          <Col xs={12} md={12} sm={12}>
-            {getFieldDecorator(`key-${k.id}`, {
-              validateTrigger: ['onChange', 'onBlur'],
-              rules: [{
-                required: true,
-                whitespace: true,
-                message: "Please input passenger's key.",
-
-              }],
-              initialValue: k.key,
-            })(
-              <Input placeholder="passenger name" style={{ width: '80%', marginRight: 16 }} />,
-            )}
+  const formItems = value && value.map((k, index) => (
+    <Row  key={`row${index}`}>
+      <Col xs={12} md={12} sm={12} key={`colkey${index}`}>
+        <Input
+          key={`key${index}`}
+          placeholder="key"
+          style={{ width: '80%', marginRight: 16 }}
+          onChange={val => inputChangeKey(val, index)}
+          value={k.key}
+        />
           :
-          </Col>
-          <Col xs={12} md={12} sm={12}>
-            {getFieldDecorator(`value-${k.id}`, {
-              validateTrigger: ['onChange', 'onBlur'],
-              rules: [{
-                required: true,
-                whitespace: true,
-                message: "Please input passenger's value.",
-              }],
-              initialValue: k.value,
-            })(
-              <Input placeholder="passenger name2" style={{ width: '80%', marginRight: 16 }} />,
-            )}
-            {keys.length > 1 ? (
-              <Icon
-                className="dynamic-delete-button"
-                type="minus-circle-o"
-                disabled={keys.length === 1}
-                onClick={() => this.remove(k)}
-              />
-            ) : null}
-          </Col>
-        </Row>
-      </FormItem>
-    ));
+      </Col>
+      <Col xs={12} md={12} sm={12} key={`colval${index}`}>
+        <Input
+          key={`value${index}`}
+          placeholder="value"
+          style={{ width: '80%', marginRight: 16 }}
+          onChange={val => inputChangeValue(val, index)}
+          value={k.value}
+        />
+        { index ? (
+          <Icon
+            key={`icon${index}`}
+            className="dynamic-delete-button"
+            type="minus-circle-o"
+            disabled={!index}
+            onClick={() => remove(index)}
+          />
+        ) : null}
+      </Col>
+    </Row>
 
-    return (
-      <div>
-        <div
-          style={{ marginBottom: '10px', color: 'black' }}
-        >
-          <b>Descriptions:</b>
-        </div>
+  ));
 
-        {formItems}
-        <Button type="dashed" onClick={this.add} style={{ width: '100%' }}>
-          <Icon type="plus" /> Add field
-        </Button>
-      </div>
-    );
-  }
-}
-
-DynamicForm.propTypes = {
-  description: PropTypes.object,
-};
-
-DynamicForm.defaultProps = {
-  description: {},
+  return (
+    <div>
+      {formItems}
+      <Button type="dashed" onClick={add} style={{ width: '100%' }}>
+        <Icon type="plus" /> Add field
+      </Button>
+    </div>
+  );
 };
 
 export default DynamicForm;

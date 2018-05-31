@@ -43,8 +43,6 @@ class SlidersSelect extends Component {
       return last + it.amount;
     }, 0);
 
-
-
     if (!sumEqual || sum <= Math.ceil(sumEqual / 100)) {
       newAmound = amount;
     } else if (sum > Math.ceil(sumEqual / 100)) {
