@@ -26,7 +26,6 @@ from ...constants import TaskType, AdditiveType
 
 class ValidateRecord(CreateTask):
     @swagger.operation(
-        notes='Create record validation task',
         nickname='create',
         responseClass=TaskPostResponseFields.__name__,
         parameters=[dict(name='structures', description='Structure[s] of molecule or reaction with optional conditions',

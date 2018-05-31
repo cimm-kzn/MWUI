@@ -137,7 +137,6 @@ class SavedRecordsCount(DBAuthResource):
     request.add_argument('user', type=positive, help='User number. by default current user return. {error_msg}')
 
     @swagger.operation(
-        notes='Get count of records',
         nickname='records_count',
         parameters=[dict(name='database', description='DataBase name: [%s]' % ', '.join(DB_DATA_LIST), required=True,
                          allowMultiple=False, dataType='str', paramType='path'),
