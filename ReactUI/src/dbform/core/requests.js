@@ -12,7 +12,7 @@ const Structures = {
     axios.delete(urlConverter(API_URLS.RECORDS_METADATA, { database, table, metadata })),
   edit: ({ database, table, metadata, task }) =>
     axios.post(urlConverter(API_URLS.RECORDS_METADATA, { database, table, metadata }), { task }),
-  getPages: ({ database, table }) => axios.get(urlConverter(API_URLS.PAGES, { database, table })),
+  getPages: ({ database, table, user }) => axios.get(urlConverter(API_URLS.PAGES, { database, table }, { user })),
   get: ({ database, table, metadata }) =>
     axios.get(urlConverter(API_URLS.RECORDS_METADATA, { database, table, metadata })),
 };

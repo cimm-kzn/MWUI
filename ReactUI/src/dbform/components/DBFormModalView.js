@@ -18,15 +18,15 @@ const Modal = styled.div`
   right: 0;
   bottom: 0;
   left: 0;
-  z-index: ${props => (props.isShow ? 1000 : -1)};
+  z-index: ${props => (props.isShow ? 2 : -1)};
   outline: 0;
   background: rgba(0,0,0,0.4);
 `;
 
 const Content = styled.div`
     position: relative;
-    margin: 20px;
     padding: 20px;
+    margin: 100px 0;
     background-color: #fff;
     background-clip: padding-box;
     border: 1px solid rgba(0,0,0,.2);
@@ -72,58 +72,60 @@ class DBFormModal extends Component {
 
     return (
       <Modal isShow={modal.visible}>
-        <Content>
-          <div className="modal-header">
-            <button
-              type="button"
-              className="close"
-              onClick={onCancel}
-            >
+        <div className="modal-dialog modal-lg">
+          <Content>
+            <div className="modal-header">
+              <button
+                type="button"
+                className="close"
+                onClick={onCancel}
+              >
               &times;
-            </button>
-          </div>
-          <Body>
-            <Form onSubmit={this.onSubmitForm}>
-              <Row gutter={24} >
-                <Col md={14}>
-                  <iframe
-                    title="marvinjs"
-                    id="marvinjs"
-                    data-toolbars="reaction"
-                    src={MARVIN_PATH_IFRAME}
-                    width="100%"
-                    height={500}
-                    style={{ border: '1px dashed #d9d9d9', padding: '10px' }}
-                  />
-                </Col>
+              </button>
+            </div>
+            <Body>
+              <Form onSubmit={this.onSubmitForm}>
+                <Row gutter={24} >
+                  <Col md={14}>
+                    <iframe
+                      title="marvinjs"
+                      id="marvinjs"
+                      data-toolbars="reaction"
+                      src={MARVIN_PATH_IFRAME}
+                      width="100%"
+                      height={500}
+                      style={{ border: '1px dashed #d9d9d9', padding: '10px' }}
+                    />
+                  </Col>
 
-                <Col md={10} >
+                  <Col md={10} >
 
-                  <DBConditionList
-                    form={form}
-                    formComponent={Form}
-                    data={conditions}
-                  />
-                </Col>
-                <Col md={24}>
-                  <Button
-                    size="large"
-                    onClick={onCancel}
-                  >
+                    <DBConditionList
+                      form={form}
+                      formComponent={Form}
+                      data={conditions}
+                    />
+                  </Col>
+                  <Col md={24}>
+                    <Button
+                      size="large"
+                      onClick={onCancel}
+                    >
                 Cancel
-                  </Button>
-                  <Button
-                    className="pull-right"
-                    type="primary"
-                    htmlType="submit"
-                    icon="upload"
-                    size="large"
-                  >Edit</Button>
-                </Col>
-              </Row>
-            </Form>
-          </Body>
-        </Content>
+                    </Button>
+                    <Button
+                      className="pull-right"
+                      type="primary"
+                      htmlType="submit"
+                      icon="upload"
+                      size="large"
+                    >Edit</Button>
+                  </Col>
+                </Row>
+              </Form>
+            </Body>
+          </Content>
+        </div>
       </Modal>
     );
   }

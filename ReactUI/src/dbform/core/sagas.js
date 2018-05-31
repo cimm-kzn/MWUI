@@ -5,7 +5,7 @@ import { getAdditives, getMagic } from '../../base/requests';
 import { addAdditives, addMagic, succsessRequest, modal } from '../../base/actions';
 import { addStructures, deleteStructure, addStructureMetadata, editStructure, addDBFields, addUsers, addPages } from './actions';
 import { catchErrSaga, requestSaga, requestSagaContinius, repeatedRequests } from '../../base/sagas';
-import { convertCmlToBase64Arr, exportCml, importCml } from '../../base/marvinAPI';
+import { convertCmlToBase64Arr, exportCml, importCml, convertCmlToBase64 } from '../../base/marvinAPI';
 import {
   SAGA_INIT_STRUCTURE_LIST_PAGE,
   SAGA_EDIT_STRUCTURE,
@@ -45,7 +45,7 @@ function* initStructureListPage({ full }) {
 
 function* getRecordsByUser({ full, user, database, table, page }) {
   const data = yield call(Records.getRecords, database, table, full, user, page);
-  const pages = yield call(Structures.getPages, { database, table });
+  const pages = yield call(Structures.getPages, { database, table, user });
   const structures = yield call(convertCmlToBase64Arr, data.data);
   yield put(addStructures(structures));
   yield put(addPages(pages.data));
@@ -87,7 +87,6 @@ function* editStructureModal({ data, database, table, metadata }) {
 }
 
 function* editStructureModalOnOk({ conditions, structure }) {
-
   const { metadata, database, table } = structure;
 
   const data = yield call(exportCml);
@@ -101,7 +100,8 @@ function* editStructureModalOnOk({ conditions, structure }) {
 
 function* requestEditStructure({ database, table, task, metadata }) {
   const structure = yield call(repeatedRequests, Structures.edit, { task, database, table, metadata });
-  yield put(editStructure(metadata, structure.data));
+  const base64 = yield call(convertCmlToBase64, structure.data.data);
+  yield put(editStructure(metadata, { ...structure.data, base64 }));
   yield put(modal(false));
   yield put(succsessRequest());
   yield message.success('Update structure');

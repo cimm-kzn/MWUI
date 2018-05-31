@@ -1,11 +1,8 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import PropTypes from 'prop-types';
 import { Form } from 'antd';
 import { SliderEditor, DynamicForm } from '../../components';
 import sliderConfig from '../../components/formItemConfigs';
-import DatabaseSelect from './DatabaseSelect';
-import DatabaseTableSelect from './DatabaseTableSelect';
 import AdditivesSelect from './AdditivesSelect';
 import { getSettings } from '../core/selectors';
 
@@ -24,6 +21,14 @@ const DBConditionList = ({
     catalysts,
     solvents,
   } = data || settings.condition;
+
+  const validateDynamicForm = (rule, values, cb) => {
+    if (values.every(v => v.key && v.value)) {
+      cb();
+    } else {
+      cb('Please fill in the fields');
+    }
+  };
 
   return (
     <div>
@@ -49,11 +54,20 @@ const DBConditionList = ({
           />,
         )}
       </FormItem>
-      <DynamicForm
-        description={description}
-        formComponent={formComponent}
-        form={form}
-      />
+      <FormItem
+        label="Descriptions:"
+      >
+        {getFieldDecorator('description', {
+          initialValue: description || [{ key: '', value: '' }],
+          rules: [{
+            required: true,
+          }, {
+            validator: validateDynamicForm,
+          }],
+        })(
+          <DynamicForm />,
+        )}
+      </FormItem>
       <AdditivesSelect
         defaultSolvents={solvents}
         defaultCatalysts={catalysts}
