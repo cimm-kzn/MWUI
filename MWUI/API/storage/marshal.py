@@ -44,11 +44,10 @@ class Structure(String):
 
 class MRV(String):
     def format(self, value):
-        with StringIO() as s, MRVwrite(s) as m:
-            m.write(value)
-            m.finalize()
+        with StringIO() as s:
+            with MRVwrite(s) as m:
+                m.write(value)
             structure = s.getvalue()
-
         return structure
 
 
