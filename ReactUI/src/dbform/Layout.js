@@ -1,14 +1,16 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { Tabs, Icon, Select } from 'antd';
+import { Tabs, Icon, Spin } from 'antd';
 import {
   CreatePage,
   StructureListPage,
   SettingsPage,
+  InfoPage,
 } from './components';
 import { LoaderView, ErrorView } from '../base/wrapper';
 import { MainLayout } from '../components';
 import { DBFormModalView } from './components';
+import { getSettings } from './core/selectors';
 
 const TabPane = Tabs.TabPane;
 
@@ -32,9 +34,9 @@ class Main extends Component {
 
     return (
       <MainLayout style={{ paddingTop: '75px' }}>
-        <LoaderView />
         <ErrorView />
         <DBFormModalView />
+        <LoaderView />
         <Tabs
           defaultActiveKey="2"
           onChange={this.changeTab}
@@ -44,10 +46,13 @@ class Main extends Component {
             <CreatePage active={activeKey === '1'} />
           </TabPane>
           <TabPane tab={<span><Icon type="database" />List</span>} key="2">
-            <StructureListPage active={activeKey === '2'}  />
+            <StructureListPage active={activeKey === '2'} />
           </TabPane>
           <TabPane tab={<span><Icon type="setting" />Settings</span>} key="3">
-            <SettingsPage active={activeKey === '3'}  />
+            <SettingsPage active={activeKey === '3'} />
+          </TabPane>
+          <TabPane tab={<span><Icon type="info-circle-o" />Info</span>} key="4">
+            <InfoPage active={activeKey === '4'} />
           </TabPane>
         </Tabs>
       </MainLayout>
@@ -56,7 +61,7 @@ class Main extends Component {
 }
 
 const mapStateToProps = state => ({
-  settings: state.settings,
+  settings: getSettings(state),
 });
 
 

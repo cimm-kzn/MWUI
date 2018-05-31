@@ -9,12 +9,12 @@ const TableListDisplay = ({
   structures,
   editStructure,
   deleteStructure,
-  request: {loading},
+  request: { loading },
 }) => {
   const columns = [{
     title: '#',
-    dataIndex: 'structure',
-    key: 'structure',
+    dataIndex: 'metadata',
+    key: 'metadata',
   }, {
     title: 'Date',
     dataIndex: 'date',

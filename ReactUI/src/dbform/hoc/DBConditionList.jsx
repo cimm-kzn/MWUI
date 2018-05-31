@@ -22,6 +22,14 @@ const DBConditionList = ({
     solvents,
   } = data || settings.condition;
 
+  const validateDynamicForm = (rule, values, cb) => {
+    if (values.every(v => v.key && v.value)) {
+      cb();
+    } else {
+      cb('Please fill in the fields');
+    }
+  };
+
   return (
     <div>
       <FormItem
@@ -53,8 +61,8 @@ const DBConditionList = ({
           initialValue: description || [{ key: '', value: '' }],
           rules: [{
             required: true,
-            type: 'array',
-            message: 'Please add key or value!',
+          }, {
+            validator: validateDynamicForm,
           }],
         })(
           <DynamicForm />,
