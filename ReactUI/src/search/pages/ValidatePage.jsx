@@ -123,7 +123,6 @@ class ValidatePage extends Component {
 ValidatePage.propTypes = {
   initPage: PropTypes.func.isRequired,
   openEditModal: PropTypes.func.isRequired,
-  changeSelectedModel: PropTypes.func.isRequired,
   onRevalidate: PropTypes.func.isRequired,
   onContinue: PropTypes.func.isRequired,
 };

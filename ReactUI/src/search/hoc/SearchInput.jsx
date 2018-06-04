@@ -48,8 +48,8 @@ const SearchInput = ({ drawStructure, onSearchFormSubmit, buttonURL }) => {
         }}
       />
       <div>
-        {buttonURL && buttonURL.map(link =>
-          <Button type="dashed" onClick={() => history.push(link.url)}>{link.name}</Button>,
+        {buttonURL && buttonURL.map((link, i) =>
+          <Button key={i} type="dashed" onClick={() => history.push(link.url)}>{link.name}</Button>,
         )}
       </div>
     </div>);

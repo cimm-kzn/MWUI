@@ -1,7 +1,8 @@
 import React from 'react';
 import { connect } from 'react-redux';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import { Button as BaseButton, Tooltip } from 'antd';
+import { Button as BaseButton, Tooltip, Row, Col } from 'antd';
 import history from '../../base/history';
 import { URLS } from '../../config';
 import { stringifyUrl } from '../../base/parseUrl';
@@ -26,9 +27,9 @@ const HistoryPage = ({ histories, showResults, showValidate }) => (
     style={{ padding: '50px 0', background: 'white' }}
   >
     <H2>History result page</H2>
-    <div className="row">
-      { histories && histories.map(hist =>
-        (<div className="col-md-6">
+    <Row>
+      { histories && histories.map((hist, i) =>
+        (<Col span={12} key={i}>
           <div className="thumbnail">
             <Rigth>
               <Tooltip placement="topLeft" title="Go to validate">
@@ -53,17 +54,26 @@ const HistoryPage = ({ histories, showResults, showValidate }) => (
               </Tooltip>
             </Rigth>
             <img src={hist.base64} />
-            <div><b>Selected model:</b> { hist.models.filter(m => m.model === hist.selectModel.model)[0].name }</div>
+            <div>
+              <b>Selected model:</b>
+              { hist.models.filter(m => m.model === hist.selectModel.model)[0].name }
+            </div>
           </div>
-        </div>))}
-    </div>
+        </Col>))}
+    </Row>
   </div>);
+
+HistoryPage.protoType = {
+  histories: PropTypes.array,
+  showResults: PropTypes.func.isRequired,
+  showValidate: PropTypes.func.isRequired,
+};
 
 const mapStateToProps = state => ({
   histories: state.histories,
 });
 
-const mapDispatchToProps = dispatch => ({
+const mapDispatchToProps = () => ({
   showValidate: validateTaskId => history.push(stringifyUrl(URLS.VALIDATE, { task: validateTaskId })),
   showResults: resultTaskId => history.push(stringifyUrl(URLS.RESULT, { task: resultTaskId })),
 });

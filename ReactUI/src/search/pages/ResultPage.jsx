@@ -11,10 +11,6 @@ import {
 
 
 class ResultPage extends Component {
-  constructor(props) {
-    super(props);
-  }
-
   componentDidMount() {
     this.props.initPage();
   }
@@ -48,7 +44,11 @@ class ResultPage extends Component {
 }
 
 ResultPage.propTypes = {
-
+  results: PropTypes.array,
+  showIncreaseModel: PropTypes.func.isRequired,
+  onSearchImg: PropTypes.func.isRequired,
+  request: PropTypes.objectOf(PropTypes.any),
+  initPage: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = state => ({
