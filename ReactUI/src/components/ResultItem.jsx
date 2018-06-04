@@ -1,7 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import { Button as BaseButton } from 'antd';
+import { Button as BaseButton, Row, Col, Tabs } from 'antd';
+
+const TabPane = Tabs.TabPane;
 
 const Rigth = styled.div`
   position: absolute;
@@ -16,15 +18,23 @@ const Button = styled(BaseButton)`
 
 const Image = styled.img`
   cursor: pointer;
-`;
-
-const ResultText = styled.div`
-  padding: 10px;
+  width: 100%;
 `;
 
 const ResultItem = ({ count, base64, result, onClickIcrease, onSearchImage }) => (
-  <div className="row">
-    <div className="col-md-5 thumbnail">
+  <Row
+    key={count.toString()}
+    style={{
+      paddingBottom: '20px',
+    }}
+  >
+    <Col
+      span={10}
+      style={{
+        border: '1px dashed #1890ff',
+        padding: '20px',
+      }}
+    >
       <Rigth>
         <Button
           type="primary"
@@ -35,27 +45,29 @@ const ResultItem = ({ count, base64, result, onClickIcrease, onSearchImage }) =>
           onClick={() => onSearchImage()}
         />
       </Rigth>
-      <Image src={base64} width={350} onClick={() => onClickIcrease()} />
-    </div>
-    <div className="col-md-7">
-      <ul className="nav nav-tabs">
-        <li >
-          <a>
-              Info
-          </a>
-        </li>
-      </ul>
-      <ResultText>
-        { result && result.map(res => <p>{res.key}: {res.value}</p>) }
-      </ResultText>
-    </div>
-  </div>
+      <Image src={base64} onClick={() => onClickIcrease()} alt="Result Image" />
+    </Col>
+    <Col
+      span={12}
+      style={{
+        paddingLeft: '10px',
+      }}
+    >
+      <Tabs defaultActiveKey="1">
+        <TabPane tab="Info" key="1">
+          { result && result.map((res, i) => <p key={i}>{res.key}: {res.value}</p>) }
+        </TabPane>
+      </Tabs>
+    </Col>
+  </Row>
 );
 
 ResultItem.propTypes = {
   count: PropTypes.number,
   base64: PropTypes.string,
-  result: PropTypes.object,
+  result: PropTypes.array,
+  onClickIcrease: PropTypes.func.isRequired,
+  onSearchImage: PropTypes.func.isRequired,
 };
 
 ResultItem.defaultProps = {

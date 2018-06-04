@@ -8,7 +8,7 @@ import {
   ValidatePage,
   ResultPage,
   HistoryPage,
-  InfoPage } from './pages';
+} from './pages';
 import { NotFoundPage } from '../components';
 import { URLS } from '../config';
 import Main from './Layout';
@@ -38,7 +38,6 @@ export default (
           <Route exact path={URLS.VALIDATE} component={ValidatePage} />
           <Route exact path={URLS.RESULT} component={ResultPage} />
           <Route exact path={URLS.HISTORY} component={HistoryPage} />
-          <Route exact path={URLS.INFO} component={InfoPage} />
           <Route path="*" component={NotFoundPage} />
         </Switch>
       </Main>

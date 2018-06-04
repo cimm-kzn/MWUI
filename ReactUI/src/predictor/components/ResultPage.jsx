@@ -81,9 +81,9 @@ class ResultPage extends Component {
                 </div>)
                 }
               </Conditions>
-              <Tabs defaultActiveKey={0}>
+              <Tabs defaultActiveKey="1">
                 { result.models && result.models.map((model, idx) =>
-                  (<TabPane tab={model.name} key={idx}>
+                  (<TabPane tab={model.name} key={idx.toString()}>
                     { model.results.map((res, i) =>
                       <p>{res.key}: {res.value}</p>,
                     )}

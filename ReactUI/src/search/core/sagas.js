@@ -114,7 +114,7 @@ export function* sagas() {
   // Validate Page
   yield takeEvery(SAGA_INIT_VALIDATE_PAGE, requestSaga, validateTask);
   yield takeEvery(SAGA_EDIT_STRUCTURE_1, catchErrSaga, editStructureR);
-  yield takeEvery(SAGA_REVALIDATE_TASK, revalidateTask);
+  yield takeEvery(SAGA_REVALIDATE_TASK, requestSaga, revalidateTask);
   yield takeEvery(SAGA_CREATE_RESULT_TASK, requestSagaContinius, createResultTask);
   yield takeEvery(SAGA_EDIT_STRUCTURE_CALLBACK, catchErrSaga, editStructureCallback);
   // Result Page
