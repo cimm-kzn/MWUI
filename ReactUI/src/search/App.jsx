@@ -8,7 +8,7 @@ import {
   ValidatePage,
   ResultPage,
   HistoryPage,
-  InfoPage } from './pages';
+} from './pages';
 import { NotFoundPage } from '../components';
 import { URLS } from '../config';
 import Main from './Layout';
@@ -27,7 +27,6 @@ import 'antd/lib/spin/style/index.css';
 import 'antd/lib/alert/style/css';
 import 'antd/lib/row/style/css';
 import 'antd/lib/col/style/css';
-import 'antd/lib/carousel/style/css';
 
 
 export default (
@@ -35,15 +34,10 @@ export default (
     <Router history={history}>
       <Main>
         <Switch>
-          <Route exact path={URLS.INDEX} component={() => (
-            <div>
-              <p>Hello! Welcome to the search page for structures from our team.</p>
-              <p> Here you will search for the structures or reactions you need.</p>
-            </div>)} />
+          <Route exact path={URLS.INDEX} component={IndexPage} />
           <Route exact path={URLS.VALIDATE} component={ValidatePage} />
           <Route exact path={URLS.RESULT} component={ResultPage} />
           <Route exact path={URLS.HISTORY} component={HistoryPage} />
-          <Route exact path={URLS.INFO} component={InfoPage} />
           <Route path="*" component={NotFoundPage} />
         </Switch>
       </Main>

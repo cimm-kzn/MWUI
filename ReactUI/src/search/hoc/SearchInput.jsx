@@ -1,8 +1,14 @@
 import React from 'react';
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Button, message, Input, Icon } from 'antd';
-import { textToCml } from '../base/marvinAPI';
-import history from '../base/history';
+import { textToCml } from '../../base/marvinAPI';
+import history from '../../base/history';
+import { URLS } from '../../config';
+import {
+  SAGA_DRAW_STRUCTURE,
+  SAGA_CREATE_TASK,
+} from '../core/constants';
 
 const Search = Input.Search;
 
@@ -59,4 +65,15 @@ SearchInput.defaultProps = {
   buttonURL: null,
 };
 
-export default SearchInput;
+const mapStateToProps = () => ({
+  buttonURL: [
+    { name: 'Index page', url: URLS.INDEX },
+    { name: 'Hisrory', url: URLS.HISTORY }],
+});
+
+const mapDispatchToProps = dispatch => ({
+  drawStructure: () => dispatch({ type: SAGA_DRAW_STRUCTURE }),
+  onSearchFormSubmit: data => dispatch({ type: SAGA_CREATE_TASK, data }),
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(SearchInput);

@@ -1,21 +1,16 @@
 import React from 'react';
 import { MainLayout } from '../components';
 import { MarvinEditorView, PageStepsView, LoaderView, ErrorView } from '../base/wrapper';
-import Searcher from './pages/IndexPage';
-import { Layout } from 'antd';
+import { SearchInput } from './hoc';
 
 const Main = ({ children }) => (
   <MainLayout>
     <PageStepsView />
-    <Searcher />
+    <SearchInput />
     <MarvinEditorView />
     <LoaderView />
     <ErrorView />
-    <div
-      style={{ padding: '50px 0', background: 'white' }}
-    >
-      {children}
-    </div>
+    {children}
   </MainLayout>
 );
 

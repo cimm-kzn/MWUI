@@ -3,7 +3,6 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Select, Button, Row, Col, Form } from 'antd';
 import { Thumbnail } from '../../components';
-import { modal, addSelectModel } from '../core/actions';
 import { URLS } from '../../config';
 import {
   SAGA_INIT_VALIDATE_PAGE,
@@ -11,7 +10,7 @@ import {
   SAGA_REVALIDATE_TASK,
   SAGA_CREATE_RESULT_TASK,
 } from '../core/constants';
-import { getStructures, isLoading } from '../core/selectors';
+import { getStructures, getRequest } from '../core/selectors';
 
 const Option = Select.Option;
 const FormItem = Form.Item;
@@ -44,67 +43,79 @@ class ValidatePage extends Component {
   }
 
   render() {
-    const { structure, openEditModal, form, history, onRevalidate, onContinue, loading } = this.props;
+    const {
+      structure,
+      openEditModal,
+      form,
+      history,
+      onRevalidate,
+      onContinue,
+      request: { loading, error },
+    } = this.props;
 
     const { getFieldDecorator } = form;
 
-    return !loading && structure && (
-      <Form onSubmit={this.handleSubmit} >
-        <Row gutter={24} sm={24} xs={24}>
-          <Col lg={14}>
-            <Thumbnail
-              data={structure.data}
-              base64={structure.base64}
-              revalidate={structure.revalidate}
-              onClickImage={openEditModal}
-            />
-          </Col>
-          <Col lg={10} sm={24} xs={24}>
-            <FormItem
-              label="Selected model:"
-            >
-              {getFieldDecorator('model', {
-                initialValue: structure && structure.models[0].model,
-              })(
-                <Select
-                  style={{ width: '100%', paddingBottom: 10 }}
-                >
-                  { structure.models.map(m => <Option key={m.model} value={m.model}>{m.name}</Option>)}
-                </Select>,
-              )}
-            </FormItem>
-          </Col>
-        </Row>
-        <Row>
-          <hr />
-        </Row>
-        <Row>
+    return !loading && !error && structure && (
+      <div
+        style={{ padding: '50px 0', background: 'white' }}
+      >
+        <Form onSubmit={this.handleSubmit} >
+          <Row gutter={24} sm={24} xs={24}>
+            <Col lg={14}>
+              <Thumbnail
+                data={structure.data}
+                base64={structure.base64}
+                revalidate={structure.revalidate}
+                onClickImage={openEditModal}
+              />
+            </Col>
+            <Col lg={10} sm={24} xs={24}>
+              <FormItem
+                label="Selected model:"
+              >
+                {getFieldDecorator('model', {
+                  initialValue: structure && structure.models[0].model,
+                })(
+                  <Select
+                    style={{ width: '100%', paddingBottom: 10 }}
+                  >
+                    { structure.models.map(m => <Option key={m.model} value={m.model}>{m.name}</Option>)}
+                  </Select>,
+                )}
+              </FormItem>
+            </Col>
+          </Row>
+          <Row>
+            <hr />
+          </Row>
+          <Row>
 
-          <Col span={8}>
-            <Button
-              onClick={() => history.push(URLS.INDEX)}
-              icon="left"
-            >Back</Button>
-          </Col>
-          <Col span={8} offset={8} style={{ textAlign: 'right' }}>
-            { structure.revalidate ?
+            <Col span={8}>
               <Button
-                icon="sync"
-                type="danger"
-                onClick={() => onRevalidate(structure.data)}
-              >
+                onClick={() => history.push(URLS.INDEX)}
+                icon="left"
+              >Back</Button>
+            </Col>
+            <Col span={8} offset={8} style={{ textAlign: 'right' }}>
+              { structure.revalidate ?
+                <Button
+                  icon="sync"
+                  type="danger"
+                  onClick={() => onRevalidate(structure.data)}
+                >
                   Revalidate
-              </Button> :
-              <Button
-                type="primary"
-                icon="right"
-                htmlType="submit"
-              >
+                </Button> :
+                <Button
+                  type="primary"
+                  icon="right"
+                  htmlType="submit"
+                >
                   Сontinue
-              </Button>}
-          </Col>
-        </Row>
-      </Form>
+                </Button>}
+            </Col>
+          </Row>
+        </Form>
+      </div>
     );
   }
 }
@@ -120,7 +131,7 @@ ValidatePage.propTypes = {
 
 const mapStateToProps = state => ({
   structure: getStructures(state),
-  loading: isLoading(state),
+  request: getRequest(state),
 });
 
 const mapDispatchToProps = dispatch => ({
