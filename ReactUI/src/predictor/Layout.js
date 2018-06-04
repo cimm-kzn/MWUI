@@ -1,17 +1,26 @@
 import React from 'react';
+import { Tabs, Icon } from 'antd';
 import { MarvinEditorView, PageStepsView, LoaderView, ErrorView } from '../base/wrapper';
-import { Layout } from 'antd';
 import { MainLayout } from '../components';
+import { SavedTaskPage } from './components';
 
-const { Header, Footer, Sider, Content } = Layout;
+const TabPlane = Tabs.TabPane;
 
 const Main = ({ children }) => (
   <MainLayout>
-    <PageStepsView />
     <MarvinEditorView />
     <LoaderView />
     <ErrorView />
-    {children}
+    <Tabs defaultActiveKey="1">
+      <TabPlane tab={<span><Icon type="file-add" />Create task</span>} key="1">
+        <PageStepsView />
+        {children}
+      </TabPlane>
+      <TabPlane tab={<span><Icon type="file-add" />Saved tasks</span>} key="2">
+        <SavedTaskPage />
+      </TabPlane>
+      <TabPlane />
+    </Tabs>
   </MainLayout>
 );
 

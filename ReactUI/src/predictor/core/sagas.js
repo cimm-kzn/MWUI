@@ -6,6 +6,8 @@ import {
   editStructureIndex,
   addStructuresResult,
   editStructureValidate,
+  addTasksSavePage,
+  addSavedTaskContent,
 } from './actions';
 import {
   modal,
@@ -26,27 +28,13 @@ import {
   importCml,
   convertCmlToBase64Arr,
 } from '../../base/marvinAPI';
-import {
-  SAGA_EDIT_STRUCTURE_INDEX,
-  SAGA_NEW_STRUCTURE,
-  SAGA_CREATE_TASK_INDEX,
-  SAGA_INIT_VALIDATE_PAGE,
-  SAGA_CREATE_RESULT_TASK,
-  SAGA_INIT_RESULT_PAGE,
-  SAGA_NEW_STRUCTURE_CALLBACK,
-  SAGA_EDIT_STRUCTURE_VALIDATE,
-  SAGA_DELETE_STRUCRURES_VALIDATE_PAGE,
-  SAGA_EDIT_STRUCTURE_VALIDATE_CALLBACK,
-  SAGA_EDIT_STRUCTURE_INDEX_CALLBACK,
-  SAGA_REVALIDATE_VALIDATE_PAGE,
-  SAGA_SAVE_TASK,
-} from './constants';
+import * as CONST from './constants';
 
 // Index Page
 
 function* createNewStructure() {
   yield call(clearEditor);
-  yield put(modal(true, SAGA_NEW_STRUCTURE_CALLBACK));
+  yield put(modal(true, CONST.SAGA_NEW_STRUCTURE_CALLBACK));
 }
 
 function* createNewStructureCallback() {
@@ -58,7 +46,7 @@ function* createNewStructureCallback() {
 
 function* editSelectStructure({ data, structure }) {
   yield call(importCml, data);
-  yield put(modal(true, SAGA_EDIT_STRUCTURE_INDEX_CALLBACK, structure));
+  yield put(modal(true, CONST.SAGA_EDIT_STRUCTURE_INDEX_CALLBACK, structure));
 }
 
 function* editSelectStructureCallback({ structure }) {
@@ -100,7 +88,7 @@ function* initValidatePage() {
 
 function* editStructureModalValidate({ data, structure }) {
   yield call(importCml, data);
-  yield put(modal(true, SAGA_EDIT_STRUCTURE_VALIDATE_CALLBACK, structure));
+  yield put(modal(true, CONST.SAGA_EDIT_STRUCTURE_VALIDATE_CALLBACK, structure));
 }
 
 function* editStructureModalValidateCallback({ structure }) {
@@ -146,23 +134,38 @@ function* saveTask() {
   yield call(message.success, 'Task saved');
 }
 
+// Saved task page
+function* initSavedTasksPage() {
+  const tasks = yield call(Request.getSavedTask);
+  yield put(addTasksSavePage(tasks.data));
+}
+
+function* getSavedTaskContent({ task }) {
+  const content = yield call(Request.getSavedTaskContent, task);
+  yield put(addSavedTaskContent(task, content.data));
+}
+
 export function* sagas() {
   // Index page
-  yield takeEvery(SAGA_NEW_STRUCTURE, catchErrSaga, createNewStructure);
-  yield takeEvery(SAGA_NEW_STRUCTURE_CALLBACK, catchErrSaga, createNewStructureCallback);
-  yield takeEvery(SAGA_EDIT_STRUCTURE_INDEX, catchErrSaga, editSelectStructure);
-  yield takeEvery(SAGA_EDIT_STRUCTURE_INDEX_CALLBACK, catchErrSaga, editSelectStructureCallback);
-  yield takeEvery(SAGA_CREATE_TASK_INDEX, requestSagaContinius, createTaskIndex);
+  yield takeEvery(CONST.SAGA_NEW_STRUCTURE, catchErrSaga, createNewStructure);
+  yield takeEvery(CONST.SAGA_NEW_STRUCTURE_CALLBACK, catchErrSaga, createNewStructureCallback);
+  yield takeEvery(CONST.SAGA_EDIT_STRUCTURE_INDEX, catchErrSaga, editSelectStructure);
+  yield takeEvery(CONST.SAGA_EDIT_STRUCTURE_INDEX_CALLBACK, catchErrSaga, editSelectStructureCallback);
+  yield takeEvery(CONST.SAGA_CREATE_TASK_INDEX, requestSagaContinius, createTaskIndex);
 
   // Validate Page
-  yield takeEvery(SAGA_INIT_VALIDATE_PAGE, requestSaga, initValidatePage);
-  yield takeEvery(SAGA_EDIT_STRUCTURE_VALIDATE, catchErrSaga, editStructureModalValidate);
-  yield takeEvery(SAGA_EDIT_STRUCTURE_VALIDATE_CALLBACK, catchErrSaga, editStructureModalValidateCallback);
-  yield takeEvery(SAGA_DELETE_STRUCRURES_VALIDATE_PAGE, requestSaga, deleteStructures);
-  yield takeEvery(SAGA_REVALIDATE_VALIDATE_PAGE, requestSaga, revalidateValidatePage);
-  yield takeEvery(SAGA_CREATE_RESULT_TASK, requestSagaContinius, createResultTask);
+  yield takeEvery(CONST.SAGA_INIT_VALIDATE_PAGE, requestSaga, initValidatePage);
+  yield takeEvery(CONST.SAGA_EDIT_STRUCTURE_VALIDATE, catchErrSaga, editStructureModalValidate);
+  yield takeEvery(CONST.SAGA_EDIT_STRUCTURE_VALIDATE_CALLBACK, catchErrSaga, editStructureModalValidateCallback);
+  yield takeEvery(CONST.SAGA_DELETE_STRUCRURES_VALIDATE_PAGE, requestSaga, deleteStructures);
+  yield takeEvery(CONST.SAGA_REVALIDATE_VALIDATE_PAGE, requestSaga, revalidateValidatePage);
+  yield takeEvery(CONST.SAGA_CREATE_RESULT_TASK, requestSagaContinius, createResultTask);
 
   // Result Page
-  yield takeEvery(SAGA_INIT_RESULT_PAGE, requestSaga, resultPageInit);
-  yield takeEvery(SAGA_SAVE_TASK, requestSagaContinius, saveTask);
+  yield takeEvery(CONST.SAGA_INIT_RESULT_PAGE, requestSaga, resultPageInit);
+  yield takeEvery(CONST.SAGA_SAVE_TASK, requestSagaContinius, saveTask);
+
+  // Saved tasks page
+  yield takeEvery(CONST.SAGA_INIT_SAVED_TASKS_PAGE, requestSaga, initSavedTasksPage);
+  yield takeEvery(CONST.SAGA_INIT_TASK_CONTENT, requestSaga, getSavedTaskContent);
 }

@@ -22,4 +22,8 @@ export const deleteStructure = (task, structure) => axios.post(API_URLS.PREPARE_
 
 export const revalidateStructure = (task, structure) => axios.post(API_URLS.PREPARE_TASK + task, structure);
 
-export const saveStructure = task => axios.post(API_URLS.SAVE_TASK + task);
+export const saveStructure = task => axios.post(API_URLS.SAVE_TASK + `/${task}`);
+
+export const getSavedTask = task => axios.get(API_URLS.SAVE_TASK);
+
+export const getSavedTaskContent = task => axios.get(API_URLS.SAVE_TASK + `/${task}`);

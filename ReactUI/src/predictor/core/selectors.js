@@ -16,6 +16,8 @@ export const getMagic = state => state.magic;
 
 export const isLoading = state => state.request.loading;
 
+export const getTasks = state => state.tasks;
+
 export const getStructuresValidatePage = createSelector(
   [getModels,
     getAdditives,

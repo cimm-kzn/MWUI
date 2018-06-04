@@ -13,10 +13,9 @@ const API = {
   ADDITIVES: '/api/jobs/additives',
   MODELS: '/api/jobs/models',
   UPLOAD_FILE: '/api/jobs/task/upload',
-  SAVE_TASK: '/api/jobs/saves/',
+  SAVE_TASK: '/api/jobs/saves',
   USER_AUTH: '/api/jobs/auth',
   MAGIC: '/api/jobs/magic',
-
   RECORDS: '/api/db/db/:database/:table/records',
   PAGES: '/api/db/db/:database/:table/size',
   RECORDS_METADATA: '/api/db/db/:database/:table/records/:metadata',

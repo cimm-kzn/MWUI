@@ -27,3 +27,11 @@ export const editStructureValidate = obj => ({
   type: CONST.EDIT_STRUCTURE_VALIDATE, obj,
 });
 
+export const addTasksSavePage = tasks => ({
+  type: CONST.ADD_TASKS, tasks,
+});
+
+export const addSavedTaskContent = (task, content) => ({
+  type: CONST.ADD_TASK_CONTENT, task, content,
+});
+

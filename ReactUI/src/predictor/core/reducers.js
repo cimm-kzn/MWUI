@@ -39,7 +39,7 @@ const validatePageStructure = (state = null, action) => {
           } :
           item),
       );
-      return {  ...state, data };
+      return { ...state, data };
     default:
       return state;
   }
@@ -54,8 +54,25 @@ const resultPageStructure = (state = [], action) => {
   }
 };
 
+const tasks = (state = [], action) => {
+  switch (action.type) {
+    case CONST.ADD_TASKS:
+      return action.tasks;
+    case CONST.ADD_TASK_CONTENT:
+      return state.map((s) => {
+        if (s.task === action.task) {
+          return { ...s, ...action.content };
+        }
+        return s;
+      });
+    default:
+      return state;
+  }
+};
+
 
 export default combineReducers({
+  tasks,
   modal,
   models,
   additives,
