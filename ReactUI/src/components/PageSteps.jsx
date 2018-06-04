@@ -15,7 +15,7 @@ const PageSteps = () => {
   );
 
   return (
-    <Row style={{ paddingBottom: 100, paddingTop: 15 }}>
+    <Row style={{ paddingBottom: 50, paddingTop: 15 }}>
       <Steps current={currentPage}>
         <Step title="Start" description="Choosing a structure for searching" />
         <Step title="Validate" description="The choice of model and the correctness of the structure" />

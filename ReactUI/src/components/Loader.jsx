@@ -8,7 +8,7 @@ const LoaderContain = styled.div`
     overflow: hidden;
     position: absolute;
     display: flex;
-    top: 0;
+    top: 50px;
     bottom: 0;
     left: 0;
     right: 0;

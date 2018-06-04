@@ -7,7 +7,9 @@ export const getModels = state => state.models;
 
 export const getMagic = state => state.magic;
 
-export const isLoading = state => state.request.loading;
+export const getRequest = state => state.request;
+
+export const getResults = state => state.results;
 
 export const getStructures = createSelector(
   [getModels,
