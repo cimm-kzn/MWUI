@@ -22,7 +22,7 @@ import * as Request from '../../base/requests';
 import history from '../../base/history';
 import { URLS } from '../../config';
 import { getUrlParams, stringifyUrl } from '../../base/parseUrl';
-import { repeatedRequests, requestSaga, catchErrSaga, requestSagaContinius } from '../../base/sagas';
+import { requestSaga, catchErrSaga, requestSagaContinius } from '../../base/sagas';
 import {
   convertCmlToBase64,
   clearEditor,
@@ -31,6 +31,15 @@ import {
   convertCmlToBase64Arr,
 } from '../../base/marvinAPI';
 import * as CONST from './constants';
+
+const eventSource = new EventSource('http://localhost:3000/api/jobs/subscribe/connect', { withCredentials: true });
+
+
+const listener = () => new Promise((resolve) => {
+  eventSource.onmessage = (e) => {
+    resolve(e.data);
+  };
+});
 
 // Index Page
 
@@ -66,8 +75,8 @@ function* createTaskIndex({ structures }) {
 // Revalidating
 
 function* revalidate() {
-  const urlParams = yield getUrlParams();
-  const task = yield call(repeatedRequests, Request.getSearchTask, urlParams.task);
+  const taskID = yield call(listener);
+  const task = yield call(Request.getSearchTask, taskID);
   const structureAndBase64 = yield call(convertCmlToBase64Arr, task.data.structures);
   yield put(addStructuresValidate({ data: structureAndBase64, type: task.data.type }));
 }
@@ -76,8 +85,8 @@ function* revalidate() {
 
 // Validate Page
 function* initValidatePage() {
-  const urlParams = yield getUrlParams();
-  const task = yield call(repeatedRequests, Request.getSearchTask, urlParams.task);
+  const taskID = yield call(listener);
+  const task = yield call(Request.getSearchTask, taskID);
   const structureAndBase64 = yield call(convertCmlToBase64Arr, task.data.structures);
   yield put(addStructuresValidate({ data: structureAndBase64, type: task.data.type }));
 }
@@ -126,8 +135,8 @@ function* revalidateValidatePage({ data }) {
 
 // Result page
 function* resultPageInit() {
-  const urlParams = yield getUrlParams();
-  const responce = yield call(repeatedRequests, Request.getResultTask, urlParams.task);
+  const taskID = yield call(listener);
+  const responce = yield call(Request.getResultTask, taskID);
   const results = yield call(convertCmlToBase64Arr, responce.data.structures);
   yield put(addStructuresResult(results));
 }
