@@ -6,6 +6,10 @@ import {
   editStructureIndex,
   addStructuresResult,
   editStructureValidate,
+  addTasksSavePage,
+  addSavedTaskContent,
+  addSavedTaskPages,
+  deleteSavedTaskPages,
 } from './actions';
 import {
   modal,
@@ -26,27 +30,13 @@ import {
   importCml,
   convertCmlToBase64Arr,
 } from '../../base/marvinAPI';
-import {
-  SAGA_EDIT_STRUCTURE_INDEX,
-  SAGA_NEW_STRUCTURE,
-  SAGA_CREATE_TASK_INDEX,
-  SAGA_INIT_VALIDATE_PAGE,
-  SAGA_CREATE_RESULT_TASK,
-  SAGA_INIT_RESULT_PAGE,
-  SAGA_NEW_STRUCTURE_CALLBACK,
-  SAGA_EDIT_STRUCTURE_VALIDATE,
-  SAGA_DELETE_STRUCRURES_VALIDATE_PAGE,
-  SAGA_EDIT_STRUCTURE_VALIDATE_CALLBACK,
-  SAGA_EDIT_STRUCTURE_INDEX_CALLBACK,
-  SAGA_REVALIDATE_VALIDATE_PAGE,
-  SAGA_SAVE_TASK,
-} from './constants';
+import * as CONST from './constants';
 
 // Index Page
 
 function* createNewStructure() {
   yield call(clearEditor);
-  yield put(modal(true, SAGA_NEW_STRUCTURE_CALLBACK));
+  yield put(modal(true, CONST.SAGA_NEW_STRUCTURE_CALLBACK));
 }
 
 function* createNewStructureCallback() {
@@ -58,7 +48,7 @@ function* createNewStructureCallback() {
 
 function* editSelectStructure({ data, structure }) {
   yield call(importCml, data);
-  yield put(modal(true, SAGA_EDIT_STRUCTURE_INDEX_CALLBACK, structure));
+  yield put(modal(true, CONST.SAGA_EDIT_STRUCTURE_INDEX_CALLBACK, structure));
 }
 
 function* editSelectStructureCallback({ structure }) {
@@ -87,12 +77,15 @@ function* revalidate() {
 // Validate Page
 function* initValidatePage() {
   const urlParams = yield getUrlParams();
-  const models = yield call(Request.getModels);
-  const additives = yield call(Request.getAdditives);
-  const magic = yield call(Request.getMagic);
   const task = yield call(repeatedRequests, Request.getSearchTask, urlParams.task);
   const structureAndBase64 = yield call(convertCmlToBase64Arr, task.data.structures);
   yield put(addStructuresValidate({ data: structureAndBase64, type: task.data.type }));
+}
+
+function* initConstants() {
+  const models = yield call(Request.getModels);
+  const additives = yield call(Request.getAdditives);
+  const magic = yield call(Request.getMagic);
   yield put(addAdditives(additives.data));
   yield put(addModels(models.data));
   yield put(addMagic(magic.data));
@@ -100,7 +93,7 @@ function* initValidatePage() {
 
 function* editStructureModalValidate({ data, structure }) {
   yield call(importCml, data);
-  yield put(modal(true, SAGA_EDIT_STRUCTURE_VALIDATE_CALLBACK, structure));
+  yield put(modal(true, CONST.SAGA_EDIT_STRUCTURE_VALIDATE_CALLBACK, structure));
 }
 
 function* editStructureModalValidateCallback({ structure }) {
@@ -146,23 +139,59 @@ function* saveTask() {
   yield call(message.success, 'Task saved');
 }
 
+// Saved task page
+function* initSavedTasksPage() {
+  const tasks = yield call(Request.getSavedTask);
+  const pages = yield call(Request.getSavedTaskPage);
+  yield put(addTasksSavePage(tasks.data));
+  yield put(addSavedTaskPages(pages.data));
+}
+
+function* getSavedTaskContent({ task }) {
+  const content = yield call(Request.getSavedTaskContent, task);
+  const results = yield call(convertCmlToBase64Arr, content.data.structures);
+
+  console.log(results);
+
+  yield put(addSavedTaskContent(task, results));
+}
+
+function* deleteSavedTask({ task }) {
+  const deletedTask = yield call(Request.deleteSavedTaskContent, task);
+  yield put(deleteSavedTaskPages(deletedTask.data.task));
+}
+
+function* getSavesTasks({ page }) {
+  const tasks = yield call(Request.getSavedTask, page);
+  yield put(addTasksSavePage(tasks.data));
+}
+
 export function* sagas() {
+  // Init constants
+
+  yield takeEvery(CONST.SAGA_INIT_CONSTANTS, catchErrSaga, initConstants);
   // Index page
-  yield takeEvery(SAGA_NEW_STRUCTURE, catchErrSaga, createNewStructure);
-  yield takeEvery(SAGA_NEW_STRUCTURE_CALLBACK, catchErrSaga, createNewStructureCallback);
-  yield takeEvery(SAGA_EDIT_STRUCTURE_INDEX, catchErrSaga, editSelectStructure);
-  yield takeEvery(SAGA_EDIT_STRUCTURE_INDEX_CALLBACK, catchErrSaga, editSelectStructureCallback);
-  yield takeEvery(SAGA_CREATE_TASK_INDEX, requestSagaContinius, createTaskIndex);
+  yield takeEvery(CONST.SAGA_NEW_STRUCTURE, catchErrSaga, createNewStructure);
+  yield takeEvery(CONST.SAGA_NEW_STRUCTURE_CALLBACK, catchErrSaga, createNewStructureCallback);
+  yield takeEvery(CONST.SAGA_EDIT_STRUCTURE_INDEX, catchErrSaga, editSelectStructure);
+  yield takeEvery(CONST.SAGA_EDIT_STRUCTURE_INDEX_CALLBACK, catchErrSaga, editSelectStructureCallback);
+  yield takeEvery(CONST.SAGA_CREATE_TASK_INDEX, requestSagaContinius, createTaskIndex);
 
   // Validate Page
-  yield takeEvery(SAGA_INIT_VALIDATE_PAGE, requestSaga, initValidatePage);
-  yield takeEvery(SAGA_EDIT_STRUCTURE_VALIDATE, catchErrSaga, editStructureModalValidate);
-  yield takeEvery(SAGA_EDIT_STRUCTURE_VALIDATE_CALLBACK, catchErrSaga, editStructureModalValidateCallback);
-  yield takeEvery(SAGA_DELETE_STRUCRURES_VALIDATE_PAGE, requestSaga, deleteStructures);
-  yield takeEvery(SAGA_REVALIDATE_VALIDATE_PAGE, requestSaga, revalidateValidatePage);
-  yield takeEvery(SAGA_CREATE_RESULT_TASK, requestSagaContinius, createResultTask);
+  yield takeEvery(CONST.SAGA_INIT_VALIDATE_PAGE, requestSaga, initValidatePage);
+  yield takeEvery(CONST.SAGA_EDIT_STRUCTURE_VALIDATE, catchErrSaga, editStructureModalValidate);
+  yield takeEvery(CONST.SAGA_EDIT_STRUCTURE_VALIDATE_CALLBACK, catchErrSaga, editStructureModalValidateCallback);
+  yield takeEvery(CONST.SAGA_DELETE_STRUCRURES_VALIDATE_PAGE, requestSaga, deleteStructures);
+  yield takeEvery(CONST.SAGA_REVALIDATE_VALIDATE_PAGE, requestSaga, revalidateValidatePage);
+  yield takeEvery(CONST.SAGA_CREATE_RESULT_TASK, requestSagaContinius, createResultTask);
 
   // Result Page
-  yield takeEvery(SAGA_INIT_RESULT_PAGE, requestSaga, resultPageInit);
-  yield takeEvery(SAGA_SAVE_TASK, requestSagaContinius, saveTask);
+  yield takeEvery(CONST.SAGA_INIT_RESULT_PAGE, requestSaga, resultPageInit);
+  yield takeEvery(CONST.SAGA_SAVE_TASK, requestSagaContinius, saveTask);
+
+  // Saved tasks page
+  yield takeEvery(CONST.SAGA_INIT_SAVED_TASKS_PAGE, requestSaga, initSavedTasksPage);
+  yield takeEvery(CONST.SAGA_INIT_TASK_CONTENT, requestSaga, getSavedTaskContent);
+  yield takeEvery(CONST.SAGA_DELETE_SAVED_TASK, requestSaga, deleteSavedTask);
+  yield takeEvery(CONST.SAGA_GET_SAVED_TASKS_FOR_PAGE, requestSaga, getSavesTasks);
 }
