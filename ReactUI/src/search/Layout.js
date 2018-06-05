@@ -4,14 +4,15 @@ import { MarvinEditorView, PageStepsView, LoaderView, ErrorView } from '../base/
 import { SearchInput } from './hoc';
 
 const Main = ({ children }) => (
-  <MainLayout>
-    <PageStepsView />
-    <SearchInput />
-    <MarvinEditorView />
-    <LoaderView />
-    <ErrorView />
-    {children}
-  </MainLayout>
+  <LoaderView>
+    <MainLayout>
+      <PageStepsView />
+      <SearchInput />
+      <MarvinEditorView />
+      <ErrorView />
+      {children}
+    </MainLayout>
+  </LoaderView>
 );
 
 export default Main;

@@ -9,6 +9,7 @@ import { URLS } from '../config';
 import { SAGA_INIT_CONSTANTS } from './core/constants';
 
 
+
 const Content = styled.div`
   margin-top: 20px;
 `;
@@ -38,31 +39,32 @@ class Main extends Component {
     const activeKey = (location.pathname === URLS.SAVED_TASK) ? 'saved' : 'create';
 
     return (
-      <MainLayout>
-        <MarvinEditorView />
-        <LoaderView />
-        <ErrorView />
-        <Menu
-          onClick={this.handleMenuClick}
-          selectedKeys={[activeKey]}
-          mode="horizontal"
-        >
-          <Menu.Item key="create">
-            <Icon type="file-add" />Create task
-          </Menu.Item>
-          <Menu.Item key="saved">
-            <Icon type="database" />Saved tasks
-          </Menu.Item>
-        </Menu>
-        <Content>
-          { activeKey === 'create' ?
-            <PageStepsView />
-            :
-            null
-          }
-          {children}
-        </Content>
-      </MainLayout>
+      <LoaderView>
+        <MainLayout>
+          <MarvinEditorView />
+          <ErrorView />
+          <Menu
+            onClick={this.handleMenuClick}
+            selectedKeys={[activeKey]}
+            mode="horizontal"
+          >
+            <Menu.Item key="create">
+              <Icon type="file-add" />Create task
+            </Menu.Item>
+            <Menu.Item key="saved">
+              <Icon type="database" />Saved tasks
+            </Menu.Item>
+          </Menu>
+          <Content>
+            { activeKey === 'create' ?
+              <PageStepsView />
+              :
+              null
+            }
+            {children}
+          </Content>
+        </MainLayout>
+      </LoaderView>
     );
   }
 }
