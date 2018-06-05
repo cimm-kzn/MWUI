@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_URLS } from '../config';
+import { urlConverter } from './functions';
 
 
 export const createSearchTask = data => axios.post(API_URLS.CREATE_TASK_SEARCH, data);
@@ -22,8 +23,12 @@ export const deleteStructure = (task, structure) => axios.post(API_URLS.PREPARE_
 
 export const revalidateStructure = (task, structure) => axios.post(API_URLS.PREPARE_TASK + task, structure);
 
-export const saveStructure = task => axios.post(API_URLS.SAVE_TASK + `/${task}`);
+export const saveStructure = task => axios.post(API_URLS.SAVE_TASK, { task });
 
-export const getSavedTask = task => axios.get(API_URLS.SAVE_TASK);
+export const getSavedTask = page => axios.get(urlConverter(API_URLS.SAVE_TASK, null, { page }));
 
-export const getSavedTaskContent = task => axios.get(API_URLS.SAVE_TASK + `/${task}`);
+export const getSavedTaskContent = task => axios.get(`${API_URLS.SAVE_TASK}/${task}`);
+
+export const deleteSavedTaskContent = task => axios.delete(`${API_URLS.SAVE_TASK}/${task}`);
+
+export const getSavedTaskPage = () => axios.get(API_URLS.SAVE_TASK_COUNT);

@@ -35,3 +35,11 @@ export const addSavedTaskContent = (task, content) => ({
   type: CONST.ADD_TASK_CONTENT, task, content,
 });
 
+export const addSavedTaskPages = pages => ({
+  type: CONST.ADD_SAVED_TASK_PAGES, pages,
+});
+
+export const deleteSavedTaskPages = task => ({
+  type: CONST.DELETE_SAVED_TASK_PAGES, task,
+});
+

@@ -6,7 +6,9 @@ import history from '../base/history';
 import {
   IndexPage,
   ValidatePage,
-  ResultPage } from './components';
+  ResultPage,
+  SavedTaskPage,
+} from './components';
 import { NotFoundPage } from '../components';
 import { URLS } from '../config';
 import Main from './Layout';
@@ -31,6 +33,7 @@ export default (
           <Route exact path={URLS.INDEX} component={IndexPage} />
           <Route exact path={URLS.VALIDATE} component={ValidatePage} />
           <Route exact path={URLS.RESULT} component={ResultPage} />
+          <Route exact path={URLS.SAVED_TASK} component={SavedTaskPage} />
           <Route path="*" component={NotFoundPage} />
         </Switch>
       </Main>

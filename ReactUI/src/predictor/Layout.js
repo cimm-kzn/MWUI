@@ -1,27 +1,74 @@
-import React from 'react';
-import { Tabs, Icon } from 'antd';
+import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import { Icon, Menu } from 'antd';
+import { withRouter } from 'react-router';
+import styled from 'styled-components';
 import { MarvinEditorView, PageStepsView, LoaderView, ErrorView } from '../base/wrapper';
 import { MainLayout } from '../components';
-import { SavedTaskPage } from './components';
+import { URLS } from '../config';
+import { SAGA_INIT_CONSTANTS } from './core/constants';
 
-const TabPlane = Tabs.TabPane;
 
-const Main = ({ children }) => (
-  <MainLayout>
-    <MarvinEditorView />
-    <LoaderView />
-    <ErrorView />
-    <Tabs defaultActiveKey="1">
-      <TabPlane tab={<span><Icon type="file-add" />Create task</span>} key="1">
-        <PageStepsView />
-        {children}
-      </TabPlane>
-      <TabPlane tab={<span><Icon type="file-add" />Saved tasks</span>} key="2">
-        <SavedTaskPage />
-      </TabPlane>
-      <TabPlane />
-    </Tabs>
-  </MainLayout>
-);
+const Content = styled.div`
+  margin-top: 20px;
+`;
 
-export default Main;
+class Main extends Component {
+  constructor(props) {
+    super(props);
+    this.handleMenuClick = this.handleMenuClick.bind(this);
+  }
+  componentDidMount() {
+    const { initConstants } = this.props;
+    initConstants();
+  }
+
+  handleMenuClick({ key }) {
+    const { history } = this.props;
+    if (key === 'create') {
+      history.push(URLS.INDEX);
+    } else {
+      history.push(URLS.SAVED_TASK);
+    }
+  }
+
+  render() {
+    const { children, location } = this.props;
+
+    const activeKey = (location.pathname === URLS.SAVED_TASK) ? 'saved' : 'create';
+
+    return (
+      <MainLayout>
+        <MarvinEditorView />
+        <LoaderView />
+        <ErrorView />
+        <Menu
+          onClick={this.handleMenuClick}
+          selectedKeys={[activeKey]}
+          mode="horizontal"
+        >
+          <Menu.Item key="create">
+            <Icon type="file-add" />Create task
+          </Menu.Item>
+          <Menu.Item key="saved">
+            <Icon type="database" />Saved tasks
+          </Menu.Item>
+        </Menu>
+        <Content>
+          { activeKey === 'create' ?
+            <PageStepsView />
+            :
+            null
+          }
+          {children}
+        </Content>
+      </MainLayout>
+    );
+  }
+}
+
+const mapDispathToProps = dispatch => ({
+  initConstants: () => dispatch({ type: SAGA_INIT_CONSTANTS }),
+});
+
+export default withRouter(connect(null, mapDispathToProps)(Main));

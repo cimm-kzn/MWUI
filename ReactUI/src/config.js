@@ -14,6 +14,7 @@ const API = {
   MODELS: '/api/jobs/models',
   UPLOAD_FILE: '/api/jobs/task/upload',
   SAVE_TASK: '/api/jobs/saves',
+  SAVE_TASK_COUNT: '/api/jobs/saves/count',
   USER_AUTH: '/api/jobs/auth',
   MAGIC: '/api/jobs/magic',
   RECORDS: '/api/db/db/:database/:table/records',
@@ -42,6 +43,7 @@ const URLS = {
   INFO: '/info/',
   EDIT: '/edit/',
   SETTINGS: '/settings',
+  SAVED_TASK: '/saved-tasks',
 };
 
 const REPEATED_REQUESTS = {

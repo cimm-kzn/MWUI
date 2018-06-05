@@ -4,8 +4,7 @@
     "react",
     "es2017",
     "stage-2",
-    "babel-preset-env",
-    "babel-preset-react"
+    "babel-preset-env"
   ],
   "plugins": [
     ["import", { "libraryName": "antd", "style": "css" }]

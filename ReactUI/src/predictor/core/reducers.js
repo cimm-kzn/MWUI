@@ -54,17 +54,28 @@ const resultPageStructure = (state = [], action) => {
   }
 };
 
-const tasks = (state = [], action) => {
+const defaultState = {
+  tasks: [],
+  pages: {},
+};
+
+const savedTaskPageStructure = (state = defaultState, action) => {
   switch (action.type) {
     case CONST.ADD_TASKS:
-      return action.tasks;
+      return { ...state, tasks: action.tasks };
     case CONST.ADD_TASK_CONTENT:
-      return state.map((s) => {
+      const tasks = state.tasks.map((s) => {
         if (s.task === action.task) {
-          return { ...s, ...action.content };
+          return { ...s, structures: [...action.content] };
         }
         return s;
       });
+      return { ...state, tasks };
+    case CONST.ADD_SAVED_TASK_PAGES:
+      return { ...state, pages: action.pages };
+    case CONST.DELETE_SAVED_TASK_PAGES:
+      const newTasks = state.tasks.filter(s => s.task !== action.task);
+      return { ...state, tasks: newTasks };
     default:
       return state;
   }
@@ -72,7 +83,7 @@ const tasks = (state = [], action) => {
 
 
 export default combineReducers({
-  tasks,
+  savedTaskPageStructure,
   modal,
   models,
   additives,

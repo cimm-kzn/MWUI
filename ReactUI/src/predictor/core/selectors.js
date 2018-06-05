@@ -16,7 +16,9 @@ export const getMagic = state => state.magic;
 
 export const isLoading = state => state.request.loading;
 
-export const getTasks = state => state.tasks;
+export const getSavedTasks = state => state.savedTaskPageStructure.tasks;
+
+export const getSavedTasksPage = state => state.savedTaskPageStructure.pages;
 
 export const getStructuresValidatePage = createSelector(
   [getModels,

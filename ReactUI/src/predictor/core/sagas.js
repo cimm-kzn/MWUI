@@ -8,6 +8,8 @@ import {
   editStructureValidate,
   addTasksSavePage,
   addSavedTaskContent,
+  addSavedTaskPages,
+  deleteSavedTaskPages,
 } from './actions';
 import {
   modal,
@@ -75,12 +77,15 @@ function* revalidate() {
 // Validate Page
 function* initValidatePage() {
   const urlParams = yield getUrlParams();
-  const models = yield call(Request.getModels);
-  const additives = yield call(Request.getAdditives);
-  const magic = yield call(Request.getMagic);
   const task = yield call(repeatedRequests, Request.getSearchTask, urlParams.task);
   const structureAndBase64 = yield call(convertCmlToBase64Arr, task.data.structures);
   yield put(addStructuresValidate({ data: structureAndBase64, type: task.data.type }));
+}
+
+function* initConstants() {
+  const models = yield call(Request.getModels);
+  const additives = yield call(Request.getAdditives);
+  const magic = yield call(Request.getMagic);
   yield put(addAdditives(additives.data));
   yield put(addModels(models.data));
   yield put(addMagic(magic.data));
@@ -137,15 +142,34 @@ function* saveTask() {
 // Saved task page
 function* initSavedTasksPage() {
   const tasks = yield call(Request.getSavedTask);
+  const pages = yield call(Request.getSavedTaskPage);
   yield put(addTasksSavePage(tasks.data));
+  yield put(addSavedTaskPages(pages.data));
 }
 
 function* getSavedTaskContent({ task }) {
   const content = yield call(Request.getSavedTaskContent, task);
-  yield put(addSavedTaskContent(task, content.data));
+  const results = yield call(convertCmlToBase64Arr, content.data.structures);
+
+  console.log(results);
+
+  yield put(addSavedTaskContent(task, results));
+}
+
+function* deleteSavedTask({ task }) {
+  const deletedTask = yield call(Request.deleteSavedTaskContent, task);
+  yield put(deleteSavedTaskPages(deletedTask.data.task));
+}
+
+function* getSavesTasks({ page }) {
+  const tasks = yield call(Request.getSavedTask, page);
+  yield put(addTasksSavePage(tasks.data));
 }
 
 export function* sagas() {
+  // Init constants
+
+  yield takeEvery(CONST.SAGA_INIT_CONSTANTS, catchErrSaga, initConstants);
   // Index page
   yield takeEvery(CONST.SAGA_NEW_STRUCTURE, catchErrSaga, createNewStructure);
   yield takeEvery(CONST.SAGA_NEW_STRUCTURE_CALLBACK, catchErrSaga, createNewStructureCallback);
@@ -168,4 +192,6 @@ export function* sagas() {
   // Saved tasks page
   yield takeEvery(CONST.SAGA_INIT_SAVED_TASKS_PAGE, requestSaga, initSavedTasksPage);
   yield takeEvery(CONST.SAGA_INIT_TASK_CONTENT, requestSaga, getSavedTaskContent);
+  yield takeEvery(CONST.SAGA_DELETE_SAVED_TASK, requestSaga, deleteSavedTask);
+  yield takeEvery(CONST.SAGA_GET_SAVED_TASKS_FOR_PAGE, requestSaga, getSavesTasks);
 }
