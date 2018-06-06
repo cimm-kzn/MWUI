@@ -43,7 +43,6 @@ class SavedTask(DBAuthResource):
                           dict(code=403, message='user access deny. you do not have permission to this task'),
                           dict(code=404, message='invalid task id. perhaps this task has already been removed'),
                           dict(code=406, message='task status is invalid. only validation tasks acceptable')])
-    @marshal_with(TaskGetResponseFields.resource_fields)
     @request_arguments_parser(results_page)
     def get(self, task, page=None):
         """
@@ -53,12 +52,12 @@ class SavedTask(DBAuthResource):
         see /task/model get doc.
         """
         result = self.__get_task(task)
-        structures = marshal(result.data, TaskStructureFields.resource_fields)
+        structures = result.data
         if page:
             structures = structures[RESULTS_PER_PAGE * (page - 1): RESULTS_PER_PAGE * page]
 
-        return dict(task=task, status=TaskStatus.PROCESSED, date=result.date, type=result.type, user=current_user,
-                    structures=structures), 200
+        return dict(task=task, status=TaskStatus.PROCESSED.value, date=result.date.isoformat(), type=result.type.value,
+                    user=current_user.id, structures=structures), 200
 
     @swagger.operation(
         nickname='delete',
