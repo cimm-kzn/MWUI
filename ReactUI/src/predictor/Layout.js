@@ -4,6 +4,7 @@ import { Icon, Menu } from 'antd';
 import { withRouter } from 'react-router';
 import styled from 'styled-components';
 import { MarvinEditorView, PageStepsView, LoaderView, ErrorView } from '../base/wrapper';
+import { SkipLoader } from '../base/hocs';
 import { MainLayout } from '../components';
 import { URLS } from '../config';
 import { SAGA_INIT_CONSTANTS } from './core/constants';
@@ -47,8 +48,10 @@ class Main extends Component {
       activeKey = 'create';
     }
 
+    const SwithLoaders = (location.pathname === URLS.RESULT) ? SkipLoader : LoaderView;
+
     return (
-      <LoaderView>
+      <SwithLoaders>
         <MainLayout>
           <MarvinEditorView />
           <ErrorView />
@@ -76,7 +79,7 @@ class Main extends Component {
             {children}
           </Content>
         </MainLayout>
-      </LoaderView>
+      </SwithLoaders>
     );
   }
 }

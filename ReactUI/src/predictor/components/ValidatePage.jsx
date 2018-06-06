@@ -135,11 +135,9 @@ class ValidatePage extends Component {
 
   render() {
     const {
-      resultTask,
       editStructure,
       deleteStructure,
       structures,
-      checkStructure,
       history,
       form,
       loading,

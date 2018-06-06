@@ -7,6 +7,7 @@ import {
   addStructuresResult,
   editStructureValidate,
   addTasksSavePage,
+  addOneTaskSavePage,
   addSavedTaskContent,
   addSavedTaskPages,
   deleteSavedTaskPages,
@@ -34,6 +35,9 @@ import {
 } from '../../base/marvinAPI';
 import * as CONST from './constants';
 
+message.config({
+  top: 100,
+});
 
 // Index Page
 
@@ -89,6 +93,10 @@ function* initConstants() {
   const models = yield call(Request.getModels);
   const additives = yield call(Request.getAdditives);
   const magic = yield call(Request.getMagic);
+  const tasks = yield call(Request.getSavedTask);
+  const pages = yield call(Request.getSavedTaskPage);
+  yield put(addTasksSavePage(tasks.data));
+  yield put(addSavedTaskPages(pages.data));
   yield put(addAdditives(additives.data));
   yield put(addModels(models.data));
   yield put(addMagic(magic.data));
@@ -138,18 +146,13 @@ function* resultPageInit() {
 
 function* saveTask() {
   const urlParams = yield getUrlParams();
-  yield call(Request.saveStructure, urlParams.task);
+  const result = yield call(Request.saveStructure, urlParams.task);
+  yield put(addOneTaskSavePage(result.data));
   yield put(succsessRequest());
   yield call(message.success, 'Task saved');
 }
 
 // Saved task page
-function* initSavedTasksPage() {
-  const tasks = yield call(Request.getSavedTask);
-  const pages = yield call(Request.getSavedTaskPage);
-  yield put(addTasksSavePage(tasks.data));
-  yield put(addSavedTaskPages(pages.data));
-}
 
 function* getSavedTaskContent({ task }) {
   const content = yield call(Request.getSavedTaskContent, task);
@@ -191,7 +194,6 @@ function* saga1() {
   yield takeEvery(CONST.SAGA_SAVE_TASK, requestSagaContinius, saveTask);
 
   // Saved tasks page
-  yield takeEvery(CONST.SAGA_INIT_SAVED_TASKS_PAGE, requestSaga, initSavedTasksPage);
   yield takeEvery(CONST.SAGA_INIT_TASK_CONTENT, requestSaga, getSavedTaskContent);
   yield takeEvery(CONST.SAGA_DELETE_SAVED_TASK, requestSaga, deleteSavedTask);
   yield takeEvery(CONST.SAGA_GET_SAVED_TASKS_FOR_PAGE, requestSaga, getSavesTasks);
