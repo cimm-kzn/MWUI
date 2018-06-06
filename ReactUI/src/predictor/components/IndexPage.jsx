@@ -28,7 +28,7 @@ const IndexPage = ({
 }) => (
   <div>
     <Row gutter={24} style={{ marginBottom: '20px' }}>
-      <Col span={8}>
+      <Col span={4}>
         <Upload {...uploadProps}>
           <Button
             icon="upload"
@@ -37,7 +37,7 @@ const IndexPage = ({
           </Button>
         </Upload>
       </Col>
-      <Col offset={8} style={{ textAlign: 'right' }}>
+      <Col span={20} style={{ textAlign: 'right' }}>
         <Button
           type="dashed"
           onClick={createNewStructure}

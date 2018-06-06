@@ -81,8 +81,37 @@ const savedTaskPageStructure = (state = defaultState, action) => {
   }
 };
 
+const processTask = (state = [], action) => {
+  switch (action.type) {
+    case CONST.ADD_PROCESS:
+      return [
+        {
+          id: state.reduce((maxId, task) => Math.max(task.id, maxId), 0) + 1,
+          task: action.task,
+          date: new Date().toString(),
+          status: 'Processing',
+        },
+        ...state,
+      ];
+    case CONST.FINISH_PROCESS:
+      return state.map(item =>
+        (item.task === action.task ?
+          {
+            ...item,
+            status: 'Finished',
+          } :
+          item),
+      );
+    case CONST.DELETE_PROCESS:
+      return state.filter(s => s.task !== action.task);
+    default:
+      return state;
+  }
+};
+
 
 export default combineReducers({
+  processTask,
   savedTaskPageStructure,
   modal,
   models,

@@ -166,7 +166,7 @@ class ValidatePage extends Component {
           onSubmit={this.handleSubmit}
         >
           <Row style={{ paddingBottom: 38 }}>
-            <Col span={8}>
+            <Col span={4}>
               <Button
                 icon="left"
                 onClick={() => history.push(URLS.INDEX)}
@@ -174,7 +174,7 @@ class ValidatePage extends Component {
               Back
               </Button>
             </Col>
-            <Col span={8} offset={8} style={{ textAlign: 'right' }}>
+            <Col span={20} style={{ textAlign: 'right' }}>
               <Dropdown
                 overlay={menu}
                 disabled={!checkedIds.length}

@@ -1,4 +1,4 @@
-import { takeEvery, put, call } from 'redux-saga/effects';
+import { takeEvery, put, call, fork } from 'redux-saga/effects';
 import { message } from 'antd';
 import {
   addStructureIndex,
@@ -10,6 +10,8 @@ import {
   addSavedTaskContent,
   addSavedTaskPages,
   deleteSavedTaskPages,
+  addProcess,
+  finishProcess,
 } from './actions';
 import {
   modal,
@@ -22,7 +24,7 @@ import * as Request from '../../base/requests';
 import history from '../../base/history';
 import { URLS } from '../../config';
 import { getUrlParams, stringifyUrl } from '../../base/parseUrl';
-import { requestSaga, catchErrSaga, requestSagaContinius } from '../../base/sagas';
+import { requestSaga, catchErrSaga, requestSagaContinius, SSE_Listener, SSE } from '../../base/sagas';
 import {
   convertCmlToBase64,
   clearEditor,
@@ -32,14 +34,6 @@ import {
 } from '../../base/marvinAPI';
 import * as CONST from './constants';
 
-const eventSource = new EventSource('http://localhost:3000/api/jobs/subscribe/connect', { withCredentials: true });
-
-
-const listener = () => new Promise((resolve) => {
-  eventSource.onmessage = (e) => {
-    resolve(e.data);
-  };
-});
 
 // Index Page
 
@@ -75,8 +69,8 @@ function* createTaskIndex({ structures }) {
 // Revalidating
 
 function* revalidate() {
-  const taskID = yield call(listener);
-  const task = yield call(Request.getSearchTask, taskID);
+  const urlParams = yield getUrlParams();
+  const task = yield call(SSE_Listener, Request.getSearchTask, urlParams.task);
   const structureAndBase64 = yield call(convertCmlToBase64Arr, task.data.structures);
   yield put(addStructuresValidate({ data: structureAndBase64, type: task.data.type }));
 }
@@ -85,8 +79,8 @@ function* revalidate() {
 
 // Validate Page
 function* initValidatePage() {
-  const taskID = yield call(listener);
-  const task = yield call(Request.getSearchTask, taskID);
+  const urlParams = yield getUrlParams();
+  const task = yield call(SSE_Listener, Request.getSearchTask, urlParams.task);
   const structureAndBase64 = yield call(convertCmlToBase64Arr, task.data.structures);
   yield put(addStructuresValidate({ data: structureAndBase64, type: task.data.type }));
 }
@@ -123,6 +117,7 @@ function* deleteStructures({ structuresId }) {
 function* createResultTask({ data }) {
   const urlParams = yield getUrlParams();
   const response = yield call(Request.createResultTask, data, urlParams.task);
+  yield put(addProcess(response.data.task));
   yield call(history.push, stringifyUrl(URLS.RESULT, { task: response.data.task }));
 }
 
@@ -135,9 +130,9 @@ function* revalidateValidatePage({ data }) {
 
 // Result page
 function* resultPageInit() {
-  const taskID = yield call(listener);
-  const responce = yield call(Request.getResultTask, taskID);
-  const results = yield call(convertCmlToBase64Arr, responce.data.structures);
+  const urlParams = yield getUrlParams();
+  const task = yield call(SSE_Listener, Request.getResultTask, urlParams.task);
+  const results = yield call(convertCmlToBase64Arr, task.data.structures);
   yield put(addStructuresResult(results));
 }
 
@@ -159,9 +154,6 @@ function* initSavedTasksPage() {
 function* getSavedTaskContent({ task }) {
   const content = yield call(Request.getSavedTaskContent, task);
   const results = yield call(convertCmlToBase64Arr, content.data.structures);
-
-  console.log(results);
-
   yield put(addSavedTaskContent(task, results));
 }
 
@@ -175,7 +167,7 @@ function* getSavesTasks({ page }) {
   yield put(addTasksSavePage(tasks.data));
 }
 
-export function* sagas() {
+function* saga1() {
   // Init constants
 
   yield takeEvery(CONST.SAGA_INIT_CONSTANTS, catchErrSaga, initConstants);
@@ -203,4 +195,18 @@ export function* sagas() {
   yield takeEvery(CONST.SAGA_INIT_TASK_CONTENT, requestSaga, getSavedTaskContent);
   yield takeEvery(CONST.SAGA_DELETE_SAVED_TASK, requestSaga, deleteSavedTask);
   yield takeEvery(CONST.SAGA_GET_SAVED_TASKS_FOR_PAGE, requestSaga, getSavesTasks);
+}
+
+function* saga2() {
+  while (true) {
+    const taskID = yield call(SSE);
+    yield put(finishProcess(taskID));
+  }
+}
+
+export function* sagas() {
+  yield [
+    fork(saga1),
+    fork(saga2),
+  ];
 }
