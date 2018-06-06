@@ -3,12 +3,7 @@ import { Route, Switch, Router } from 'react-router';
 import { Provider } from 'react-redux';
 import store from './core/store';
 import history from '../base/history';
-import {
-  IndexPage,
-  ValidatePage,
-  ResultPage,
-  SavedTaskPage,
-} from './components';
+import * as Pages from './components';
 import { NotFoundPage } from '../components';
 import { URLS } from '../config';
 import Main from './Layout';
@@ -30,10 +25,11 @@ export default (
     <Router history={history}>
       <Main>
         <Switch>
-          <Route exact path={URLS.INDEX} component={IndexPage} />
-          <Route exact path={URLS.VALIDATE} component={ValidatePage} />
-          <Route exact path={URLS.RESULT} component={ResultPage} />
-          <Route exact path={URLS.SAVED_TASK} component={SavedTaskPage} />
+          <Route exact path={URLS.INDEX} component={Pages.IndexPage} />
+          <Route exact path={URLS.VALIDATE} component={Pages.ValidatePage} />
+          <Route exact path={URLS.RESULT} component={Pages.ResultPage} />
+          <Route exact path={URLS.SAVED_TASK} component={Pages.SavedTaskPage} />
+          <Route exact path={URLS.PROCESSING} component={Pages.ProcessingPage} />
           <Route path="*" component={NotFoundPage} />
         </Switch>
       </Main>

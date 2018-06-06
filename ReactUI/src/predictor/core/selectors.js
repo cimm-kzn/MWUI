@@ -20,6 +20,8 @@ export const getSavedTasks = state => state.savedTaskPageStructure.tasks;
 
 export const getSavedTasksPage = state => state.savedTaskPageStructure.pages;
 
+export const getProcess = state => state.processTask;
+
 export const getStructuresValidatePage = createSelector(
   [getModels,
     getAdditives,

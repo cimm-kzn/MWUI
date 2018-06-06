@@ -4,7 +4,7 @@ import * as Request from '../../base/requests';
 import history from '../../base/history';
 import { URLS } from '../../config';
 import { getUrlParams, stringifyUrl } from '../../base/parseUrl';
-import { repeatedRequests, requestSaga, catchErrSaga, requestSagaContinius } from '../../base/sagas';
+import { SSE_Listener, requestSaga, catchErrSaga, requestSagaContinius } from '../../base/sagas';
 import { convertCmlToBase64, clearEditor, exportCml, importCml, convertCmlToBase64Arr } from '../../base/marvinAPI';
 import {
   modal,
@@ -49,7 +49,7 @@ function* validateTask() {
   const urlParams = yield getUrlParams();
   const models = yield call(Request.getModels);
   const magic = yield call(Request.getMagic);
-  const task = yield call(repeatedRequests, Request.getSearchTask, urlParams.task);
+  const task = yield call(SSE_Listener, Request.getSearchTask, urlParams.task);
   const structureAndBase64 = yield call(convertCmlToBase64Arr, task.data.structures);
   yield put(addStructure({ data: structureAndBase64, type: task.data.type }));
   yield put(addModels(models.data));
@@ -86,7 +86,7 @@ function* createResultTask({ structure, selectModel }) {
 
 function* resultPage() {
   const urlParams = yield getUrlParams();
-  const responce = yield call(repeatedRequests, Request.getResultTask, urlParams.task);
+  const responce = yield call(SSE_Listener, Request.getResultTask, urlParams.task);
   const results = yield call(convertCmlToBase64Arr, responce.data.structures, { width: 700, height: 450, typeImg: 'image/png' });
   yield put(addResult(results));
 }
