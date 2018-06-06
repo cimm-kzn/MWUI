@@ -33,29 +33,31 @@ class Main extends Component {
     const { activeKey } = this.state;
 
     return (
-      <MainLayout style={{ paddingTop: '75px' }}>
-        <ErrorView />
-        <DBFormModalView />
-        <LoaderView />
-        <Tabs
-          defaultActiveKey="2"
-          onChange={this.changeTab}
-          {...tabs}
-        >
-          <TabPane tab={<span><Icon type="file-add" />Create</span>} key="1">
-            <CreatePage active={activeKey === '1'} />
-          </TabPane>
-          <TabPane tab={<span><Icon type="database" />List</span>} key="2">
-            <StructureListPage active={activeKey === '2'} />
-          </TabPane>
-          <TabPane tab={<span><Icon type="setting" />Settings</span>} key="3">
-            <SettingsPage active={activeKey === '3'} />
-          </TabPane>
-          <TabPane tab={<span><Icon type="info-circle-o" />Info</span>} key="4">
-            <InfoPage active={activeKey === '4'} />
-          </TabPane>
-        </Tabs>
-      </MainLayout>
+      <LoaderView>
+        <MainLayout>
+          <ErrorView />
+          <DBFormModalView />
+
+          <Tabs
+            defaultActiveKey="2"
+            onChange={this.changeTab}
+            {...tabs}
+          >
+            <TabPane tab={<span><Icon type="file-add" />Create</span>} key="1">
+              <CreatePage active={activeKey === '1'} />
+            </TabPane>
+            <TabPane tab={<span><Icon type="database" />List</span>} key="2">
+              <StructureListPage active={activeKey === '2'} />
+            </TabPane>
+            <TabPane tab={<span><Icon type="setting" />Settings</span>} key="3">
+              <SettingsPage active={activeKey === '3'} />
+            </TabPane>
+            <TabPane tab={<span><Icon type="info-circle-o" />Info</span>} key="4">
+              <InfoPage active={activeKey === '4'} />
+            </TabPane>
+          </Tabs>
+        </MainLayout>
+      </LoaderView>
     );
   }
 }

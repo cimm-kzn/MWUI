@@ -9,7 +9,7 @@ import {
   SAGA_INIT_RESULT_PAGE,
   SAGA_SAVE_TASK,
 } from '../core/constants';
-import { getResultPageStructure } from '../core/selectors';
+import { getResultPageStructure, isLoading } from '../core/selectors';
 
 const Conditions = styled.div`
   border: 1px dashed #1890ff;
@@ -34,9 +34,9 @@ class ResultPage extends Component {
   }
 
   render() {
-    const { results, history, saveTask } = this.props;
+    const { results, history, saveTask, loading } = this.props;
 
-    return results && (
+    return !loading && results.length && (
       <div>
         <Row style={{ paddingBottom: 38 }}>
           <Col span={8}>
@@ -110,6 +110,7 @@ ResultPage.defaultProps = {
 
 const mapStateToProps = state => ({
   results: getResultPageStructure(state),
+  loading: isLoading(state),
 });
 
 const mapDispatchToProps = dispatch => ({

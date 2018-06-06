@@ -27,6 +27,8 @@ class Main extends Component {
     const { history } = this.props;
     if (key === 'create') {
       history.push(URLS.INDEX);
+    } else if (key === 'processing') {
+      history.push(URLS.PROCESSING);
     } else {
       history.push(URLS.SAVED_TASK);
     }
@@ -35,34 +37,46 @@ class Main extends Component {
   render() {
     const { children, location } = this.props;
 
-    const activeKey = (location.pathname === URLS.SAVED_TASK) ? 'saved' : 'create';
+    let activeKey = '';
+
+    if (location.pathname === URLS.SAVED_TASK) {
+      activeKey = 'saved';
+    } else if (location.pathname === URLS.PROCESSING) {
+      activeKey = 'processing';
+    } else {
+      activeKey = 'create';
+    }
 
     return (
-      <MainLayout>
-        <MarvinEditorView />
-        <LoaderView />
-        <ErrorView />
-        <Menu
-          onClick={this.handleMenuClick}
-          selectedKeys={[activeKey]}
-          mode="horizontal"
-        >
-          <Menu.Item key="create">
-            <Icon type="file-add" />Create task
-          </Menu.Item>
-          <Menu.Item key="saved">
-            <Icon type="database" />Saved tasks
-          </Menu.Item>
-        </Menu>
-        <Content>
-          { activeKey === 'create' ?
-            <PageStepsView />
-            :
-            null
-          }
-          {children}
-        </Content>
-      </MainLayout>
+      <LoaderView>
+        <MainLayout>
+          <MarvinEditorView />
+          <ErrorView />
+          <Menu
+            onClick={this.handleMenuClick}
+            selectedKeys={[activeKey]}
+            mode="horizontal"
+          >
+            <Menu.Item key="create">
+              <Icon type="file-add" />Create task
+            </Menu.Item>
+            <Menu.Item key="processing">
+              <Icon type="sync" />Processing
+            </Menu.Item>
+            <Menu.Item key="saved">
+              <Icon type="database" />Saved tasks
+            </Menu.Item>
+          </Menu>
+          <Content>
+            { activeKey === 'create' ?
+              <PageStepsView />
+              :
+              null
+            }
+            {children}
+          </Content>
+        </MainLayout>
+      </LoaderView>
     );
   }
 }

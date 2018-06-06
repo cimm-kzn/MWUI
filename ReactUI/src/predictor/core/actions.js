@@ -43,3 +43,17 @@ export const deleteSavedTaskPages = task => ({
   type: CONST.DELETE_SAVED_TASK_PAGES, task,
 });
 
+// Process page
+
+export const addProcess = task => ({
+  type: CONST.ADD_PROCESS, task,
+});
+
+export const finishProcess = task => ({
+  type: CONST.FINISH_PROCESS, task,
+});
+
+export const deleteProcess = task => ({
+  type: CONST.DELETE_PROCESS, task,
+});
+

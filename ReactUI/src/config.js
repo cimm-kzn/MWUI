@@ -25,6 +25,7 @@ const API = {
   DB_FIELDS: '/api/db/db',
   USERS: '/api/db/users',
   WHOAMI: '/api/db/auth',
+  LISTENER: '/api/jobs/subscribe/connect',
 };
 
 const MODAL = {
@@ -44,6 +45,7 @@ const URLS = {
   EDIT: '/edit/',
   SETTINGS: '/settings',
   SAVED_TASK: '/saved-tasks',
+  PROCESSING: '/processing',
 };
 
 const REPEATED_REQUESTS = {
