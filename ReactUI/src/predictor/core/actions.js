@@ -31,6 +31,10 @@ export const addTasksSavePage = tasks => ({
   type: CONST.ADD_TASKS, tasks,
 });
 
+export const addOneTaskSavePage = task => ({
+  type: CONST.ADD_TASK, task,
+});
+
 export const addSavedTaskContent = (task, content) => ({
   type: CONST.ADD_TASK_CONTENT, task, content,
 });
@@ -51,9 +55,5 @@ export const addProcess = task => ({
 
 export const finishProcess = task => ({
   type: CONST.FINISH_PROCESS, task,
-});
-
-export const deleteProcess = task => ({
-  type: CONST.DELETE_PROCESS, task,
 });
 

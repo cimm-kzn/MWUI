@@ -5,11 +5,12 @@ import styled from 'styled-components';
 import { BackTop, Row, Col, Tabs, Button } from 'antd';
 import { ModalIncrease } from '../../components';
 import { URLS } from '../../config';
+import { getUrlParams } from '../../base/parseUrl';
 import {
   SAGA_INIT_RESULT_PAGE,
   SAGA_SAVE_TASK,
 } from '../core/constants';
-import { getResultPageStructure, isLoading } from '../core/selectors';
+import { getResultPageStructure, isLoading, getSavedTasks } from '../core/selectors';
 
 const Conditions = styled.div`
   border: 1px dashed #1890ff;
@@ -34,9 +35,11 @@ class ResultPage extends Component {
   }
 
   render() {
-    const { results, history, saveTask, loading } = this.props;
+    const { results, history, saveTask, loading, savedTasks } = this.props;
 
-    return !loading && results.length && (
+    const taskID = getUrlParams().task;
+
+    return !loading && (
       <div>
         <Row style={{ paddingBottom: 38 }}>
           <Col span={8}>
@@ -50,7 +53,7 @@ class ResultPage extends Component {
           <Col span={8} offset={8} style={{ textAlign: 'right' }}>
             <Button
               type="primary"
-              htmlType="submit"
+              disabled={savedTasks.some(s => s.task === taskID)}
               icon="save"
               onClick={saveTask}
             >
@@ -76,7 +79,7 @@ class ResultPage extends Component {
                 (<div>
                   <p>Additives:</p>
                   {result.additives.map((item, i) =>
-                    <p key={i + item.name}>{item.name} : { item.amount }</p>
+                    <p key={i + item.name}>{item.name} : { item.amount }</p>,
                   )}
                 </div>)
                 }
@@ -111,6 +114,7 @@ ResultPage.defaultProps = {
 const mapStateToProps = state => ({
   results: getResultPageStructure(state),
   loading: isLoading(state),
+  savedTasks: getSavedTasks(state),
 });
 
 const mapDispatchToProps = dispatch => ({

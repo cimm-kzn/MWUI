@@ -63,6 +63,9 @@ const savedTaskPageStructure = (state = defaultState, action) => {
   switch (action.type) {
     case CONST.ADD_TASKS:
       return { ...state, tasks: action.tasks };
+    case CONST.ADD_TASK:
+      const allTask = state.tasks.concat([action.task]);
+      return { ...state, tasks: allTask };
     case CONST.ADD_TASK_CONTENT:
       const tasks = state.tasks.map((s) => {
         if (s.task === action.task) {
