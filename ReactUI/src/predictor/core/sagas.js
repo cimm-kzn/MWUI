@@ -70,6 +70,11 @@ function* createTaskIndex({ structures }) {
   yield call(history.push, stringifyUrl(URLS.VALIDATE, { task: response.data.task }));
 }
 
+function* uploadFile({ formData }) {
+  const response = yield call(Request.uploadFile, formData);
+  yield call(history.push, stringifyUrl(URLS.VALIDATE, { task: response.data.task }));
+}
+
 // Revalidating
 
 function* revalidate() {
@@ -170,6 +175,11 @@ function* getSavesTasks({ page }) {
   yield put(addTasksSavePage(tasks.data));
 }
 
+function* skipRedirectPage() {
+  yield put(succsessRequest());
+  yield call(history.push, URLS.PROCESSING);
+}
+
 function* saga1() {
   // Init constants
 
@@ -179,7 +189,8 @@ function* saga1() {
   yield takeEvery(CONST.SAGA_NEW_STRUCTURE_CALLBACK, catchErrSaga, createNewStructureCallback);
   yield takeEvery(CONST.SAGA_EDIT_STRUCTURE_INDEX, catchErrSaga, editSelectStructure);
   yield takeEvery(CONST.SAGA_EDIT_STRUCTURE_INDEX_CALLBACK, catchErrSaga, editSelectStructureCallback);
-  yield takeEvery(CONST.SAGA_CREATE_TASK_INDEX, requestSagaContinius, createTaskIndex);
+  yield takeEvery(CONST.SAGA_CREATE_TASK_INDEX, catchErrSaga, createTaskIndex);
+  yield takeEvery(CONST.SAGA_UPLOAD_FILE, catchErrSaga, uploadFile);
 
   // Validate Page
   yield takeEvery(CONST.SAGA_INIT_VALIDATE_PAGE, requestSaga, initValidatePage);
@@ -191,7 +202,8 @@ function* saga1() {
 
   // Result Page
   yield takeEvery(CONST.SAGA_INIT_RESULT_PAGE, requestSaga, resultPageInit);
-  yield takeEvery(CONST.SAGA_SAVE_TASK, requestSagaContinius, saveTask);
+  yield takeEvery(CONST.SAGA_SAVE_TASK, catchErrSaga, saveTask);
+  yield takeEvery(CONST.SAGA_SKIP_REDIRECT_PROCESSING, catchErrSaga, skipRedirectPage);
 
   // Saved tasks page
   yield takeEvery(CONST.SAGA_INIT_TASK_CONTENT, requestSaga, getSavedTaskContent);

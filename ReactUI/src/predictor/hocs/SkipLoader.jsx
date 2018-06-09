@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Spin, Button } from 'antd';
 import styled from 'styled-components';
-import { succsessRequest } from '../actions';
+import { SAGA_SKIP_REDIRECT_PROCESSING } from '../core/constants';
 
 
 const TipWpap = styled.div`
@@ -53,7 +53,7 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-  skip: () => dispatch(succsessRequest()),
+  skip: () => dispatch({ type: SAGA_SKIP_REDIRECT_PROCESSING }),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(SkipLoader);

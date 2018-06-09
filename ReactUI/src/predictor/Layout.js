@@ -4,7 +4,7 @@ import { Icon, Menu } from 'antd';
 import { withRouter } from 'react-router';
 import styled from 'styled-components';
 import { MarvinEditorView, PageStepsView, LoaderView, ErrorView } from '../base/wrapper';
-import { SkipLoader } from '../base/hocs';
+import { SkipLoader } from './hocs';
 import { MainLayout } from '../components';
 import { URLS } from '../config';
 import { SAGA_INIT_CONSTANTS } from './core/constants';

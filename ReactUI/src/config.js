@@ -12,7 +12,7 @@ const API = {
   RESULT: '/api/jobs/process/',
   ADDITIVES: '/api/jobs/additives',
   MODELS: '/api/jobs/models',
-  UPLOAD_FILE: '/api/jobs/task/upload',
+  UPLOAD_FILE: '/api/jobs/upload',
   SAVE_TASK: '/api/jobs/saves',
   SAVE_TASK_COUNT: '/api/jobs/saves/count',
   USER_AUTH: '/api/jobs/auth',

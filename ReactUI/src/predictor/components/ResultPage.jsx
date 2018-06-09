@@ -39,7 +39,7 @@ class ResultPage extends Component {
 
     const taskID = getUrlParams().task;
 
-    return !loading && results.length && (
+    return !loading && (
       <div>
         <Row style={{ paddingBottom: 38 }}>
           <Col span={8}>
