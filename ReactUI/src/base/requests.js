@@ -32,3 +32,8 @@ export const getSavedTaskContent = task => axios.get(`${API_URLS.SAVE_TASK}/${ta
 export const deleteSavedTaskContent = task => axios.delete(`${API_URLS.SAVE_TASK}/${task}`);
 
 export const getSavedTaskPage = () => axios.get(API_URLS.SAVE_TASK_COUNT);
+
+export const uploadFile = formData => axios.post(API_URLS.UPLOAD_FILE, formData, {
+  headers: {
+    'Content-Type': 'multipart/form-data'
+  }});

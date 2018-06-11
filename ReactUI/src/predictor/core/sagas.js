@@ -7,6 +7,7 @@ import {
   addStructuresResult,
   editStructureValidate,
   addTasksSavePage,
+  addOneTaskSavePage,
   addSavedTaskContent,
   addSavedTaskPages,
   deleteSavedTaskPages,
@@ -34,6 +35,9 @@ import {
 } from '../../base/marvinAPI';
 import * as CONST from './constants';
 
+message.config({
+  top: 100,
+});
 
 // Index Page
 
@@ -66,6 +70,11 @@ function* createTaskIndex({ structures }) {
   yield call(history.push, stringifyUrl(URLS.VALIDATE, { task: response.data.task }));
 }
 
+function* uploadFile({ formData }) {
+  const response = yield call(Request.uploadFile, formData);
+  yield call(history.push, stringifyUrl(URLS.VALIDATE, { task: response.data.task }));
+}
+
 // Revalidating
 
 function* revalidate() {
@@ -89,6 +98,10 @@ function* initConstants() {
   const models = yield call(Request.getModels);
   const additives = yield call(Request.getAdditives);
   const magic = yield call(Request.getMagic);
+  const tasks = yield call(Request.getSavedTask);
+  const pages = yield call(Request.getSavedTaskPage);
+  yield put(addTasksSavePage(tasks.data));
+  yield put(addSavedTaskPages(pages.data));
   yield put(addAdditives(additives.data));
   yield put(addModels(models.data));
   yield put(addMagic(magic.data));
@@ -138,18 +151,13 @@ function* resultPageInit() {
 
 function* saveTask() {
   const urlParams = yield getUrlParams();
-  yield call(Request.saveStructure, urlParams.task);
+  const result = yield call(Request.saveStructure, urlParams.task);
+  yield put(addOneTaskSavePage(result.data));
   yield put(succsessRequest());
   yield call(message.success, 'Task saved');
 }
 
 // Saved task page
-function* initSavedTasksPage() {
-  const tasks = yield call(Request.getSavedTask);
-  const pages = yield call(Request.getSavedTaskPage);
-  yield put(addTasksSavePage(tasks.data));
-  yield put(addSavedTaskPages(pages.data));
-}
 
 function* getSavedTaskContent({ task }) {
   const content = yield call(Request.getSavedTaskContent, task);
@@ -167,6 +175,11 @@ function* getSavesTasks({ page }) {
   yield put(addTasksSavePage(tasks.data));
 }
 
+function* skipRedirectPage() {
+  yield put(succsessRequest());
+  yield call(history.push, URLS.PROCESSING);
+}
+
 function* saga1() {
   // Init constants
 
@@ -176,7 +189,8 @@ function* saga1() {
   yield takeEvery(CONST.SAGA_NEW_STRUCTURE_CALLBACK, catchErrSaga, createNewStructureCallback);
   yield takeEvery(CONST.SAGA_EDIT_STRUCTURE_INDEX, catchErrSaga, editSelectStructure);
   yield takeEvery(CONST.SAGA_EDIT_STRUCTURE_INDEX_CALLBACK, catchErrSaga, editSelectStructureCallback);
-  yield takeEvery(CONST.SAGA_CREATE_TASK_INDEX, requestSagaContinius, createTaskIndex);
+  yield takeEvery(CONST.SAGA_CREATE_TASK_INDEX, catchErrSaga, createTaskIndex);
+  yield takeEvery(CONST.SAGA_UPLOAD_FILE, catchErrSaga, uploadFile);
 
   // Validate Page
   yield takeEvery(CONST.SAGA_INIT_VALIDATE_PAGE, requestSaga, initValidatePage);
@@ -188,10 +202,10 @@ function* saga1() {
 
   // Result Page
   yield takeEvery(CONST.SAGA_INIT_RESULT_PAGE, requestSaga, resultPageInit);
-  yield takeEvery(CONST.SAGA_SAVE_TASK, requestSagaContinius, saveTask);
+  yield takeEvery(CONST.SAGA_SAVE_TASK, catchErrSaga, saveTask);
+  yield takeEvery(CONST.SAGA_SKIP_REDIRECT_PROCESSING, catchErrSaga, skipRedirectPage);
 
   // Saved tasks page
-  yield takeEvery(CONST.SAGA_INIT_SAVED_TASKS_PAGE, requestSaga, initSavedTasksPage);
   yield takeEvery(CONST.SAGA_INIT_TASK_CONTENT, requestSaga, getSavedTaskContent);
   yield takeEvery(CONST.SAGA_DELETE_SAVED_TASK, requestSaga, deleteSavedTask);
   yield takeEvery(CONST.SAGA_GET_SAVED_TASKS_FOR_PAGE, requestSaga, getSavesTasks);

@@ -86,9 +86,16 @@ class ValidatePage extends Component {
   }
 
   revalidateData() {
-    const { form, revalidatePage } = this.props;
+    const { form, revalidatePage, structures } = this.props;
     const values = form.getFieldsValue();
-    const data = this.serialiseFieldsData(values);
+    const serializeData = this.serialiseFieldsData(values);
+    const data = serializeData.map((sD) => {
+      const { data } = structures.filter(s => s.structure === sD.structure)[0];
+      return {
+        ...sD,
+        data,
+      };
+    });
     revalidatePage(data);
   }
 
@@ -135,11 +142,9 @@ class ValidatePage extends Component {
 
   render() {
     const {
-      resultTask,
       editStructure,
       deleteStructure,
       structures,
-      checkStructure,
       history,
       form,
       loading,

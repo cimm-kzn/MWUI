@@ -5,7 +5,6 @@ import styled from 'styled-components';
 import { Table, Popconfirm, Button, Pagination } from 'antd';
 import { getSavedTasks, getSavedTasksPage } from '../core/selectors';
 import {
-  SAGA_INIT_SAVED_TASKS_PAGE,
   SAGA_INIT_TASK_CONTENT,
   SAGA_DELETE_SAVED_TASK,
   SAGA_GET_SAVED_TASKS_FOR_PAGE,
@@ -21,11 +20,6 @@ class SavedTaskPage extends Component {
   constructor(props) {
     super(props);
     this.getTableExpandedContent = this.getTableExpandedContent.bind(this);
-  }
-
-  componentDidMount() {
-    const { initPage } = this.props;
-    initPage();
   }
 
   getTableExpandedContent(record) {
@@ -85,7 +79,6 @@ class SavedTaskPage extends Component {
 
 SavedTaskPage.propTypes = {
   tasks: PropTypes.array,
-  initPage: PropTypes.func.isRequired,
   initExpandedContent: PropTypes.func.isRequired,
   deleteTask: PropTypes.func.isRequired,
 };
@@ -96,7 +89,6 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-  initPage: () => dispatch({ type: SAGA_INIT_SAVED_TASKS_PAGE }),
   initExpandedContent: task => dispatch({ type: SAGA_INIT_TASK_CONTENT, task }),
   deleteTask: task => dispatch({ type: SAGA_DELETE_SAVED_TASK, task }),
   changePage: page => dispatch({ type: SAGA_GET_SAVED_TASKS_FOR_PAGE, page }),
