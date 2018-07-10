@@ -10,6 +10,8 @@ import NotFoundPage from './NotFoundPage';
 import ConditionList from './ConditionList';
 import SliderEditor from './SliderInput';
 import SlidersSelect from './SlidersSelect';
+import ListResult from './ListResult';
+import TableResult from './TableResult';
 
 export {
   DynamicForm,
@@ -24,4 +26,6 @@ export {
   ConditionList,
   SliderEditor,
   SlidersSelect,
+  TableResult,
+  ListResult,
 };
