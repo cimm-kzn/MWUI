@@ -18,11 +18,16 @@ TableResult.proptypes = {
 
 TableResult.defaultProps = {
   props: PropTypes.object,
-  data: null,
-  fields: {
+  data: [],
+  fields: [{
+    title: 'Key',
+    dataIndex: 'key',
     key: 'key',
-    value: 'value',
-  },
+  }, {
+    title: 'Value',
+    dataIndex: 'value',
+    key: 'value',
+  }],
 };
 
 export default TableResult;
