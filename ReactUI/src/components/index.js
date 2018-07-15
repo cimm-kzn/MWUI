@@ -12,6 +12,9 @@ import SliderEditor from './SliderInput';
 import SlidersSelect from './SlidersSelect';
 import ListResult from './ListResult';
 import TableResult from './TableResult';
+import ChartResult from './ChartResult';
+import JsonTabs from './JsonTabs';
+
 
 export {
   DynamicForm,
@@ -28,4 +31,6 @@ export {
   SlidersSelect,
   TableResult,
   ListResult,
+  ChartResult,
+  JsonTabs,
 };
