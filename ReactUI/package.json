@@ -18,7 +18,8 @@
     "query-string": "^5.0.1",
     "prop-types": "^15.6.0",
     "reselect": "^3.0.1",
-    "recharts": "^1.0.1"
+    "recharts": "^1.0.1",
+    "lodash": "^4.17.10"
   },
   "devDependencies": {
     "@storybook/addon-actions": "^4.0.0-alpha.3",
