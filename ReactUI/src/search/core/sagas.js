@@ -76,7 +76,7 @@ function* revalidateTask(action) {
 function* createResultTask({ structure, selectModel }) {
   const urlParams = getUrlParams();
   const { data } = structure;
-  const response = yield call(Request.createResultTask, { models: [{ model: selectModel.model, data }], structure: 1 }, urlParams.task);
+  const response = yield call(Request.createResultTask, [{ models: [{ model: selectModel.model, data }], structure: 1 }], urlParams.task);
   const resultTaskId = response.data.task;
   yield put(addHistory({ resultTaskId, selectModel, validateTaskId: urlParams.task, ...structure }));
   yield call(history.push, stringifyUrl(URLS.RESULT, { task: resultTaskId }));
@@ -108,14 +108,14 @@ function* editTaskStructure() {
 
 export function* sagas() {
   // Index Page
-  yield takeEvery(SAGA_CREATE_TASK, requestSagaContinius, createTask);
+  yield takeEvery(SAGA_CREATE_TASK, requestSaga, createTask);
   yield takeEvery(SAGA_DRAW_STRUCTURE, catchErrSaga, drawStructure);
   yield takeEvery(SAGA_DRAW_STRUCTURE_CALLBACK, catchErrSaga, drawStructureCallback);
   // Validate Page
   yield takeEvery(SAGA_INIT_VALIDATE_PAGE, requestSaga, validateTask);
   yield takeEvery(SAGA_EDIT_STRUCTURE_1, catchErrSaga, editStructureR);
   yield takeEvery(SAGA_REVALIDATE_TASK, requestSaga, revalidateTask);
-  yield takeEvery(SAGA_CREATE_RESULT_TASK, requestSagaContinius, createResultTask);
+  yield takeEvery(SAGA_CREATE_RESULT_TASK, requestSaga, createResultTask);
   yield takeEvery(SAGA_EDIT_STRUCTURE_CALLBACK, catchErrSaga, editStructureCallback);
   // Result Page
   yield takeEvery(SAGA_INIT_RESULT_PAGE, requestSaga, resultPage);
