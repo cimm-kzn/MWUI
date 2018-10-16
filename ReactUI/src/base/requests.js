@@ -3,7 +3,7 @@ import { API_URLS } from '../config';
 import { urlConverter } from './functions';
 
 
-export const createSearchTask = data => axios.post(API_URLS.CREATE_TASK_SEARCH, data);
+export const createSearchTask = data => axios.post(API_URLS.CREATE_TASK_SEARCH, [data]);
 
 export const createModellingTask = data => axios.post(API_URLS.CREATE_TASK_PREDICTOR, data);
 
