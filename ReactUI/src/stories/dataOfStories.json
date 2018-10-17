@@ -1,0 +1,81 @@
+{
+  "list": {
+    "tabName": "Лист",
+    "data": [
+      { "key": "аммиак", "value": "токсичен" },
+      { "key": "толуол", "value": "токсичен" },
+      { "key": "бензол", "value": "токсичен" },
+      { "key": "хлороформ", "value": "токсичен" },
+      { "key": "метан", "value": "токсичен" },
+      { "key": "этанол", "value": "токсичен" },
+      { "key": "ацетобензол", "value": "токсичен" },
+      { "key": "анилин", "value": "токсичен" },
+      { "key": "бутан", "value": "токсичен" },
+      { "key": "этилбензол", "value": "токсичен" }
+    ],
+    "props": {
+      "bordered": true,
+      "grid": {
+        "gutter": 16,
+        "column": 2
+      },
+      "split": true,
+      "pagination": false,
+      "header": "Токсичность веществ"
+    },
+    "fields": {
+      "key": "key",
+      "value": "value"
+    }
+  },
+  "table": {
+    "tabName": "Таблица",
+    "data": [
+      { "key": "аммиак", "value": "токсичен" },
+      { "key": "толуол", "value": "токсичен" },
+      { "key": "бензол", "value": "токсичен" },
+      { "key": "хлороформ", "value": "токсичен" },
+      { "key": "метан", "value": "токсичен" },
+      { "key": "этанол", "value": "токсичен" },
+      { "key": "ацетобензол", "value": "токсичен" },
+      { "key": "анилин", "value": "токсичен" },
+      { "key": "бутан", "value": "токсичен" },
+      { "key": "этилбензол", "value": "токсичен" }
+    ],
+    "props": {
+      
+    },
+    "fields": [{
+      "title": "Key",
+      "dataIndex": "key"
+    }, {
+      "title": "Value",
+      "dataIndex": "value"
+    }]
+  },
+  "charts": {
+    "tabName": "График",
+    "data": [
+      { "key": 1, "value": 12 },
+      { "key": 2, "value": 22 },
+      { "key": 3, "value": 34 },
+      { "key": 4, "value": 22 },
+      { "key": 5, "value": 40 },
+      { "key": 6, "value": 45 },
+      { "key": 7, "value": 50 },
+      { "key": 8, "value": 60 },
+      { "key": 9, "value": 65 },
+      { "key": 10, "value": 88 }
+    ],
+    "props": {
+
+    },
+    "fields": [{
+      "title": "Key",
+      "dataIndex": "key"
+    }, {
+      "title": "Value",
+      "dataIndex": "value"
+    }]
+  }
+}

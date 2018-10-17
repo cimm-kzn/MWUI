@@ -10,22 +10,26 @@ const API = {
   CREATE_STRUCTUSE: '/structures',
   PREPARE_TASK: '/api/jobs/prepare/',
   RESULT: '/api/jobs/process/',
-  ADDITIVES: '/api/jobs/additives',
-  MODELS: '/api/jobs/models',
+  ADDITIVES: '/api/jobs/additives/',
+  MODELS: '/api/jobs/models/',
   UPLOAD_FILE: '/api/jobs/upload',
-  SAVE_TASK: '/api/jobs/saves',
-  SAVE_TASK_COUNT: '/api/jobs/saves/count',
+  SAVE_TASK: '/api/jobs/saves/',
+  SAVE_TASK_COUNT: '/api/jobs/saves/pages/count',
   USER_AUTH: '/api/jobs/auth',
   MAGIC: '/api/jobs/magic',
-  RECORDS: '/api/db/db/:database/:table/records',
-  PAGES: '/api/db/db/:database/:table/size',
-  RECORDS_METADATA: '/api/db/db/:database/:table/records/:metadata',
+
+
+
+
+  RECORDS: '/api/db/:database/:table/records',
+  PAGES: '/api/db/:database/:table/count',
+  RECORDS_METADATA: '/api/db/:database/:table/:metadata',
   CREATE_TASK_DBFORM: '/api/db/validate',
   SERVER_SIDE_SUBSCRIBE: '/api/jobs/subscribe/connect',
-  DB_FIELDS: '/api/db/db',
-  USERS: '/api/db/users',
-  WHOAMI: '/api/db/auth',
-  LISTENER: '/api/jobs/subscribe/connect',
+  DB_FIELDS: '/api/db/',
+  USERS: '/api/db/users/',
+  WHOAMI: '/api/auth/',
+  LISTENER: '/api/jobs/subscribe',
 };
 
 const MODAL = {
