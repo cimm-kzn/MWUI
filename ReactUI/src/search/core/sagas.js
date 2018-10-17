@@ -76,7 +76,7 @@ function* revalidateTask(action) {
 function* createResultTask({ structure, selectModel }) {
   const urlParams = getUrlParams();
   const { data } = structure;
-  const response = yield call(Request.createResultTask, [{ models: [{ model: selectModel.model, data }], structure: 1 }], urlParams.task);
+  const response = yield call(Request.createResultTask, [{ models: [{ model: selectModel.model }], structure: 1 }], urlParams.task);
   const resultTaskId = response.data.task;
   yield put(addHistory({ resultTaskId, selectModel, validateTaskId: urlParams.task, ...structure }));
   yield call(history.push, stringifyUrl(URLS.RESULT, { task: resultTaskId }));
