@@ -1,6 +1,5 @@
-import React, { createElement } from 'react';
+import React from 'react';
 import { Tabs } from 'antd';
-import { forIn, uniqueId } from 'lodash';
 import ListResult from './ListResult';
 import TableResult from './TableResult';
 import ChartResult from './ChartResult';
@@ -15,7 +14,7 @@ const components = {
 
 const Comp = ({ keys, data }) => {
   const Component = components[keys];
-  return <Component key={uniqueId('comp_')} {...data} />;
+  return <Component key={`comp_${Math.random()}`} {...data} />;
 };
 
 const JsonTabs = ({ json }) => (
