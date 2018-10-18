@@ -15,12 +15,8 @@ const API = {
   UPLOAD_FILE: '/api/jobs/upload',
   SAVE_TASK: '/api/jobs/saves/',
   SAVE_TASK_COUNT: '/api/jobs/saves/pages/count',
-  USER_AUTH: '/api/jobs/auth',
+  USER_AUTH: '/api/auth/',
   MAGIC: '/api/jobs/magic',
-
-
-
-
   RECORDS: '/api/db/:database/:table/records',
   PAGES: '/api/db/:database/:table/count',
   RECORDS_METADATA: '/api/db/:database/:table/:metadata',
