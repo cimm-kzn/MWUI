@@ -14,11 +14,11 @@ const DatabaseSelect = ({ form, formComponent, database }) => {
   return (
     <FormItem label="Database">
       {getFieldDecorator('database', {
-        initialValue: database && database[0].id,
+        initialValue: database && database[0].name,
       })(
         <Select placeholder="choose..">
           {database && database.map((field, i) =>
-            <Option key={i} value={field.id}>{field.name}</Option>,
+            <Option key={i} value={field.name}>{field.name}</Option>,
           )}
         </Select>,
       )}

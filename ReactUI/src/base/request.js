@@ -25,7 +25,7 @@ function prepareUrl(template, base, getParams = null) {
 }
 
 const Request = (apiUrl) => {
-  const get = url => (params, getParams) => { console.log(prepareUrl(url, params, getParams)); return axios.get(prepareUrl(url, params, getParams)); };
+  const get = url => (params, getParams) => axios.get(prepareUrl(url, params, getParams));
 
   const set = url => (params, data = null) => axios.post(prepareUrl(url, params), data);
 

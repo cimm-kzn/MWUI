@@ -38,7 +38,7 @@ function* initStructureListPage({ full }) {
 }
 
 function* getRecordsByUser({ full, user, database, table }) {
-  const data = yield call(Request.tableMetadataForMe.get, { database, table });
+  const data = yield call(full ? Request.tableDataForMe.get : Request.tableMetadataForMe.get, { database, table });
   const pages = yield call(Request.tablePageAndCountForUser.get, { database, table, user });
   const structures = yield call(convertCmlToBase64Arr, data.data);
   yield put(addStructures(structures));

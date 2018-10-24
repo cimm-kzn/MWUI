@@ -8,7 +8,7 @@ const PaginationComp = ({ pages, ...rest }) => (
   <div>
     <Pagination
       pageSize={15}
-      total={pages && pages.data}
+      total={pages && pages.total}
       {...rest}
     />
   </div>
