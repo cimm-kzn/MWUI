@@ -18,7 +18,7 @@ const DatabaseSelect = ({ form, formComponent, users }) => {
       })(
         <Select placeholder="choose..">
           {users && users.map(user =>
-            <Option key={user.name} value={user.user}>{user.name}</Option>,
+            <Option key={user.name} value={user.id}>{user.name}</Option>,
           )}
         </Select>,
       )}
