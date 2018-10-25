@@ -7,8 +7,8 @@ import { getPages } from '../core/selectors';
 const PaginationComp = ({ pages, ...rest }) => (
   <div>
     <Pagination
-      pageSize={15}
-      total={pages && pages.data}
+      pageSize={pages && pages.size}
+      total={pages && pages.total}
       {...rest}
     />
   </div>

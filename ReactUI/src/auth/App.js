@@ -21,7 +21,7 @@ class NormalLoginForm extends React.Component {
     e.preventDefault();
     this.props.form.validateFields((err, values) => {
       if (!err) {
-        axios.post(API_URLS.USER_AUTH, { user: values.email, password: values.password }, { withCredentials: true })
+        axios.post(API_URLS.USER_AUTH, { email: values.email, password: values.password }, { withCredentials: true })
           .then(() => {
             message.success('Ok! You log in');
           })
