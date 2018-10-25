@@ -39,7 +39,7 @@ export const getConditionsByMetadata = createSelector(
   ],
   (modal, structures, magic) => {
     if(modal.visible && structures){
-      const data = structures.filter(struct => struct.metadata === modal.structure.metadata)[0];
+      const data = structures.filter(struct => struct.metadata === modal.structure.record)[0];
       const additives = Serialize.additivesOfType(data.additives, magic);
       return { ...data, ...additives };
     }

@@ -65,17 +65,17 @@ class StructureListPage extends Component {
     this.setState({ expand: !expand });
   }
 
-  deleteStructure(metadata) {
+  deleteStructure(record) {
     const { deleteStructure, form } = this.props;
     form.validateFields((err, { database, table, user }) => {
-      deleteStructure({ database, table, user, metadata });
+      deleteStructure({ database, table, user, record });
     });
   }
 
-  editStructure(metadata, data) {
+  editStructure(record, data) {
     const { editStructure, form } = this.props;
     form.validateFields((err, { database, table }) => {
-      editStructure({ database, table, data, metadata });
+      editStructure({ database, table, data, record });
     });
   }
 

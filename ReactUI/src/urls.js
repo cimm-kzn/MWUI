@@ -15,7 +15,7 @@ export const API_URL = {
   tablePageAndCountForMe: '/api/db/{database}/{table}/pages/count',
   tablePageMetadateForMe: '/api/db/users/{database}/{table}/pages/{page}',
   tablePageDataForMe: '/api/db/{database}/{table}/pages/{page}/full',
-  tableMetadateForMeToRecord: '/api/db/{database}/{table}/{record}',
+  tableDataRecord: '/api/db/{database}/{table}/{record}',
   additives: '/api/jobs/additives/',
   magic: '/api/jobs/magic',
   models: '/api/jobs/models/',

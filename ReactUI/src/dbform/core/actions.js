@@ -13,16 +13,16 @@ export const addStructures = structures => ({
   type: ADD_STRUCTURES, structures,
 });
 
-export const addStructureMetadata = (metadata, data) => ({
-  type: ADD_STRUCTURE, metadata, data,
+export const addStructureRecord = (record, data) => ({
+  type: ADD_STRUCTURE, record, data,
 });
 
-export const deleteStructure = metadata => ({
-  type: DELETE_STRUCTURE, metadata,
+export const deleteStructure = record => ({
+  type: DELETE_STRUCTURE, record,
 });
 
-export const editStructure = (metadata, data) => ({
-  type: EDIT_STRUCTURE, metadata, data,
+export const editStructure = (record, data) => ({
+  type: EDIT_STRUCTURE, record, data,
 });
 
 export const addSettings = settings => ({

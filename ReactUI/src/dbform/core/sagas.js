@@ -1,9 +1,8 @@
 import { takeEvery, call, put } from 'redux-saga/effects';
 import { message } from 'antd';
 import Request from '../../base/request';
-import { getAdditives, getMagic } from '../../base/requests';
 import { addAdditives, addMagic, succsessRequest, modal } from '../../base/actions';
-import { addStructures, deleteStructure, addStructureMetadata, editStructure, addDBFields, addUsers, addPages } from './actions';
+import { addStructures, deleteStructure, addStructureRecord, editStructure, addDBFields, addUsers, addPages } from './actions';
 import { catchErrSaga, requestSaga, requestSagaContinius, repeatedRequests } from '../../base/sagas';
 import { convertCmlToBase64Arr, exportCml, importCml, convertCmlToBase64 } from '../../base/marvinAPI';
 import {
@@ -20,7 +19,7 @@ import { MARVIN_EDITOR_IS_EMPTY } from '../../config';
 
 function* initStructureListPage({ full }) {
   const fields = yield call(Request.listOfDatabases.get);
-  let users = yield call(Request.listOfUsers.get);
+  const users = yield call(Request.listOfUsers.get);
   const me = yield call(Request.authorization.get);
   const additives = yield call(Request.additives.get);
   const magic = yield call(Request.magic.get);
@@ -37,8 +36,8 @@ function* initStructureListPage({ full }) {
   });
 }
 
-function* getRecordsByUser({ full, user, database, table }) {
-  const data = yield call(full ? Request.tableDataForMe.get : Request.tableMetadataForMe.get, { database, table });
+function* getRecordsByUser({ full, user, database, table, page }) {
+  const data = yield call(full ? Request.tablePageDataForUser.get : Request.tablePageMetadateForUser.get, { database, table, page, user });
   const pages = yield call(Request.tablePageAndCountForUser.get, { database, table, user });
   const structures = yield call(convertCmlToBase64Arr, data.data);
   yield put(addStructures(structures));
@@ -62,43 +61,43 @@ function* addNewStructure({ conditions }) {
   // yield put({ type: SAGA_ADD_STRUCTURE_AFTER_VALIDATE, database, table, task });
 }
 
-function* deleteStructureInList({ database, table, metadata }) {
-  // yield call(Structures.delete, { database, table, metadata });
-  // yield put(deleteStructure(metadata));
-  // yield message.success('Delete structure');
+function* deleteStructureInList({ database, table, record }) {
+  yield call(Request.tableDataRecord.del, { database, table, record });
+  yield put(deleteStructure(record));
+  yield message.success('Delete structure');
 }
 
-function* editStructureModal({ data, database, table, metadata }) {
-  // if (!data) {
-  //   const structMeta = yield call(Structures.get, { database, table, metadata });
-  //   yield put(addStructureMetadata(metadata, structMeta.data));
-  //   yield importCml(structMeta.data.data);
-  // } else {
-  //   yield importCml(data);
-  // }
-  //
-  // yield put(modal(true, null, { metadata, database, table }));
+function* editStructureModal({ data, database, table, record }) {
+  if (!data) {
+    const structMeta = yield call(Request.tableDataRecord.get, { database, table, record });
+    yield put(addStructureRecord(record, structMeta.data));
+    yield importCml(structMeta.data.data);
+  } else {
+    yield importCml(data);
+  }
+
+  yield put(modal(true, null, { record, database, table }));
 }
 
 function* editStructureModalOnOk({ conditions, structure }) {
-  // const { metadata, database, table } = structure;
-  //
-  // const data = yield call(exportCml);
-  // if (data === MARVIN_EDITOR_IS_EMPTY) {
-  //   throw new Error('Structure is empty!');
-  // }
-  // const response = yield call(Structures.validate, { data, ...conditions });
-  // const task = response.data.task;
-  // yield put({ type: SAGA_EDIT_STRUCTURE_AFTER_VALIDATE, database, table, task, metadata });
+  const { metadata, database, table } = structure;
+
+  const data = yield call(exportCml);
+  if (data === MARVIN_EDITOR_IS_EMPTY) {
+    throw new Error('Structure is empty!');
+  }
+  const response = yield call(Request.tableDataRecord.set, { data, ...conditions });
+  const task = response.data.task;
+  yield put({ type: SAGA_EDIT_STRUCTURE_AFTER_VALIDATE, database, table, task, metadata });
 }
 
-function* requestEditStructure({ database, table, task, metadata }) {
-  // const structure = yield call(repeatedRequests, Structures.edit, { task, database, table, metadata });
-  // const base64 = yield call(convertCmlToBase64, structure.data.data);
-  // yield put(editStructure(metadata, { ...structure.data, base64 }));
-  // yield put(modal(false));
-  // yield put(succsessRequest());
-  // yield message.success('Update structure');
+function* requestEditStructure({ database, table, task, record }) {
+  const structure = yield call(repeatedRequests, Request.tableDataRecord.set, { task, database, table, record });
+  const base64 = yield call(convertCmlToBase64, structure.data.data);
+  yield put(editStructure(record, { ...structure.data, base64 }));
+  yield put(modal(false));
+  yield put(succsessRequest());
+  yield message.success('Update structure');
 }
 
 

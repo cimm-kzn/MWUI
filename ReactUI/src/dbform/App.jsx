@@ -16,6 +16,7 @@ import 'antd/lib/layout/style/index.css';
 import 'antd/lib/spin/style/index.css';
 import 'antd/lib/row/style/css';
 import 'antd/lib/col/style/css';
+import 'antd/lib/drawer/style/css';
 
 export default (
   <Provider store={store}>
