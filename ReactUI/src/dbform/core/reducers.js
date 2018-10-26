@@ -28,7 +28,7 @@ export const structures = (state = [], action) => {
   switch (action.type) {
     case ADD_STRUCTURE:
       return state.map((data) => {
-        if (data.metadata === action.metadata) {
+        if (data.record === action.record) {
           return {
             ...data,
             ...action.data,
@@ -42,14 +42,14 @@ export const structures = (state = [], action) => {
 
     case EDIT_STRUCTURE:
       return state.map(data =>
-        (data.metadata === action.metadata ?
+        (data.record === action.record ?
           action.data :
           data),
       );
 
     case DELETE_STRUCTURE:
       return state.filter(structure =>
-        structure.metadata !== action.metadata,
+        structure.record !== action.record,
       );
 
     default:
