@@ -45,20 +45,20 @@ function* getRecordsByUser({ full, user, database, table, page }) {
 }
 
 function* requestAddNewStructure({ task, database, table }) {
-  // yield call(repeatedRequests, Structures.add, { task, database, table });
-  // yield put(succsessRequest());
-  // yield message.success('Add structure');
+  yield call(repeatedRequests, Request.tableMetadataForMe.set, { database, table }, { task });
+  yield put(succsessRequest());
+  yield message.success('Add structure');
 }
 
 function* addNewStructure({ conditions }) {
-  // const data = yield call(exportCml, 'marvinjs_create_page');
-  // if (data === MARVIN_EDITOR_IS_EMPTY) {
-  //   throw new Error('Structure is empty!');
-  // }
-  // const response = yield call(Structures.validate, { data, ...conditions });
-  // const task = response.data.task;
-  // const { database, table } = conditions;
-  // yield put({ type: SAGA_ADD_STRUCTURE_AFTER_VALIDATE, database, table, task });
+  const data = yield call(exportCml, 'marvinjs_create_page');
+  if (data === MARVIN_EDITOR_IS_EMPTY) {
+    throw new Error('Structure is empty!');
+  }
+  const response = yield call(Request.createTask.set, { _type: 2 }, [{ data, ...conditions }]);
+  const task = response.data.task;
+  const { database, table } = conditions;
+  yield put({ type: SAGA_ADD_STRUCTURE_AFTER_VALIDATE, database, table, task });
 }
 
 function* deleteStructureInList({ database, table, record }) {
@@ -80,19 +80,19 @@ function* editStructureModal({ data, database, table, record }) {
 }
 
 function* editStructureModalOnOk({ conditions, structure }) {
-  const { metadata, database, table } = structure;
+  const { record, database, table } = structure;
 
   const data = yield call(exportCml);
   if (data === MARVIN_EDITOR_IS_EMPTY) {
     throw new Error('Structure is empty!');
   }
-  const response = yield call(Request.tableDataRecord.set, { data, ...conditions });
+  const response = yield call(Request.createTask.set, { _type: 2 }, [{ data, ...conditions }]);
   const task = response.data.task;
-  yield put({ type: SAGA_EDIT_STRUCTURE_AFTER_VALIDATE, database, table, task, metadata });
+  yield put({ type: SAGA_EDIT_STRUCTURE_AFTER_VALIDATE, database, table, task, record });
 }
 
 function* requestEditStructure({ database, table, task, record }) {
-  const structure = yield call(repeatedRequests, Request.tableDataRecord.set, { task, database, table, record });
+  const structure = yield call(repeatedRequests, Request.tableDataRecord.set, { database, table, record }, { task });
   const base64 = yield call(convertCmlToBase64, structure.data.data);
   yield put(editStructure(record, { ...structure.data, base64 }));
   yield put(modal(false));
