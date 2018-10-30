@@ -19,5 +19,6 @@ export const API_URL = {
   additives: '/api/jobs/additives/',
   magic: '/api/jobs/magic',
   models: '/api/jobs/models/',
+  createTask: '/api/jobs/create/{_type}',
 };
 
