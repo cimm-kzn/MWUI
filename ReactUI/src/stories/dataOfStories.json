@@ -1,35 +1,7 @@
-{
-  "list": {
-    "tabName": "Лист",
-    "data": [
-      { "key": "аммиак", "value": "токсичен" },
-      { "key": "толуол", "value": "токсичен" },
-      { "key": "бензол", "value": "токсичен" },
-      { "key": "хлороформ", "value": "токсичен" },
-      { "key": "метан", "value": "токсичен" },
-      { "key": "этанол", "value": "токсичен" },
-      { "key": "ацетобензол", "value": "токсичен" },
-      { "key": "анилин", "value": "токсичен" },
-      { "key": "бутан", "value": "токсичен" },
-      { "key": "этилбензол", "value": "токсичен" }
-    ],
-    "props": {
-      "bordered": true,
-      "grid": {
-        "gutter": 16,
-        "column": 2
-      },
-      "split": true,
-      "pagination": false,
-      "header": "Токсичность веществ"
-    },
-    "fields": {
-      "key": "key",
-      "value": "value"
-    }
-  },
-  "table": {
-    "tabName": "Таблица",
+[
+  {
+    "title": "Таблица",
+    "type": "table",
     "data": [
       { "key": "аммиак", "value": "токсичен" },
       { "key": "толуол", "value": "токсичен" },
@@ -53,8 +25,9 @@
       "dataIndex": "value"
     }]
   },
-  "charts": {
-    "tabName": "График",
+  {
+    "tipe": "charts",
+    "title": "График",
     "data": [
       { "key": 1, "value": 12 },
       { "key": 2, "value": 22 },
@@ -77,5 +50,8 @@
       "title": "Value",
       "dataIndex": "value"
     }]
-  }
-}
+  },{
+  "type": "image",
+  "title": "Image",
+  "data": "https://avatars.mds.yandex.net/get-pdb/245485/624f4367-a64b-449a-9b5f-68818ca48c9b/s1200"
+}]

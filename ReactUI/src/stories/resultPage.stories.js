@@ -2,46 +2,40 @@ import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { withKnobs, text, boolean, number, object } from '@storybook/addon-knobs/react';
 import { Form, Row, Col } from 'antd';
-import { ListResult, TableResult, ChartResult, JsonTabs } from '../components';
+import { ImageResult, TableResult, ChartResult, JsonTabs } from '../components';
 import json from './dataOfStories';
 import 'antd/dist/antd.min.css';
-
-const { list, table, charts } = json;
 
 const stories = storiesOf('Storybook Knobs', module);
 stories.addDecorator(withKnobs);
 
 stories
-  .add('List', () => {
+  .add('Image', () => {
     const props = {
-      data: object('data', list.data),
-      fields: object('fields', list.fields),
+      data: object('data', json[2].data),
       props: {
-        bordered: boolean('bordered', list.props.bordered),
-        grid: object('grid', list.props.grid),
-        split: boolean('split', list.props.split),
-        pagination: boolean('pagination', list.props.pagination),
-        header: text('header', list.props.header),
+        alt: text('alt', 'Not Found'),
+        size: number('size', 128),
       },
     };
 
-    object('json', list);
+    object('json', json[2]);
 
     return (
       <Row>
         <Col span={6} offset={9}>
-          <ListResult {...props} />
+          <ImageResult {...props} />
         </Col>
       </Row>
     );
   })
   .add('Table', () => {
     const props = {
-      data: object('data', table.data),
-      fields: object('fields', table.fields),
+      data: object('data', json[0].data),
+      fields: object('fields', json[0].fields),
     };
 
-    object('json', table);
+    object('json', json[0]);
 
     return (
       <Row>
@@ -53,17 +47,15 @@ stories
   })
   .add('Charts', () => {
     const props = {
-      data: object('data', charts.data),
-      fields: object('fields', charts.fields),
+      data: object('data', json[1].data),
+      fields: object('fields', json[1].fields),
     };
 
-    object('json', charts);
+    object('json', json[1]);
 
     return (
       <Row>
-        <Col span={6} offset={9}>
           <ChartResult {...props} />
-        </Col>
       </Row>
     );
   });
@@ -73,16 +65,12 @@ stories1.addDecorator(withKnobs);
 
 stories1
   .add('Компонент', () => {
-    // const props = {
-    //   data: object('data', charts.data),
-    //   fields: object('fields', charts.fields),
-    // };
 
     object('json', json);
 
     return (
       <Row>
-        <Col span={6} offset={9}>
+        <Col span={9} offset={6}>
           <JsonTabs json={json} />
         </Col>
       </Row>
