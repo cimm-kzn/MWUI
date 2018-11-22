@@ -15,6 +15,7 @@ import ChartResult from './ChartResult';
 import JsonTabs from './JsonTabs';
 import ImageResult from './ImageResult';
 import StructureResult from './StructureResult';
+import TextResult from './TextResult';
 
 
 export {
@@ -35,4 +36,5 @@ export {
   ChartResult,
   JsonTabs,
   StructureResult,
+  TextResult,
 };

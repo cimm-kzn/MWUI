@@ -3,21 +3,28 @@ import PropTypes from 'prop-types';
 import { Card } from 'antd';
 
 
-const ImageResult = ({ data, props }) => (<Card
+const ImageResult = ({ data, title, description, props }) => (<Card
   hoverable
-  style={{ width: 240 }}
+  title={title}
+  style={{ width: props.size }}
   cover={<img alt={props.alt} src={data} />}
-/>);
+>
+  <Card.Meta
+    description={description}
+  />
+</Card>);
 
 ImageResult.proptypes = {
   props: PropTypes.object,
   data: PropTypes.array,
+  title: PropTypes.string,
+  description: PropTypes.string,
 };
 
 ImageResult.defaultProps = {
   props: {
     alt: 'Not Found',
-    size: 128,
+    size: '100%',
   },
 };
 

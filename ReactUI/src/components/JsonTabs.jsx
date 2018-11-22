@@ -4,6 +4,7 @@ import ImageResult from './ImageResult';
 import TableResult from './TableResult';
 import ChartResult from './ChartResult';
 import StructureResult from './StructureResult';
+import TextResult from './TextResult';
 
 const TabPane = Tabs.TabPane;
 
@@ -12,6 +13,7 @@ const components = {
   charts: ChartResult,
   image: ImageResult,
   structure: StructureResult,
+  text: TextResult,
 };
 
 const Comp = ({ type, props }) => {
@@ -23,7 +25,7 @@ const JsonTabs = ({ json }) => (
   <Tabs defaultActiveKey="1">
     {
       json && json.map((item, key) =>
-        (<TabPane tab={item.title} key={`tab_${key}`}>
+        (<TabPane tab={item.tabName} key={`tab_${key}`}>
           <Comp type={item.type} props={item} />
         </TabPane>))
     }
