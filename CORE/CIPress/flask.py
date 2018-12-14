@@ -18,15 +18,23 @@
 #
 from flask import Flask
 from flask_bootstrap import Bootstrap
-from flask_misaka import Misaka
 from flask_nav import Nav, register_renderer
 from flask_resize import Resize
-from misaka import HTML_ESCAPE
-from .bootstrap import CIPressRenderer, NavBar, MisakaRenderer
-from .views import bp as main
+from importlib import import_module
+from pkgutil import iter_modules
+from pony.orm import Database
+from . import extensions
+from .bootstrap import CIPressRenderer, NavBar
+from .database import LazyEntityMeta
+from .views import bp
 
 
 def init(config):
+    db = Database()
+    LazyEntityMeta.attach(db, config['schema'])
+    db.bind(**config.pop('database'))
+    db.generate_mapping(create_tables=False)
+
     app = Flask(__name__)
     app.jinja_env.globals.update(copyright=config['copyright'], yandex=config.get('yandex'))
     app.config.update(config)
@@ -37,8 +45,13 @@ def init(config):
 
     Resize(app)
     Bootstrap(app)
-    Misaka(app, renderer=MisakaRenderer(flags=0 | HTML_ESCAPE), tables=True, autolink=True,
-           underline=True, math=True, strikethrough=True, superscript=True, footnotes=True)
 
-    app.register_blueprint(main, url_prefix='/')
+    app.register_blueprint(bp, url_prefix='/')
+
+    for module_info in iter_modules(extensions.__path__):
+        if not module_info.ispkg:
+            continue
+        module = import_module(f'CIPress.extensions.{module_info.name}')
+        if hasattr(module, 'bp'):
+            app.register_blueprint(module.bp)
     return app

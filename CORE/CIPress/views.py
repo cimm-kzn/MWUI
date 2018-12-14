@@ -16,12 +16,16 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program; if not, see <https://www.gnu.org/licenses/>.
 #
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, current_app
+from pony.orm import db_session, desc
+from .database import Carousel
 
 
 bp = Blueprint('main', __name__, template_folder='templates')
 
 
 @bp.route('/', methods=('GET',))
+@db_session
 def index():
-    return render_template('index.html', carousel=[])
+    carousel = Carousel[current_app.config['schema']].select().order_by(lambda x: desc(x.date)).limit(5)
+    return render_template('index.html', carousel=carousel)

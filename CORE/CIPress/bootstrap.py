@@ -21,13 +21,6 @@ from flask import current_app
 from flask_bootstrap.nav import BootstrapRenderer
 from flask_nav.elements import View, NavigationItem, Navbar
 from hashlib import sha1
-from misaka import HtmlRenderer
-
-
-class MisakaRenderer(HtmlRenderer):
-    @staticmethod
-    def table(content):
-        return f'<table class="table">{content}</table>'
 
 
 class LeftSubgroup(NavigationItem):

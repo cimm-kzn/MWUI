@@ -24,10 +24,14 @@ import sys
 sys.path.append('/home/stsouko/Private/bydlocoding/predictor/CORE')
 
 
-from CIPress import init
+from CIPress.flask import init
 
 
-config = {'DEBUG': True, 'logo': 'CIMM', 'RESIZE_URL': '/static/images', 'RESIZE_ROOT': 'upload/images',
-          'copyright': 'Kazan Chemoinformatics and Molecular Modeling Laboratory 2018'}
+config = {'DEBUG': True, 'logo': 'CIMM', 'RESIZE_URL': '/static/images',
+          'RESIZE_ROOT': 'CORE/CIPress/static/images',
+          'copyright': 'Kazan Chemoinformatics and Molecular Modeling Laboratory 2018',
+          'schema': 'cipress',
+          'database': {'provider': 'postgres', 'user': 'postgres', 'password': 'postgres',
+                       'host': 'localhost', 'database': 'postgres', 'port': 5432}}
 app = init(config)
 app.run('localhost', port=5000)
