@@ -10,10 +10,12 @@ import NotFoundPage from './NotFoundPage';
 import ConditionList from './ConditionList';
 import SliderEditor from './SliderInput';
 import SlidersSelect from './SlidersSelect';
-import ListResult from './ListResult';
 import TableResult from './TableResult';
 import ChartResult from './ChartResult';
 import JsonTabs from './JsonTabs';
+import ImageResult from './ImageResult';
+import StructureResult from './StructureResult';
+import TextResult from './TextResult';
 
 
 export {
@@ -29,8 +31,10 @@ export {
   ConditionList,
   SliderEditor,
   SlidersSelect,
+  ImageResult,
   TableResult,
-  ListResult,
   ChartResult,
   JsonTabs,
+  StructureResult,
+  TextResult,
 };
