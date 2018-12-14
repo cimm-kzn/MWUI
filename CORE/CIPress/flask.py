@@ -49,9 +49,8 @@ def init(config):
     app.register_blueprint(bp, url_prefix='/')
 
     for module_info in iter_modules(extensions.__path__):
-        if not module_info.ispkg:
-            continue
-        module = import_module(f'CIPress.extensions.{module_info.name}')
-        if hasattr(module, 'bp'):
-            app.register_blueprint(module.bp)
+        if module_info.ispkg:
+            module = import_module(f'CIPress.extensions.{module_info.name}')
+            if hasattr(module, 'bp'):
+                app.register_blueprint(module.bp)
     return app
