@@ -1,0 +1,28 @@
+{% extends 'layout.html' %}
+
+
+{% block page %}
+    <div class="row">
+        <div class="col-lg-8">
+            <img class="img-responsive"
+                 src="{{ post.banner and post.banner|resize('900x300', upscale=False) or '//placehold.it/900x300&text=No Graphical Abstract' }}"
+                 alt="">
+            <hr>
+
+            {{ post.body|markdown }}
+
+            {% for i in post.attachments %}
+                <div class="btn-group" role="group" aria-label="...">
+                    <a href="{{ url_for('.download', file=i.file, name=i.name) }}" class="btn btn-default">
+                        <span class="glyphicon glyphicon-save-file"/> {{ i.name|truncate(15, True) }}
+                    </a>
+                </div>
+            {% endfor %}
+
+            <hr>
+            <p><span class="glyphicon glyphicon-time"/> {{ post.date.strftime('%B %d, %Y at %H:%M') }}. <span class="glyphicon glyphicon-pencil"/> {{ post.author.full_name }}</p>
+        </div>
+
+        <div class="col-md-4"></div>
+    </div>
+{% endblock %}

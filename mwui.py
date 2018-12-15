@@ -30,8 +30,21 @@ from CIPress.flask import init
 config = {'DEBUG': True, 'logo': 'CIMM', 'RESIZE_URL': '/static/images',
           'RESIZE_ROOT': 'CORE/CIPress/static/images',
           'copyright': 'Kazan Chemoinformatics and Molecular Modeling Laboratory 2018',
-          'schema': 'cipress',
+          'schema': 'cipress', 'blog_posts': 10,
           'database': {'provider': 'postgres', 'user': 'postgres', 'password': 'postgres',
                        'host': 'localhost', 'database': 'postgres', 'port': 5432}}
+
+'''
+from pony.orm import Database, db_session
+import CIPress.extensions.main
+import CIPress.extensions.auth
+import CIPress.extensions.blog
+from CIPress.database import LazyEntityMeta
+db = Database()
+LazyEntityMeta.attach(db, 'cipress')
+db.bind(**config['database'])
+db.generate_mapping(create_tables=True)
+'''
+
 app = init(config)
 app.run('localhost', port=5000)

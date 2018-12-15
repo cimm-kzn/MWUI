@@ -44,15 +44,15 @@ class LazyEntityMeta(type):
     @classmethod
     def attach(mcs, db, schema=None):
         for name, lazy in mcs._entities.items():
-            if schema in lazy._databases:
+            if schema in lazy.databases:
                 raise RuntimeError('schema already attached')
-            attrs = lazy._attrs.copy()
+            attrs = lazy.attrs.copy()
             if schema:
                 if '_table_' in attrs:
                     attrs['_table_'] = (schema, attrs['_table_'])
                 else:
                     attrs['_table_'] = (schema, name)
-            lazy._databases[schema] = type(name, lazy._bases + (db.Entity,), attrs)
+            lazy.databases[schema] = type(name, lazy.bases + (db.Entity,), attrs)
 
     _entities = {}
     _reverse = defaultdict(dict)
@@ -68,9 +68,9 @@ class DoubleLink:
 
 class LazyEntity:
     def __init__(self, bases, attrs):
-        self._bases = bases
-        self._attrs = attrs
-        self._databases = {}
+        self.bases = bases
+        self.attrs = attrs
+        self.databases = {}
 
     def __getitem__(self, item):
-        return self._databases[item]
+        return self.databases[item]

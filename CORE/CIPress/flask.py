@@ -46,6 +46,8 @@ def init(config):
             module = import_module(f'CIPress.extensions.{module_info.name}')
             if hasattr(module, 'bp'):
                 app.register_blueprint(module.bp)
+                if hasattr(module, 'nav'):
+                    nav_bar.register(*module.nav)
 
     db = Database()
     LazyEntityMeta.attach(db, config['schema'])

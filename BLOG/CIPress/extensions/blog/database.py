@@ -17,5 +17,35 @@
 #  along with this program; if not, see <https://www.gnu.org/licenses/>.
 #
 from datetime import datetime
-from pony.orm import PrimaryKey, Required, Optional
-from ..database import LazyEntityMeta
+from pony.orm import PrimaryKey, Required, Optional, Set
+from ...database import LazyEntityMeta, DoubleLink
+
+
+class Post(metaclass=LazyEntityMeta):
+    id = PrimaryKey(int, auto=True)
+    title = Required(str)
+    body = Required(str)
+    glyph = Required(str, default='file')
+    date = Required(datetime, default=datetime.utcnow)
+    banner = Optional(str)
+    attachments = Set('Attachment')
+    slug = Optional(str, unique=True)
+    author = Required('Author')
+
+
+class Attachment(metaclass=LazyEntityMeta):
+    id = PrimaryKey(int, auto=True)
+    file = Required(str)
+    name = Required(str)
+    post = Required('Post')
+
+
+class Author(metaclass=LazyEntityMeta):
+    id = DoubleLink(PrimaryKey('User', reverse='blog'), Optional('Author'))
+    name = Required(str)
+    surname = Required(str)
+    posts = Set('Post')
+
+    @property
+    def full_name(self):
+        return f'{self.name} {self.surname}'

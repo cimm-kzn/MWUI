@@ -19,6 +19,7 @@
 #  MA 02110-1301, USA.
 #
 from flask_misaka import Misaka
+from flask_nav.elements import View
 from misaka import HtmlRenderer, HTML_ESCAPE
 from .views import bp
 
@@ -35,3 +36,4 @@ def init_misaka(state):
 
 
 bp.record_once(init_misaka)
+nav = (lambda: View('News', 'blog.blog', page=1),)

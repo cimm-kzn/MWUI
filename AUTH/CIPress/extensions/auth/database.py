@@ -20,7 +20,7 @@ from bcrypt import hashpw, gensalt
 from datetime import datetime
 from pony.orm import PrimaryKey, Required, Optional
 from uuid import UUID, uuid4
-from ..database import LazyEntityMeta
+from ...database import LazyEntityMeta
 
 
 class User(metaclass=LazyEntityMeta):

@@ -18,7 +18,8 @@
 #
 from flask import Blueprint, redirect, url_for, request
 from flask_login import login_user, logout_user, login_required, current_user
-from ..utils import is_safe_url
+from .database import User
+from ...utils import is_safe_url
 
 
 bp = Blueprint('auth', __name__)
