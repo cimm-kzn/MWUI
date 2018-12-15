@@ -16,20 +16,30 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program; if not, see <https://www.gnu.org/licenses/>.
 #
-from flask import Blueprint, redirect, url_for, request
+from flask import Blueprint, redirect, url_for, request, current_app
 from flask_login import login_user, logout_user, login_required, current_user
+from pony.orm import db_session
 from .database import User
-from ...utils import is_safe_url
+from .forms import RegistrationForm
+from ...utils import is_safe_url, send_mail
 
 
-bp = Blueprint('auth', __name__)
+bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
 @bp.route('/register', methods=('GET', 'POST'))
+@db_session
 def register():
-    if current_user.is_authenticated:
-        target = request.args.get('next')
-        if target and is_safe_url(target):
-            return redirect(target)
+    target = request.args.get('next')
+    if not target or not is_safe_url(target):
+        target = redirect(url_for('main.index'))
 
-        return redirect(url_for('main.index'))
+    if current_user.is_authenticated:
+        return target
+
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        u = User(email=form.email.data.lower(), password=form.password.data)
+        send_mail(mail_to=u.email, **current_app.config['registration_mail'])
+        login_user(u, remember=form.remember.data)
+        return target

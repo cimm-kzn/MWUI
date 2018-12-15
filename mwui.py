@@ -32,7 +32,10 @@ config = {'DEBUG': True, 'logo': 'CIMM', 'RESIZE_URL': '/static/images',
           'copyright': 'Kazan Chemoinformatics and Molecular Modeling Laboratory 2018',
           'schema': 'cipress', 'blog_posts': 10,
           'database': {'provider': 'postgres', 'user': 'postgres', 'password': 'postgres',
-                       'host': 'localhost', 'database': 'postgres', 'port': 5432}}
+                       'host': 'localhost', 'database': 'postgres', 'port': 5432},
+          'redis_mail': 'mail', 'redis': {},
+          'mail_from': ('CIMM', 'cimm@kpfu.ru'), 'mail_sign': ('inkey', 'signer'),
+          'registration_mail': {'message': 'welcome', 'subject': 'title'}}
 
 '''
 from pony.orm import Database, db_session

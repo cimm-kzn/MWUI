@@ -18,14 +18,15 @@
 #
 from bcrypt import hashpw, gensalt
 from datetime import datetime
+from flask_login import UserMixin
 from pony.orm import PrimaryKey, Required, Optional
 from uuid import UUID, uuid4
 from ...database import LazyEntityMeta
 
 
-class User(metaclass=LazyEntityMeta):
+class User(UserMixin, metaclass=LazyEntityMeta):
     id = PrimaryKey(int, auto=True)
-    active = Required(bool, default=True)
+    is_active = Required(bool, default=True, column='active')
     date = Required(datetime, default=datetime.utcnow)
     email = Required(str, unique=True)
     password = Required(bytes)
@@ -40,7 +41,7 @@ class User(metaclass=LazyEntityMeta):
     @classmethod
     def get_by_password(cls, email, password):
         x = cls.get(email=email)
-        if x and x.password == hashpw(password, x.password):
+        if x and x.password == hashpw(password.encode(), x.password):
             if x.restore:
                 x.restore = None
             return x
@@ -77,3 +78,10 @@ class User(metaclass=LazyEntityMeta):
 
     def change_token(self):
         self.token = self.get_unique_token()
+
+    def check_password(self, password):
+        return self.password == hashpw(password.encode(), self.password)
+
+    def get_id(self):
+        # need for flask-login
+        return self.token

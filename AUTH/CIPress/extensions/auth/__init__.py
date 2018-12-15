@@ -18,4 +18,23 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
+from flask import current_app
+from flask_login import LoginManager
+from pony.orm import db_session
+from .database import User
 from .views import bp
+
+
+@db_session
+def load_user(token):
+    return User[current_app.config['schema']].get_by_token(token)
+
+
+def init_login(state):
+    lm = LoginManager()
+    lm.login_view = 'auth.login'
+    lm.user_loader(load_user)
+    lm.init_app(state.app)
+
+
+bp.record_once(init_login)
