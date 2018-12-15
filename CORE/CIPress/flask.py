@@ -24,33 +24,31 @@ from importlib import import_module
 from pkgutil import iter_modules
 from pony.orm import Database
 from . import extensions
-from .bootstrap import CIPressRenderer, NavBar
+from .navbar import CIPressRenderer, NavBar
 from .database import LazyEntityMeta
-from .views import bp
 
 
 def init(config):
-    db = Database()
-    LazyEntityMeta.attach(db, config['schema'])
-    db.bind(**config.pop('database'))
-    db.generate_mapping(create_tables=False)
-
     app = Flask(__name__)
     app.jinja_env.globals.update(copyright=config['copyright'], yandex=config.get('yandex'))
     app.config.update(config)
-    nav = Nav(app)
+
     nav_bar = NavBar()
+    nav = Nav(app)
     nav.register_element('nav_bar', nav_bar)
     register_renderer(app, 'CIPress', CIPressRenderer)
 
     Resize(app)
     Bootstrap(app)
 
-    app.register_blueprint(bp, url_prefix='/')
-
     for module_info in iter_modules(extensions.__path__):
         if module_info.ispkg:
             module = import_module(f'CIPress.extensions.{module_info.name}')
             if hasattr(module, 'bp'):
                 app.register_blueprint(module.bp)
+
+    db = Database()
+    LazyEntityMeta.attach(db, config['schema'])
+    db.bind(**config.pop('database'))
+    db.generate_mapping(create_tables=False)
     return app

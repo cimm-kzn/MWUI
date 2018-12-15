@@ -17,8 +17,6 @@
 #  along with this program; if not, see <https://www.gnu.org/licenses/>.
 #
 from collections import defaultdict
-from datetime import datetime
-from pony.orm import Required, PrimaryKey
 
 
 class LazyEntityMeta(type):
@@ -76,11 +74,3 @@ class LazyEntity:
 
     def __getitem__(self, item):
         return self._databases[item]
-
-
-class Carousel(metaclass=LazyEntityMeta):
-    id = PrimaryKey(int, auto=True)
-    title = Required(str)
-    banner = Required(str)
-    url = Required(str)
-    date = Required(datetime, default=datetime.utcnow)
