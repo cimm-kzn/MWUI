@@ -68,7 +68,6 @@ class LoginForm(FlaskForm):
 class RegistrationForm(FlaskForm):
     email = StringField('Email', [DataRequired(), Email(), CheckUserFree()])
     password = PasswordField('Password', [DataRequired()])
-    remember = BooleanField('Remember me')
     submit_btn = SubmitField('Enter')
 
 
@@ -94,5 +93,4 @@ class ForgotPasswordForm(FlaskForm):
 
 class NewPasswordForm(FlaskForm):
     password = StringField('New Password', [DataRequired()])
-    remember = BooleanField('Remember me')
     submit_btn = SubmitField('Enter')

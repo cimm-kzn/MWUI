@@ -35,8 +35,7 @@ config = {'DEBUG': True, 'logo': 'CIMM', 'RESIZE_URL': '/static/images',
                        'host': 'localhost', 'database': 'postgres', 'port': 5432},
           'redis_mail': 'mail', 'redis': {},
           'mail_from': ('CIMM', 'cimm@kpfu.ru'), 'mail_sign': ('inkey', 'signer'),
-          'registration_mail': {'message': 'welcome', 'subject': 'title'},
-          'restore_success_mail': {'message': 'welcome', 'subject': 'title'},
+          'registration_mail': {'message': 'welcome %s', 'subject': 'title'},
           'restore_mail': {'message': 'welcome %s', 'subject': 'title'}}
 
 '''

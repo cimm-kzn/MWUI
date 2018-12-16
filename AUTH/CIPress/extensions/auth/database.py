@@ -26,7 +26,7 @@ from ...database import LazyEntityMeta
 
 class User(UserMixin, metaclass=LazyEntityMeta):
     id = PrimaryKey(int, auto=True)
-    is_active = Required(bool, default=True, column='active')
+    is_active = Required(bool, default=False, column='active')
     date = Required(datetime, default=datetime.utcnow)
     email = Required(str, unique=True)
     password = Required(bytes)
@@ -36,7 +36,8 @@ class User(UserMixin, metaclass=LazyEntityMeta):
     def __init__(self, email, password, **kwargs):
         password = hashpw(password.encode(), gensalt())
         token = self.get_unique_token()
-        super().__init__(email=email, password=password, token=token, **kwargs)
+        restore = self.get_restore_token()
+        super().__init__(email=email, password=password, token=token, restore=restore, **kwargs)
 
     @classmethod
     def get_by_password(cls, email, password):

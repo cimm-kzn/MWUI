@@ -28,45 +28,58 @@ from ...utils import is_safe_url, send_mail
 bp = Blueprint('auth', __name__, url_prefix='/auth', template_folder='templates')
 
 
-@bp.route('/register', methods=('GET', 'POST'))
-@db_session
-def register():
-    target = request.args.get('next')
-    if not target or not is_safe_url(target):
-        target = redirect(url_for('main.index'))
-    else:
-        target = redirect(target)
-
-    if current_user.is_authenticated:
-        return target
-
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        u = User[current_app.config['schema']](email=form.email.data.lower(), password=form.password.data)
-        login_user(u, remember=form.remember.data)
-        send_mail(mail_to=u.email, **current_app.config['registration_mail'])
-        return target
-    return render_template('auth/form.html', form=form, title='Registration')
-
-
 @bp.route('/login', methods=('GET', 'POST'))
 @db_session
 def login():
     target = request.args.get('next')
     if not target or not is_safe_url(target):
-        target = redirect(url_for('main.index'))
-    else:
-        target = redirect(target)
-
+        target = url_for('main.index')
     if current_user.is_authenticated:
-        return target
+        return redirect(target)
 
     form = LoginForm()
     if form.validate_on_submit():
         u = User[current_app.config['schema']].get(email=form.email.data.lower())
         login_user(u, remember=form.remember.data)
-        return target
+        return redirect(target)
     return render_template('auth/form.html', form=form, title='Authorization')
+
+
+@bp.route('/register', methods=('GET', 'POST'))
+@db_session
+def register():
+    target = request.args.get('next')
+    if not target or not is_safe_url(target):
+        target = url_for('main.index')
+    if current_user.is_authenticated:
+        return redirect(target)
+
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        u = User[current_app.config['schema']](email=form.email.data.lower(), password=form.password.data)
+        flash('Check email box for message with instructions')
+        message = current_app.config['registration_mail'].copy()
+        message['message'] = message['message'] % url_for('auth.confirm', token=u.restore, next=target)
+        send_mail(mail_to=u.email, **message)
+        return redirect(url_for('auth.login', next=target))
+    return render_template('auth/form.html', form=form, title='Registration')
+
+
+@bp.route('/confirm/<string:token>', methods=('GET',))
+@db_session
+def confirm(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
+
+    u = User[current_app.config['schema']].get(restore=token)
+    if u:
+        u.is_active = True
+        u.restore = None
+        target = request.args.get('next') or url_for('main.index')
+        flash('Email confirmed. Please login')
+        return redirect(url_for('auth.login', next=target))
+    flash('Invalid confirm token')
+    return redirect(url_for('auth.login'))
 
 
 @bp.route('/logout', methods=('GET', 'POST'))
@@ -75,7 +88,7 @@ def logout():
     form = LogoutForm()
     if form.validate_on_submit():
         logout_user()
-        return redirect(url_for('main.index'))
+        return redirect(url_for('auth.login'))
     return render_template('auth/form.html', form=form, title='Log out')
 
 
@@ -87,7 +100,7 @@ def logout_all():
     if form.validate_on_submit():
         current_user.change_token()
         logout_user()
-        return redirect(url_for('main.index'))
+        return redirect(url_for('auth.login'))
     return render_template('auth/form.html', form=form, title='Log out from all devices')
 
 
@@ -99,9 +112,31 @@ def change_password():
     if form.validate_on_submit():
         current_user.change_password(form.password.data)
         logout_user()
-        flash('Password changed. Please Login with new password')
+        flash('Password changed. Please login with new password')
         return redirect(url_for('auth.login'))
     return render_template('auth/form.html', form=form, title='Change password')
+
+
+@bp.route('/restore/', methods=('GET', 'POST'))
+@db_session
+def forgot():
+    target = request.args.get('next')
+    if not target or not is_safe_url(target):
+        target = url_for('main.index')
+    if current_user.is_authenticated:
+        return redirect(target)
+
+    form = ForgotPasswordForm()
+    if form.validate_on_submit():
+        u = User[current_app.config['schema']].get(email=form.email.data.lower())
+        if u:
+            token = u.get_restore_token()
+            message = current_app.config['restore_mail'].copy()
+            message['message'] = message['message'] % url_for('auth.restore', token=token, next=target)
+            send_mail(mail_to=u.email, **message)
+        flash('Check email box for message with instructions')
+        return redirect(url_for('auth.login'))
+    return render_template('auth/form.html', form=form, title='Restore access')
 
 
 @bp.route('/restore/<string:token>', methods=('GET', 'POST'))
@@ -116,28 +151,9 @@ def restore(token):
         if u:
             u.change_password(form.password.data)
             u.restore = None
-            login_user(u, remember=form.remember.data)
-            send_mail(mail_to=u.email, **current_app.config['restore_success_mail'])
-            return redirect(url_for('main.index'))
+            target = request.args.get('next') or url_for('main.index')
+            flash('Password changed. Please login with new password')
+            return redirect(url_for('auth.login', next=target))
         flash('Invalid restore token')
-        return redirect(url_for('auth.login'))
-    return render_template('auth/form.html', form=form, title='Restore access')
-
-
-@bp.route('/restore/', methods=('GET', 'POST'))
-@db_session
-def forgot():
-    if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
-
-    form = ForgotPasswordForm()
-    if form.validate_on_submit():
-        u = User[current_app.config['schema']].get(email=form.email.data.lower())
-        if u:
-            token = u.get_restore_token()
-            message = current_app.config['restore_mail'].copy()
-            message['message'] = message['message'] % token
-            send_mail(mail_to=u.email, **message)
-        flash('Check email box for message with instructions')
         return redirect(url_for('auth.login'))
     return render_template('auth/form.html', form=form, title='Restore access')
