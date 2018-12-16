@@ -16,44 +16,57 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program; if not, see <https://www.gnu.org/licenses/>.
 #
+from flask import current_app
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from pony.orm import db_session
 from wtforms import StringField, BooleanField, SubmitField, PasswordField, ValidationError
-from wtforms.validators import DataRequired, Email as ValidatorEmail
+from wtforms.validators import DataRequired, Email
 from .database import User
 
 
 class CheckUserExist:
     def __call__(self, form, field):
         with db_session:
-            if not User.exists(email=field.data.lower()):
+            if not User[current_app.config['schema']].exists(email=field.data.lower()):
                 raise ValidationError('User not found')
 
 
 class CheckUserFree:
     def __call__(self, form, field):
         with db_session:
-            if User.exists(email=field.data.lower()):
+            if User[current_app.config['schema']].exists(email=field.data.lower()):
                 raise ValidationError('User exist. Please Log in or if you forgot password use restore procedure')
 
 
 class VerifyPassword:
     def __call__(self, form, field):
         with db_session:
-            if not current_user.get_user().check_password(field.data):
+            if not current_user.check_password(field.data):
                 raise ValidationError('Bad password')
 
 
-class AuthForm(FlaskForm):
-    email = StringField('Email', [DataRequired(), ValidatorEmail(), CheckUserExist()])
-    password = PasswordField('Password', [DataRequired()])
+class CheckPassword:
+    def __init__(self, email_field):
+        self.email = email_field
+
+    def __call__(self, form, field):
+        email = form[self.email].data.lower()
+        if email:
+            with db_session:
+                if not User[current_app.config['schema']].get_by_password(email, field.data):
+                    raise ValidationError('Bad password')
+
+
+class LoginForm(FlaskForm):
+    email = StringField('Email', [DataRequired(), Email(), CheckUserExist()])
+    password = PasswordField('Password', [DataRequired(), CheckPassword('email')])
     remember = BooleanField('Remember me')
     submit_btn = SubmitField('Enter')
 
 
 class RegistrationForm(FlaskForm):
-    email = StringField('Email', [DataRequired(), ValidatorEmail(), CheckUserFree()])
+    email = StringField('Email', [DataRequired(), Email(), CheckUserFree()])
     password = PasswordField('Password', [DataRequired()])
     remember = BooleanField('Remember me')
     submit_btn = SubmitField('Enter')
@@ -75,10 +88,11 @@ class ChangePasswordForm(FlaskForm):
 
 
 class ForgotPasswordForm(FlaskForm):
-    email = StringField('Email', [DataRequired(), ValidatorEmail()])
+    email = StringField('Email', [DataRequired(), Email()])
     submit_btn = SubmitField('Send Email')
 
 
 class NewPasswordForm(FlaskForm):
     password = StringField('New Password', [DataRequired()])
+    remember = BooleanField('Remember me')
     submit_btn = SubmitField('Enter')

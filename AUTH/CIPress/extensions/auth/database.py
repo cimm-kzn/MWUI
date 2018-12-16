@@ -51,30 +51,22 @@ class User(UserMixin, metaclass=LazyEntityMeta):
         return cls.get(token=token)
 
     @classmethod
-    def get_by_restore(cls, email, restore, password):
-        x = cls.get(email=email)
-        if x and x.restore and x.restore == restore:
-            x.password = hashpw(password.encode(), gensalt())
-            x.token = cls.get_unique_token()
-            x.restore = None
-            return x
-
-    @classmethod
     def get_unique_token(cls):
         while True:
             x = uuid4()
             if not cls.exists(token=x):
                 return x
 
-    @classmethod
-    def get_restore_token(cls, email):
-        x = cls.get(email=email)
-        if x:
-            restore = x.restore = uuid4()
-            return restore
+    def get_restore_token(self):
+        while True:
+            x = uuid4()
+            if not self.exists(restore=x):
+                self.restore = x
+                return x
 
     def change_password(self, password):
         self.password = hashpw(password.encode(), gensalt())
+        self.token = self.get_unique_token()
 
     def change_token(self):
         self.token = self.get_unique_token()

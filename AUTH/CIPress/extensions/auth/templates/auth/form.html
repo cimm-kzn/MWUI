@@ -1,0 +1,12 @@
+{% extends 'layout.html' %}
+{% from 'bootstrap/wtf.html' import quick_form %}
+
+{% block page %}
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="col-lg-8">
+                {{ quick_form(form, form_type='horizaontal', button_map={'submit_button': 'primary'})}}
+            </div>
+        </div>
+    </div>
+{% endblock %}

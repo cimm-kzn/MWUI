@@ -18,11 +18,13 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-from flask import current_app
-from flask_login import LoginManager
+from flask import current_app, request
+from flask_login import LoginManager, current_user
+from flask_nav.elements import View, Subgroup, Separator
 from pony.orm import db_session
 from .database import User
 from .views import bp
+from ...utils import is_safe_url
 
 
 @db_session
@@ -38,3 +40,22 @@ def init_login(state):
 
 
 bp.record_once(init_login)
+
+
+def auth_nav():
+    if current_user.is_authenticated:
+        return Subgroup(current_user.email,
+                        View('Logout', 'auth.logout'), Separator(),
+                        View('Logout everywhere', 'auth.logout_all'),
+                        View('Change password', 'auth.change_password'))
+
+    target = request.args.get('next')
+    if not target or not is_safe_url(target):
+        target = request.path
+    return Subgroup('Login',
+                    View('Login', 'auth.login', next=target),
+                    View('Register', 'auth.register', next=target), Separator(),
+                    View('Forgot password?', 'auth.forgot'))
+
+
+nav = (auth_nav, True)
