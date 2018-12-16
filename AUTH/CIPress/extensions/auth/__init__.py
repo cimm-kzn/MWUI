@@ -55,7 +55,7 @@ def auth_nav():
     return Subgroup('Login',
                     View('Login', 'auth.login', next=target),
                     View('Register', 'auth.register', next=target), Separator(),
-                    View('Forgot password?', 'auth.forgot'))
+                    View('Forgot password?', 'auth.forgot', next=target))
 
 
 nav = (auth_nav, True)

@@ -75,18 +75,18 @@ class LogoutForm(FlaskForm):
     submit_btn = SubmitField('Log Out')
 
 
-class LogoutAllForm(FlaskForm):
+class CheckPasswordForm(FlaskForm):
     password = PasswordField('Password', [DataRequired(), VerifyPassword()])
     submit_btn = SubmitField('Log Out')
 
 
 class ChangePasswordForm(FlaskForm):
     old_password = PasswordField('Old Password', [DataRequired(), VerifyPassword()])
-    password = PasswordField('Password', [DataRequired()])
+    password = PasswordField('New Password', [DataRequired()])
     submit_btn = SubmitField('Change Password')
 
 
-class ForgotPasswordForm(FlaskForm):
+class EmailForm(FlaskForm):
     email = StringField('Email', [DataRequired(), Email()])
     submit_btn = SubmitField('Send Email')
 

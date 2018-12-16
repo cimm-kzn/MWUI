@@ -61,7 +61,7 @@ class User(UserMixin, metaclass=LazyEntityMeta):
     def get_restore_token(self):
         while True:
             x = uuid4()
-            if not self.exists(restore=x):
+            if not type(self).exists(restore=x):
                 self.restore = x
                 return x
 

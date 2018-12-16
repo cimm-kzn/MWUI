@@ -20,8 +20,8 @@ from flask import Blueprint, redirect, url_for, request, current_app, flash, ren
 from flask_login import login_user, logout_user, login_required, current_user
 from pony.orm import db_session
 from .database import User
-from .forms import (RegistrationForm, LoginForm, LogoutForm, LogoutAllForm, ChangePasswordForm, NewPasswordForm,
-                    ForgotPasswordForm)
+from .forms import (RegistrationForm, LoginForm, LogoutForm, CheckPasswordForm, ChangePasswordForm, NewPasswordForm,
+                    EmailForm)
 from ...utils import is_safe_url, send_mail
 
 
@@ -96,7 +96,7 @@ def logout():
 @db_session
 @login_required
 def logout_all():
-    form = LogoutAllForm()
+    form = CheckPasswordForm()
     if form.validate_on_submit():
         current_user.change_token()
         logout_user()
@@ -126,7 +126,7 @@ def forgot():
     if current_user.is_authenticated:
         return redirect(target)
 
-    form = ForgotPasswordForm()
+    form = EmailForm()
     if form.validate_on_submit():
         u = User[current_app.config['schema']].get(email=form.email.data.lower())
         if u:
