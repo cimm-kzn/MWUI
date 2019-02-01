@@ -1,0 +1,56 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+	<title>{{ config.title }}</title>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta charset="UTF-8">
+
+	<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500" rel="stylesheet">
+
+	<link href="{{ url_for('static', filename='css/bootstrap.css') }}" rel="stylesheet">
+	<link href="{{ url_for('static', filename='css/ionicons.css') }}" rel="stylesheet">
+	<link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+	<link href="{{ url_for('static', filename='css/responsive.css') }}" rel="stylesheet">
+</head>
+<body >
+	<header>
+		<div class="container-fluid position-relative no-side-padding">
+			<a href="/" class="logo"><img src="{{ url_for('static', filename='logo.png') }}" alt="Logo Image"></a>
+			<div class="menu-nav-icon" data-nav-menu="#main-menu"><i class="ion-navicon"></i></div>
+
+			<ul class="main-menu visible-on-click" id="main-menu">
+                <li><a href="{{ url_for('.index') }}">All</a></li>
+                {% for category in categories %}
+                <li><a href="{{ url_for('.index', category=category.id) }}">{{ category.name }}</a></li>
+                {% endfor %}
+			</ul>
+		</div>
+	</header>
+
+    {% block section %}{% endblock %}
+
+    <footer>
+		<div class="container">
+			<div class="row">
+                <div class="col-lg-4 col-md-6">
+					<div class="footer-section">
+						<p class="copyright">{{ config.company }}</p>
+					</div>
+				</div>
+				<div class="col-lg-4 col-md-6">
+					<div class="footer-section">
+						<p class="copyright">Bona @ 2017. All rights reserved.</p>
+						<p class="copyright">Designed by <a href="https://colorlib.com" target="_blank">Colorlib</a></p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</footer>
+
+	<script src="{{ url_for('static', filename='js/jquery-3.1.1.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/tether.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+</body>
+</html>
