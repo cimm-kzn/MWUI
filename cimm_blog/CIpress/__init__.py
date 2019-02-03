@@ -25,6 +25,7 @@ from pony.flask import Pony
 from pony.orm import Database
 from .misaka import MisakaRenderer
 from .views import views
+from .vk import vk_api
 
 
 app = Flask(__name__, static_url_path=f"{getenv('URL_PREFIX', '/')}/static")
@@ -36,6 +37,14 @@ app.config.SECRET_KEY = getenv('SECRET_KEY', 'development')
 
 
 app.register_blueprint(views, url_prefix=getenv('URL_PREFIX', '/'))
+
+vk_secret = getenv('VK_CALLBACK_SECRET')
+vk_token = getenv('VK_CALLBACK_TOKEN')
+if vk_secret and vk_token:
+    app.config.vk_secret = vk_secret
+    app.config.vk_token = vk_token
+    app.register_blueprint(vk_api, url_prefix=getenv('URL_PREFIX', '/') + 'vk/')
+
 
 Misaka(app, renderer=MisakaRenderer(flags=0 | HTML_ESCAPE), tables=True, autolink=True,
        underline=True, math=True, strikethrough=True, superscript=True, footnotes=True)

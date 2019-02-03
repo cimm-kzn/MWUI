@@ -21,7 +21,7 @@ from pony.orm import desc, ObjectNotFound
 from .database import *
 
 
-views = Blueprint('bp', __name__)
+views = Blueprint('views', __name__)
 
 
 @views.route('/')
