@@ -4,3 +4,4 @@ LazyPony
 Flask
 Misaka
 Flask-Misaka
+requests

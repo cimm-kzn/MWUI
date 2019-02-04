@@ -40,10 +40,14 @@ app.register_blueprint(views, url_prefix=getenv('URL_PREFIX', '/'))
 
 vk_secret = getenv('VK_CALLBACK_SECRET')
 vk_token = getenv('VK_CALLBACK_TOKEN')
+vk_author = getenv('VK_CALLBACK_AUTHOR', 1)
+vk_category = getenv('VK_CALLBACK_CATEGORY', 1)
 if vk_secret and vk_token:
     app.config.vk_secret = vk_secret
     app.config.vk_token = vk_token
-    app.register_blueprint(vk_api, url_prefix=getenv('URL_PREFIX', '/') + 'vk/')
+    app.config.vk_author = vk_author
+    app.config.vk_category = vk_category
+    app.register_blueprint(vk_api, url_prefix=getenv('URL_PREFIX', '') + '/vk/')
 
 
 Misaka(app, renderer=MisakaRenderer(flags=0 | HTML_ESCAPE), tables=True, autolink=True,

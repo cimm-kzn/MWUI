@@ -23,7 +23,7 @@ from re import findall, sub
 from requests import get
 from shutil import copyfileobj
 from uuid import uuid4
-from .models import User, BlogPost
+from .database import *
 
 
 class VKView(View):
@@ -41,30 +41,8 @@ class VKView(View):
         if _type == 'confirmation':
             return current_app.config.vk_token
         elif _type in ('wall_post_new', 'wall_repost'):
-            try:
-                res = self.__prepare_post(data['object'])
-            except:
-                print('parsing error', data)
-                return 'ok'
-
-            if res['banner']:
-                try:
-                    r = get(res['banner'], stream=True)
-                    if r.status_code == 200:
-                        banner = '%s.jpg' % uuid4()
-                        with (IMAGES_ROOT / banner).open('wb') as f:
-                            r.raw.decode_content = True
-                            copyfileobj(r.raw, f)
-                    else:
-                        print('banner not found')
-                        banner = None
-                except:
-                    print('banner load error')
-                    banner = None
-            else:
-                banner = None
-
-            self.__add_post(res['title'], res['body'], banner)
+            res = self.__prepare_post(data['object'])
+            self.__add_post(res)
 
         return 'ok'
 
@@ -85,48 +63,82 @@ class VKView(View):
         else:
             body = body[0]
 
-        attachments = data.get('attachments', [])
-        banner = cls.__get_banner_url(attachments)
-        links = cls.__get_links(attachments)
-        links = '\n\n####Links:\n* %s' % '\n* '.join(links) if links else ''
-        return {'title': title, 'body': text + links, 'banner': banner}
+        post = {'title': title, 'tags': tags}
+        if 'attachments' in data:
+            banner = cls.__get_banner_url(data['attachments'])
+            if banner:
+                banner = cls.__get_banner(banner)
+                if banner:
+                    post['banner'] = banner
+            links = cls.__get_links(data['attachments'])
+            if links:
+                post['body'] = body + '\n\n####Links:\n* %s' % '\n* '.join(links)
+            else:
+                post['body'] = body
+        else:
+            post['body'] = body
+        return post
 
     @staticmethod
     def __get_banner_url(attachments):
         for x in attachments:
             _type = x['type']
             if _type == 'photo':
+                photo = x[_type]
                 for k in ('photo_2560', 'photo_1280', 'photo_807', 'photo_604', 'photo_320', 'photo_130'):
-                    if k in x[_type]:
-                        return x[_type][k]
+                    if k in photo:
+                        return photo[k]
         for x in attachments:
             _type = x['type']
             if _type == 'video':
+                video = x[_type]
                 for k in ('photo_800', 'photo_640', 'photo_320', 'photo_130'):
-                    if k in x[_type]:
-                        return x[_type][k]
+                    if k in video:
+                        return video[k]
         for x in attachments:
             _type = x['type']
             if _type == 'link':
                 if 'photo' in x[_type]:
+                    photo = x[_type]['photo']
                     for k in ('photo_2560', 'photo_1280', 'photo_807', 'photo_604', 'photo_320', 'photo_130'):
-                        if k in x[_type]['photo']:
-                            return x[_type]['photo'][k]
+                        if k in photo:
+                            return photo[k]
 
     @staticmethod
     def __get_links(attachments):
         urls = []
         for x in attachments:
             _type = x['type']
+            data = x[_type]
             if _type in ('video', 'photo', 'doc'):
-                urls.append('https://vk.com/%s%s_%s' % (_type, x[_type]['owner_id'], x[_type]['id']))
+                urls.append(f'https://vk.com/{_type}{data["owner_id"]}_{data["id"]}')
             elif _type == 'link':
-                urls.append(x[_type]['url'])
+                urls.append(data['url'])
         return urls
 
+    @staticmethod
+    def __get_banner(banner):
+        r = get(banner, stream=True)
+        if r.status_code == 200:
+            banner = f'{uuid4()}.jpg'
+            with open(f'{current_app.static_folder}/images/{banner}', 'wb') as f:
+                r.raw.decode_content = True
+                copyfileobj(r.raw, f)
+            return banner
+
     @db_session
-    def __add_post(self, title, body, banner):
-        BlogPost(type=BlogPostType.COMMON, author=User[VK_AUTHOR], title=title, body=body, banner=banner)
+    def __add_post(self, post):
+        tags = post.pop('tags')
+        a = Author[current_app.config.db_schema][current_app.config.vk_author]
+        c = Category[current_app.config.db_schema][current_app.config.vk_category]
+        p = Post[current_app.config.db_schema](**post, author=a, category=c)
+        t = Tag[current_app.config.db_schema]
+        for tag in tags:
+            te = t.get(name=tag)
+            if not te:
+                te = t(name=tag)
+            p.tags.add(te)
+        return p
 
 
 vk_api = Blueprint('vk_api', __name__)
