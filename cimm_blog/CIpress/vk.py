@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 #
 #  Copyright 2019 Ramil Nugmanov <stsouko@live.ru>
-#  This file is part of cimm_blog.
+#  This file is part of CIpress.
 #
-#  cimm_blog is free software; you can redistribute it and/or modify
+#  CIpress is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as published by
 #  the Free Software Foundation; either version 3 of the License, or
 #  (at your option) any later version.
@@ -18,7 +18,6 @@
 #
 from flask import Blueprint, request, current_app
 from flask.views import View
-from pony.orm import db_session
 from re import findall, sub
 from requests import get
 from shutil import copyfileobj
@@ -126,8 +125,8 @@ class VKView(View):
                 copyfileobj(r.raw, f)
             return banner
 
-    @db_session
-    def __add_post(self, post):
+    @staticmethod
+    def __add_post(post):
         tags = post.pop('tags')
         a = Author[current_app.config.db_schema][current_app.config.vk_author]
         c = Category[current_app.config.db_schema][current_app.config.vk_category]
