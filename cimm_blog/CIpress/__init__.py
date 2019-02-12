@@ -28,13 +28,13 @@ from .views import views
 from .vk import vk_api
 
 
-app = Flask(__name__, static_url_path=f"{getenv('URL_PREFIX', '/')}/static")
+app = Flask(__name__, static_url_path=f"{getenv('URL_PREFIX', '')}/static")
 app.config.db_schema = getenv('DB_SCHEMA')
 app.config.title = getenv('CIPRESS_TITLE')
 app.config.company = getenv('CIPRESS_COMPANY')
 app.config.posts_per_page = getenv('CIPRESS_PAGE', 12)
 app.config.SECRET_KEY = getenv('SECRET_KEY', 'development')
-
+app.config.yandex = getenv('YANDEX')
 
 app.register_blueprint(views, url_prefix=getenv('URL_PREFIX', '/'))
 
