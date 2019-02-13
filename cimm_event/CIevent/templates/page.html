@@ -1,0 +1,32 @@
+{% extends 'layout.html' %}
+
+{% block nav %}
+{% if event.participation %}
+<div class="collapse navbar-collapse" id="navbars">
+    <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+            <a class="nav-link" href="#">Home</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">Link</a>
+        </li>
+    </ul>
+</div>
+{% endif %}
+{% endblock %}
+{% block page %}
+<h1 class="page-header">{{ event.title }}</h1>
+<hr>
+<div class="row">
+    <div class="col-lg-8">{{ page.body | markdown }}</div>
+    <div class="col-md-4">
+        <ul class="nav list-group">
+            {% for i in event.ordered_pages %}
+            <li>
+                <a href="{{ url_for('.page_view', event=event.abbr, page=i.id) }}">{{ i.title }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

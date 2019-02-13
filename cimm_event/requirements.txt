@@ -1,0 +1,6 @@
+psycopg2-binary
+pony
+LazyPony
+Flask
+Misaka
+Flask-Misaka
