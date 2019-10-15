@@ -1,4 +1,4 @@
-{% from "macroses.html" import metrika %}
+{% from "yandex.html" import metrika %}
 
 <!DOCTYPE HTML>
 <html lang="en">
@@ -15,10 +15,10 @@
 	<link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
 	<link href="{{ url_for('static', filename='css/responsive.css') }}" rel="stylesheet">
 </head>
-<body >
+<body>
 	<header>
 		<div class="container-fluid position-relative no-side-padding">
-			<a href="/" class="logo"><img src="{{ url_for('static', filename='logo.png') }}" alt="Logo Image"></a>
+			<a href="{{ config.home }}" class="logo"><img src="{{ url_for('static', filename='logo.png') }}" alt="Logo Image"></a>
 			<div class="menu-nav-icon" data-nav-menu="#main-menu"><i class="ion-navicon"></i></div>
 
 			<ul class="main-menu visible-on-click" id="main-menu">

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2018 Ramil Nugmanov <stsouko@live.ru>
-#  This file is part of CIPress.
+#  Copyright 2019 Ramil Nugmanov <stsouko@live.ru>
+#  This file is part of CIMMBlog.
 #
-#  CIPress is free software; you can redistribute it and/or modify
+#  CIMMBlog is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as published by
 #  the Free Software Foundation; either version 3 of the License, or
 #  (at your option) any later version.
@@ -17,35 +17,32 @@
 #  along with this program; if not, see <https://www.gnu.org/licenses/>.
 #
 from datetime import datetime
-from pony.orm import PrimaryKey, Required, Optional, Set
-from ...database import LazyEntityMeta, DoubleLink
+from LazyPony import LazyEntityMeta
+from pony.orm import PrimaryKey, Required, Set, Optional
 
 
 class Post(metaclass=LazyEntityMeta):
     id = PrimaryKey(int, auto=True)
     title = Required(str)
     body = Required(str)
-    glyph = Required(str, default='file')
-    date = Required(datetime, default=datetime.utcnow)
     banner = Optional(str)
-    attachments = Set('Attachment')
-    slug = Optional(str, unique=True)
-    author = Required('Author')
+
+    date = Required(datetime, default=datetime.utcnow)
+    views = Required(int, default=0)
+    category = Required('Category')
+    tags = Set('Tag')
 
 
-class Attachment(metaclass=LazyEntityMeta):
+class Tag(metaclass=LazyEntityMeta):
     id = PrimaryKey(int, auto=True)
-    file = Required(str)
     name = Required(str)
-    post = Required('Post')
+    posts = Set('Post', table='PostTag')
 
 
-class Author(metaclass=LazyEntityMeta):
-    id = DoubleLink(PrimaryKey('User', reverse='blog'), Optional('Author'))
+class Category(metaclass=LazyEntityMeta):
+    id = PrimaryKey(int, auto=True)
     name = Required(str)
-    surname = Required(str)
     posts = Set('Post')
 
-    @property
-    def full_name(self):
-        return f'{self.name} {self.surname}'
+
+__all__ = ['Post', 'Tag', 'Category']

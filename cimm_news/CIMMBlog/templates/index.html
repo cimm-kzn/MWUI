@@ -1,7 +1,9 @@
 {% extends 'layout.html' %}
 
 {% block section %}
-<div class="slider" style="background-image: url({{ url_for('static', filename='images/' + (banner or 'empty_banner.jpg')) }})"></div>
+<div class="slider" style="background-image: url({{ url_for('static',
+                                                            filename='images/' + banner if banner else
+                                                                     'banner.jpg') }})"></div>
 
 <section class="blog-area section">
     <div class="container">
@@ -11,9 +13,10 @@
                 <div class="card h-100">
                     <div class="single-post post-style-1">
                         <div class="blog-image">
-                            <img src="{{ url_for('static', filename='images/' + post.banner) }}" alt="Blog Image">
+                            <img src="{{ url_for('static',
+                                                 filename='images/' + post.banner if post.banner else
+                                                          'banner.jpg') }}" alt="Blog Image">
                         </div>
-                        <img class="avatar" src="{{ url_for('static', filename='images/' + post.author.avatar) }}" alt="{{ post.author.name }}">
                         <div class="blog-info">
                             <h4 class="title">
                                 <a href="{{ url_for('.post_page', post=post.id) }}"><b>{{ post.title }}</b></a>
