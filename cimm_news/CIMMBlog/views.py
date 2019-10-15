@@ -67,8 +67,7 @@ def post_page(post):
         abort(404)
     post.views += 1
     categories = Category.select().order_by(lambda x: x.id)[:]
-    recommendations = Post.select(lambda x: x != post).order_by(lambda x: desc(x.views)).limit(3)
-    return render_template('post.html', post=post, categories=categories, recommendations=recommendations)
+    return render_template('post.html', post=post, categories=categories)
 
 
 @views.route('/popular/')

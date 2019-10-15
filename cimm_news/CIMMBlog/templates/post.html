@@ -42,27 +42,5 @@
     </div>
 </section>
 <section class="recomended-area section">
-    <div class="container">
-        <div class="row">
-            {% for recommendation in recommendations %}
-            <div class="col-lg-4 col-md-6">
-                <div class="card h-100">
-                    <div class="single-post post-style-1">
-                        <div class="blog-image"><img src="{{ url_for('static',
-                                                                     filename='images/' + recommendation.banner
-                                                                     if recommendation.banner else
-                                                                     'banner.jpg') }}" alt="{{ recommendation.title }}"></div>
-                        <div class="blog-info">
-                            <h4 class="title"><a href="{{ url_for('.post_page', post=recommendation.id) }}"><b>{{ recommendation.title }}</b></a></h4>
-                            <ul class="post-footer">
-                                <li><a href="{{ url_for('.popular') }}"><i class="ion-eye"></i>{{ recommendation.views }}</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
 </section>
 {% endblock %}
