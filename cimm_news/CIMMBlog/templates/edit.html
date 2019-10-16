@@ -12,8 +12,9 @@
             <div class="col-lg-10 col-md-12">
                 <div class="main-post">
                     <div class="post-top-area">
-                        <form>
-
+                        <form method="POST" enctype="multipart/form-data">
+                            {{ form.csrf_token }}
+                            {{ form.title.label }} {{ form.title }}
                         </form>
                     </div>
                 </div>
@@ -21,4 +22,5 @@
         </div>
     </div>
 </section>
+<section class="recomended-area section"></section>
 {% endblock %}

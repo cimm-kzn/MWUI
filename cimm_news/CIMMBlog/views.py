@@ -16,9 +16,21 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program; if not, see <https://www.gnu.org/licenses/>.
 #
-from flask import Blueprint, render_template, current_app, abort
+from flask import Blueprint, render_template, current_app, abort, url_for, redirect, request, Response
+from functools import wraps
 from pony.orm import desc, ObjectNotFound
-from .database import Post, Category
+from .database import Post, Category, Tag
+from .forms import EditPost
+
+
+def authenticate(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        auth = request.authorization
+        if auth and (auth.username, auth.password) == (current_app.config.admin_login, current_app.config.admin_pass):
+            return f(*args, **kwargs)
+        return Response('access deny', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
+    return wrapper
 
 
 views = Blueprint('views', __name__)
@@ -77,12 +89,28 @@ def popular(category=None):
 
 
 @views.route('/edit/<int(min=1):post>')
+@authenticate
 def edit(post):
     try:
-        post = Post[post]
+        p = Post[post]
     except ObjectNotFound:
         abort(404)
-    return render_template('edit.html', post=post)
+    categories = Category.select().order_by(lambda x: x.id)[:]
+    form = EditPost(obj=p, categories=categories)
+    if form.validate_on_submit():
+        if form.to_delete.data:
+            p.delete()
+            return redirect(url_for('.index'))
+
+        p.title = form.title.data
+        p.body = form.body.data
+        p.category = Category[form.category.data]
+        p.tags.clear()
+        for t in form.tags:
+            t = Tag.get(name=t) or Tag(name=t)
+            p.tags.add(t)
+        return redirect(url_for('.post_page', post=post))
+    return render_template('edit.html', post=p, form=form)
 
 
 __all__ = ['views']

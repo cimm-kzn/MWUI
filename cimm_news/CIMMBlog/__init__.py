@@ -28,11 +28,14 @@ from .views import views
 
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = getenv('SECRET_KEY', 'development')
 app.config.home = getenv('HOME_PAGE', '/')
 app.config.company = getenv('COMPANY')
-app.config.SECRET_KEY = getenv('SECRET_KEY', 'development')
 app.config.yandex = getenv('YANDEX')
 app.config.posts_per_page = getenv('PAGE_SIZE', 12)
+app.config.admin_login = getenv('ADMIN_LOGIN', 'admin')
+app.config.admin_pass = getenv('ADMIN_PASS')
+
 app.register_blueprint(views, url_prefix=getenv('URL_PREFIX', '/'))
 
 Misaka(app, renderer=MisakaRenderer(flags=0 | HTML_ESCAPE), tables=True, autolink=True,
